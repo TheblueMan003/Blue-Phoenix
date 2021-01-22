@@ -1,0 +1,38 @@
+announceAdvancements	Whether advancements should be announced in chat	true	Bool	Yes	No
+commandBlocksEnabled	Whether command blocks should be enabled in-game	true	Bool	No	Yes
+commandBlockOutput	Whether command blocks should notify admins when they perform commands	true	Bool	Yes	Yes
+disableElytraMovementCheck	Whether the server should skip checking player speed when the player is wearing elytra. Often helps with jittering due to lag in multiplayer.	false	Bool	Yes	No
+disableRaids	Whether raids are disabled.	false	Bool	Yes	No
+doDaylightCycle	Whether the daylight cycle and moon phases progress	true	Bool	Yes	Yes
+doEntityDrops	Whether entities that are not mobs should have drops	true	Bool	Yes	Yes
+doFireTick	Whether fire should spread and naturally extinguish	true	Bool	Yes	Yes
+doInsomnia	Whether phantoms can spawn in the nighttime	true	Bool	Yes	Yes
+doImmediateRespawn	Players respawn immediately without showing the death screen	false	Bool	Yes	Yes
+doLimitedCrafting	Whether players should be able to craft only those recipes that they've unlocked first	false	Bool	Yes	No
+doMobLoot	Whether mobs should drop items	true	Bool	Yes	Yes
+doMobSpawning	Whether mobs should naturally spawn. Does not affect monster spawners.	true	Bool	Yes	Yes
+doPatrolSpawning	Whether patrols can spawn	true	Bool	Yes	No
+doTileDrops	Whether blocks should have drops	true	Bool	Yes	Yes
+doTraderSpawning	Whether wandering traders can spawn	true	Bool	Yes	No
+doWeatherCycle	Whether the weather can change naturally. The /weather command can still change weather.	true	Bool	Yes	Yes
+drowningDamage	Whether the player should take damage when drowning	true	Bool	Yes	Yes
+fallDamage	Whether the player should take fall damage	true	Bool	Yes	Yes
+fireDamage	Whether the player should take fire damage	true	Bool	Yes	Yes
+forgiveDeadPlayers	Makes angered neutral mobs stop being angry when the targeted player dies nearby	true	Bool	Yes	No
+keepInventory	Whether the player should keep items and experience in their inventory after death	false	Bool	Yes	Yes
+logAdminCommands	Whether to log admin commands to server log	true	Bool	Yes	No
+maxCommandChainLength	Determines the number at which the chain command block acts as a "chain".	65536	Int	Yes	Yes
+maxEntityCramming	The maximum number of other pushable entities a mob or player can push, before taking 3♥♥ suffocation damage per half-second. Setting to 0 or lower disables the rule. Damage affects survival-mode or adventure-mode players, and all mobs but bats. Pushable entities include non-spectator-mode players, any mob except bats, as well as boats and minecarts.	24	Int	Yes	No
+mobGriefing	Whether creepers, zombies, endermen, ghasts, withers, ender dragons, rabbits, sheep, villagers, silverfish, snow golems, and end crystals should be able to change blocks and whether mobs can pick up items, which also disables bartering. This also affects the capability of zombie-like creatures like zombie pigmen and drowned to pathfind to turtle eggs.	true	Bool	Yes	Yes
+naturalRegeneration	Whether the player can regenerate health naturally if their hunger is full enough (doesn't affect external healing, such as golden apples, the Regeneration effect, etc.)	true	Bool	Yes	Yes
+pvp	Whether the player can fight with other players	true	Bool	No	Yes
+randomTickSpeed	How often a random block tick occurs (such as plant growth, leaf decay, etc.) per chunk section per game tick. 0 disables random ticks [needs testing], higher numbers increase random ticks. Setting to a high integer results in high speeds of decay and growth	3‌[JE only]
+reducedDebugInfo	Whether the debug screen shows all or reduced information; and whether the effects of F3+B (entity hitboxes) and F3+G (chunk boundaries) are shown.	false	Bool	Yes	No
+sendCommandFeedback	Whether the feedback from commands executed by a player should show up in chat. Also affects the default behavior of whether command blocks store their output text	true	Bool	Yes	Yes
+showCoordinates	Whether the player's coordinates are displayed	true	Bool	No	Yes
+showDeathMessages	Whether death messages are put into chat when a player dies. Also affects whether a message is sent to the pet's owner when the pet dies.	true	Bool	Yes	Yes
+spawnRadius	The number of blocks outward from the world spawn coordinates that a player spawns in when first joining a server or when dying without a personal spawnpoint.	10‌[JE only]
+spectatorsGenerateChunks	Whether players in spectator mode can generate chunks	true	Bool	Yes	No
+tntExplodes	Whether TNT explodes after activation	true	Bool	No	Yes
+universalAnger	Makes angered neutral mobs attack any nearby player, not just the player that angered them. Works best if forgiveDeadPlayers is disabled.	false	Bool	Yes	No
+showTags	Hides the "Can place on" and "Can destroy" block lists from item lore.	true	Bool	No	Yes

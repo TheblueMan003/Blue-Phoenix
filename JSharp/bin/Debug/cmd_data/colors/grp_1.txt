@@ -1,0 +1,56 @@
+achievement
+ban
+ban-ip
+banlist
+clear
+clone
+Command:
+data
+debug
+defaultgamemode
+deop
+difficulty
+effect
+enchant
+execute
+experience
+function
+gamemode
+gamerule
+give
+kick
+kill
+list
+locate
+op
+pardon
+pardon-ip
+playsound
+publish
+replaceitem block
+replaceitem entity
+save-all
+save-off
+save-on
+say
+scoreboard objectives
+scoreboard players
+seed
+setblock
+setidletimeout
+setworldspawn
+spawnpoint
+spreadplayers
+stop
+summon
+tag
+teams
+tellraw
+time add
+time set
+tp
+weather
+whitelist
+xp
+fill
+operation

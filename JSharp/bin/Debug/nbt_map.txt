@@ -1,0 +1,133 @@
+[Position]
+x = Pos[0] = double
+y = Pos[1] = double
+z = Pos[2] = double
+
+[Rotation]
+rot_x = Rotation[0] = float
+rot_y = Rotation[1] = float
+rot[0] = Rotation[0] = float
+rot[1] = Rotation[1] = float
+rotation_x = Rotation[0] = float
+rotation_y = Rotation[1] = float
+rotation[0] = Rotation[0] = float
+rotation[1] = Rotation[1] = float
+
+[Motion]
+motion_x = Motion[0] = double
+motion_y = Motion[1] = double
+motion_z = Motion[2] = double
+motion[0] = Motion[0] = double
+motion[1] = Motion[1] = double
+motion[2] = Motion[2] = double
+
+
+[Entity]
+hp = Health = float
+air = Air = float
+fall_distance = FallDistance = float
+food = food_level = float
+hurt_time = HurtTime = float
+
+uuid_0 = UUID[0] = int
+uuid_1 = UUID[1] = int
+uuid_2 = UUID[2] = int
+uuid_3 = UUID[3] = int
+
+uuid[0] = UUID[0] = int
+uuid[1] = UUID[1] = int
+uuid[2] = UUID[2] = int
+uuid[3] = UUID[3] = int
+
+
+[Player]
+selected_slot = SelectedItemSlot = int
+slot = SelectedItemSlot = int
+flying = flying = bool
+
+[Armor_Stand]
+head.x = Pose.Head.x = float
+head.y = Pose.Head.y = float
+head.z = Pose.Head.z = float
+head_x = Pose.Head.x = float
+head_y = Pose.Head.y = float
+head_z = Pose.Head.z = float
+
+
+body.x = Pose.Body.x = float
+body.y = Pose.Body.y = float
+body.z = Pose.Body.z = float
+body_x = Pose.Body.x = float
+body_y = Pose.Body.y = float
+body_z = Pose.Body.z = float
+
+
+leftarm.x = Pose.LeftArm.x = float
+leftarm.y = Pose.LeftArm.y = float
+leftarm.z = Pose.LeftArm.z = float
+leftarm_x = Pose.LeftArm.x = float
+leftarm_y = Pose.LeftArm.y = float
+leftarm_z = Pose.LeftArm.z = float
+
+left_arm.x = Pose.LeftArm.x = float
+left_arm.y = Pose.LeftArm.y = float
+left_arm.z = Pose.LeftArm.z = float
+left_arm_x = Pose.LeftArm.x = float
+left_arm_y = Pose.LeftArm.y = float
+left_arm_z = Pose.LeftArm.z = float
+
+
+rightarm.x = Pose.RightArm.x = float
+rightarm.y = Pose.RightArm.y = float
+rightarm.z = Pose.RightArm.z = float
+rightarm_x = Pose.RightArm.x = float
+rightarm_y = Pose.RightArm.y = float
+rightarm_z = Pose.RightArm.z = float
+
+right_arm.x = Pose.RightArm.x = float
+right_arm.y = Pose.RightArm.y = float
+right_arm.z = Pose.RightArm.z = float
+right_arm_x = Pose.RightArm.x = float
+right_arm_y = Pose.RightArm.y = float
+right_arm_z = Pose.RightArm.z = float
+
+
+leftleg.x = Pose.LeftLeg.x = float
+leftleg.y = Pose.LeftLeg.y = float
+leftleg.z = Pose.LeftLeg.z = float
+leftleg_x = Pose.LeftLeg.x = float
+leftleg_y = Pose.LeftLeg.y = float
+leftleg_z = Pose.LeftLeg.z = float
+
+left_leg.x = Pose.LeftLeg.x = float
+left_leg.y = Pose.LeftLeg.y = float
+left_leg.z = Pose.LeftLeg.z = float
+left_leg_x = Pose.LeftLeg.x = float
+left_leg_y = Pose.LeftLeg.y = float
+left_leg_z = Pose.LeftLeg.z = float
+
+
+rightleg.x = Pose.RightLeg.x = float
+rightleg.y = Pose.RightLeg.y = float
+rightleg.z = Pose.RightLeg.z = float
+rightleg_x = Pose.RightLeg.x = float
+rightleg_y = Pose.RightLeg.y = float
+rightleg_z = Pose.RightLeg.z = float
+
+right_leg.x = Pose.RightLeg.x = float
+right_leg.y = Pose.RightLeg.y = float
+right_leg.z = Pose.RightLeg.z = float
+right_leg_x = Pose.RightLeg.x = float
+right_leg_y = Pose.RightLeg.y = float
+right_leg_z = Pose.RightLeg.z = float
+
+small = Small = bool
+invisible = Invisible = bool
+onground = OnGround = bool
+on_ground = OnGround = bool
+
+nobase = NoBasePlate = bool
+nobaseplate = NoBasePlate = bool
+showarms = ShowArms = bool
+show_arms = ShowArms = bool
+invulnerable = Invulnerable = bool
