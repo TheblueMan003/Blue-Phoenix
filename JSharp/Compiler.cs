@@ -574,14 +574,7 @@ namespace JSharp
                     return instBlockTag(text);
                 }
                 //int set
-                else if (varInstReg.Match(text).Success)/*text.ToLower().StartsWith("int ") || text.ToLower().StartsWith("const ") || text.ToLower().StartsWith("float ") ||
-                    text.ToLower().StartsWith("bool ") || text.ToLower().StartsWith("entity ") || containEnum(text) || containStruct(text)
-                    || text.ToLower().StartsWith("function<") || text.ToLower().StartsWith("function ") || text.ToLower().StartsWith("string ")
-                     || text.ToLower().StartsWith("json ") || text.ToLower().StartsWith("params ")
-                    || text.ToLower().StartsWith("int[") || text.ToLower().StartsWith("float[") ||
-                    text.ToLower().StartsWith("bool[") || text.ToLower().StartsWith("entity[")
-                    || text.ToLower().StartsWith("function[") || text.ToLower().StartsWith("string[")
-                    || containType(text))*/
+                else if (varInstReg.Match(text).Success)
                 {
                     return instVar(text);
                 }
@@ -1709,7 +1702,7 @@ namespace JSharp
             string output = "";
             string[] operations = new string[] { "^", "|","&" ,"+", "-", "%", "/", "*" };
             string val2 = getParenthis(val, 1);
-
+            
             foreach (string xop in operations)
             {
                 part = smartSplit(val2, xop[0], 2);
@@ -2707,7 +2700,7 @@ namespace JSharp
             }
             if (isAbstract)
                 return "";
-            return GenerateInfo(function);
+            return "";// GenerateInfo(function);
         }
         public static string instWhile(string text, string fText)
         {
@@ -4314,7 +4307,8 @@ namespace JSharp
             {
                 text = text.Substring(0, text.Length - 1);
             }
-            while (text.StartsWith("(") && text.EndsWith(")")) {
+            
+            while (text.StartsWith("(") && text.EndsWith(")") && getCloseCharIndex(text, ')') == text.Length-1) {
                 return getParenthis(text.Substring(text.IndexOf('(') + 1, getCloseCharIndex(text,')') - text.IndexOf('(') - 1), max-1);
             }
             
@@ -5481,7 +5475,7 @@ namespace JSharp
                     if (LastConds.Count > 0)
                         LastCond = LastConds.Pop();
                 }
-                if ((type == "if" || (type == "with" && !cantMergeWith) || type == "at" || type == "case") && lineCount == 1)
+                if ((type == "if" || (type == "with" && !cantMergeWith) || type == "at" || type == "case") && lineCount == 1 && !content.StartsWith("#"))
                 {
                     File f = context.currentFile();
                     string tmp = f.content.Substring(0, f.content.LastIndexOf(' '));
