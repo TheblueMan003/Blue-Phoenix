@@ -60,7 +60,7 @@
             this.ProjectSave = new System.Windows.Forms.SaveFileDialog();
             this.ProjectOpen = new System.Windows.Forms.OpenFileDialog();
             this.ExportSave = new System.Windows.Forms.SaveFileDialog();
-            this.OffuscationCheck = new System.Windows.Forms.CheckBox();
+            this.isLibraryCheckbox = new System.Windows.Forms.CheckBox();
             this.LineNumberTextBox = new System.Windows.Forms.RichTextBox();
             this.ErrorBox = new System.Windows.Forms.RichTextBox();
             this.button5 = new System.Windows.Forms.Button();
@@ -338,18 +338,19 @@
             this.ProjectOpen.Filter = "*.tbms|*.tbms";
             this.ProjectOpen.Title = "OpenProject";
             // 
-            // OffuscationCheck
+            // isLibraryCheckbox
             // 
-            this.OffuscationCheck.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.OffuscationCheck.AutoSize = true;
-            this.OffuscationCheck.Checked = true;
-            this.OffuscationCheck.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.OffuscationCheck.Location = new System.Drawing.Point(962, 31);
-            this.OffuscationCheck.Name = "OffuscationCheck";
-            this.OffuscationCheck.Size = new System.Drawing.Size(70, 17);
-            this.OffuscationCheck.TabIndex = 12;
-            this.OffuscationCheck.Text = "offuscate";
-            this.OffuscationCheck.UseVisualStyleBackColor = true;
+            this.isLibraryCheckbox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.isLibraryCheckbox.AutoSize = true;
+            this.isLibraryCheckbox.Checked = true;
+            this.isLibraryCheckbox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.isLibraryCheckbox.Location = new System.Drawing.Point(963, 31);
+            this.isLibraryCheckbox.Name = "isLibraryCheckbox";
+            this.isLibraryCheckbox.Size = new System.Drawing.Size(69, 17);
+            this.isLibraryCheckbox.TabIndex = 12;
+            this.isLibraryCheckbox.Text = "is Project";
+            this.isLibraryCheckbox.UseVisualStyleBackColor = true;
+            this.isLibraryCheckbox.CheckedChanged += new System.EventHandler(this.isLibrary_CheckedChanged);
             // 
             // LineNumberTextBox
             // 
@@ -537,7 +538,7 @@
             this.Controls.Add(this.ErrorBox);
             this.Controls.Add(this.button5);
             this.Controls.Add(this.LineNumberTextBox);
-            this.Controls.Add(this.OffuscationCheck);
+            this.Controls.Add(this.isLibraryCheckbox);
             this.Controls.Add(this.CodeBox);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.listBox1);
@@ -583,7 +584,7 @@
         private System.Windows.Forms.ToolStripMenuItem projectToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem minecraftToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem newDatapackToolStripMenuItem;
-        private System.Windows.Forms.CheckBox OffuscationCheck;
+        private System.Windows.Forms.CheckBox isLibraryCheckbox;
         private System.Windows.Forms.ToolStripMenuItem structuresToolStripMenuItem;
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button button3;

@@ -27,7 +27,6 @@ namespace JSharp
         private string previous = "load";
         private string projectName = "default";
         private string currentDataPack;
-        private int changedTime;
         public string projectPath;
         public bool ignorNextListboxUpdate = false;
         public int isCompiling = 0;
@@ -35,14 +34,14 @@ namespace JSharp
         public List<Compiler.File> compileFiled;
         private List<DebugMessage> debugMSGs = new List<DebugMessage>();
         private int lastSeen = -1;
-        public bool showForm;
-        FilePreview filePreview;
+        private bool showForm;
+
         private List<string> PreviousText = new List<string>();
         private bool ignoreMod = false;
         private bool noReformat = false;
         private bool exporting;
         private int index = 0;
-
+        private int changedTime;
 
 
         public Form1(string project = null)
@@ -225,12 +224,24 @@ namespace JSharp
             save.TagsList = TagsList;
             save.mcTagsList = MCTagsList;
             save.version = projectVersion;
-            save.offuscate = OffuscationCheck.Checked;
+            save.offuscate = isLibraryCheckbox.Checked;
+            save.isLibrary = isLibraryCheckbox.Checked;
             List<ProjectSave.FileSave> lst = new List<ProjectSave.FileSave>();
+            save.compileOrder = new List<string>();
             save.datapackDirectory = currentDataPack;
+            string dir = Path.GetDirectoryName(projectPath)+"/scripts/";
+            
             foreach (string file in listBox1.Items)
             {
-                lst.Add(new ProjectSave.FileSave(file, code[file], i));
+                if (isLibraryCheckbox.Checked)
+                {
+                    SafeWriteFile(dir + file + ".bps", code[file]);
+                    save.compileOrder.Add(file);
+                }
+                else
+                {
+                    lst.Add(new ProjectSave.FileSave(file, code[file], i));
+                }
             }
             save.files = lst.ToArray();
 
@@ -240,7 +251,7 @@ namespace JSharp
         {
             try
             {
-                Open(File.ReadAllText(name));
+                Open(name, File.ReadAllText(name));
                 projectPath = name;
                 Text = projectName + " - TBMScript";
             }
@@ -249,7 +260,7 @@ namespace JSharp
                 MessageBox.Show(error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        public void Open(string data)
+        public void Open(string name, string data)
         {
             ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
             listBox1.Items.Clear();
@@ -261,10 +272,11 @@ namespace JSharp
 
             projectName = project.projectName;
             currentDataPack = project.datapackDirectory;
-            OffuscationCheck.Checked = project.offuscate;
+            isLibraryCheckbox.Checked = project.isLibrary;
             previous = "$$$$$$$$$";
             int i = 0;
-            foreach(var file in project.files)
+            string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
+            foreach (var file in project.files)
             {
                 ignorNextListboxUpdate = true;
                 try
@@ -288,6 +300,56 @@ namespace JSharp
                     previous = file.name;
                 }
                 i++;
+            }
+            if (project.compileOrder != null)
+            {
+                foreach (var file in project.compileOrder)
+                {
+                    ignorNextListboxUpdate = true;
+                    try
+                    {
+                        code.Add(file, File.ReadAllText(dir + file + ".bps"));
+                    }
+                    catch (Exception e)
+                    {
+                        Debug("Exception while reading " + e.ToString(), Color.Red);
+                    }
+
+                    listBox1.Items.Add(file);
+
+                    if (i == 0)
+                    {
+                        noReformat = true;
+                        CodeBox.Text = code[file];
+                        PreviousText.Clear();
+                        PreviousText.Add(CodeBox.Text);
+                        index = 0;
+                        previous = file;
+                    }
+                    i++;
+                }
+            }
+            if (Directory.Exists(dir))
+            {
+                foreach (var file in Directory.GetFiles(dir))
+                {
+                    string fname = Path.GetFileName(file);
+                    fname = fname.Substring(0, fname.Length - Path.GetExtension(file).Length);
+
+                    if (!code.ContainsKey(fname.ToLower()))
+                    {
+                        try
+                        {
+                            code.Add(fname.ToLower(), File.ReadAllText(file));
+                        }
+                        catch (Exception e)
+                        {
+                            Debug("Exception while reading " + e.ToString(), Color.Red);
+                        }
+
+                        listBox1.Items.Add(fname.ToLower());
+                    }
+                }
             }
             Debug("Project Loaded: " + projectPath+" ("+i.ToString()+" Files)", Color.Aqua);
             noReformat = false;
@@ -364,7 +426,7 @@ namespace JSharp
             if (res == DialogResult.Yes)
             {
                 projectPath = form.ProjectName;
-                Open(File.ReadAllText(form.ProjectName));
+                Open(form.ProjectName, File.ReadAllText(form.ProjectName));
                 Text = projectName + " - TBMScript";
                 newP = true;
 
@@ -919,6 +981,11 @@ namespace JSharp
         {
             FunctionPreview fp = new FunctionPreview(CommandParser.sounds);
             fp.Show();
+        }
+
+        private void isLibrary_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
     }
 

@@ -11,6 +11,7 @@ namespace JSharp
         public string projectName;
         public string datapackDirectory;
         public bool offuscate;
+        public bool isLibrary;
         public FileSave[] files;
         public Dictionary<string, Dictionary<string, TagsList>> TagsList;
         public Dictionary<string, Dictionary<string, TagsList>> mcTagsList;
