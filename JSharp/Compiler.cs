@@ -50,7 +50,6 @@ namespace JSharp
         private static bool isInStructMethod;
         private static bool isInStaticMethod;
         private static bool forcedUnsed = false;
-        private static bool inLazyEval = false;
         private static bool isInlazyFunc = false;
         private static Stack<string> lazyCall = new Stack<string>();
         private static Stack<List<Variable>> lazyOutput;
@@ -157,7 +156,6 @@ namespace JSharp
                 isInStructMethod = false;
                 isInStaticMethod = false;
                 isInlazyFunc = false;
-                inLazyEval = false;
                 forcedUnsed = false;
                 structMethodFile = null;
                 loadFile = new File("load", "");
@@ -955,11 +953,11 @@ namespace JSharp
         {
             lazyEvalVar.RemoveAt(lazyEvalVar.Count - 1);
         }
-
         public static bool containLazyVal(string val)
         {
             return getLazyVal(val) != null;
         }
+
         private static void stringInit()
         {
             File fFile = new File("__multiplex__/sstring");
@@ -1001,7 +999,7 @@ namespace JSharp
             variable.wasSet = true;
 
             
-            if (inLazyEval && containLazyVal(val))
+            if (containLazyVal(val))
             {
                 return eval(getLazyVal(val), variable, ca, op);
             }
@@ -1178,6 +1176,10 @@ namespace JSharp
                             {
                                 if (line != "" && !line.StartsWith("#"))
                                 {
+                                    if (!variables.ContainsKey("__mux__" + grp))
+                                    {
+                                        addVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
+                                    }
                                     Variable mux = GetVariable("__mux__" + grp);
                                     fFile.AddLine("execute if score "+mux.scoreboard()+ " matches " + functDelegated[grp].IndexOf(func).ToString()
                                         + " run " + line);
@@ -1189,6 +1191,10 @@ namespace JSharp
                                 string line = parseLine("__mux__." + grp + ".ret_" + i.ToString() + "=" + func.outputs[i].gameName);
                                 if (line != "" && !line.StartsWith("#"))
                                 {
+                                    if (!variables.ContainsKey("__mux__" + grp))
+                                    {
+                                        addVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
+                                    }
                                     Variable mux = GetVariable("__mux__" + grp);
                                     fFile.AddLine("execute if score "+mux.scoreboard()+" matches " + functDelegated[grp].IndexOf(func).ToString()
                                         + " run " + line);
@@ -1931,7 +1937,7 @@ namespace JSharp
                 string[] arg = text.Replace("==", "=").Split('=');
                 for (int i = 0; i < arg.Length; i++)
                 {
-                    if (inLazyEval && containLazyVal(smartEmpty(arg[i])))
+                    if (containLazyVal(smartEmpty(arg[i])))
                     {
                         arg[i] = getLazyVal(smartEmpty(arg[i]));
                     }
@@ -2106,7 +2112,7 @@ namespace JSharp
 
                 for (int i = 0; i < arg.Length; i++)
                 {
-                    if (inLazyEval && containLazyVal(smartEmpty(arg[i]))) 
+                    if (containLazyVal(smartEmpty(arg[i]))) 
                     {
                         arg[i] = getLazyVal(smartEmpty(arg[i]));
                     }
@@ -3409,7 +3415,7 @@ namespace JSharp
             {
                 type = Type.VOID;
             }
-            else if (inLazyEval && containLazyVal(smartEmpty(t)))
+            else if (containLazyVal(smartEmpty(t)))
             {
                 return getType(getLazyVal(smartEmpty(t)));
             }
@@ -3506,7 +3512,7 @@ namespace JSharp
                 }
             }
 
-            if (inLazyEval && containLazyVal(smartEmpty(t)))
+            if (containLazyVal(smartEmpty(t)))
             {
                 return getExprType(getLazyVal(smartEmpty(t)));
             }
@@ -3619,6 +3625,8 @@ namespace JSharp
                 {
                     func = text.Substring(0, text.IndexOf('('));
                 }
+                if (containLazyVal(func))
+                    func = getLazyVal(func);
 
                 string output = "";
                 if (func.StartsWith("@"))
@@ -3642,7 +3650,7 @@ namespace JSharp
 
                 string funcName = context.GetFunctionName(func);
 
-                if (inLazyEval && lazyCall.Contains(funcName))
+                if (lazyCall.Contains(funcName))
                     throw new Exception("Cannot have recursive Lazy Recursive Function.");
 
                 Function funObj = GetFunction(funcName, args);
@@ -3669,7 +3677,6 @@ namespace JSharp
                 HashSet<string> contextVar = new HashSet<string>();
                 if (funObj.lazy)
                 {
-                    inLazyEval = true;
                     lazyOutput.Push(new List<Variable>());
                     adjPackage.Push(funObj.package);
                     
@@ -3723,14 +3730,15 @@ namespace JSharp
                             else if ((smartEmpty(text).EndsWith("{") && a.type == Type.FUNCTION))
                             {
                                 anonymusFuncName = "lamba_" + lambdaID.ToString();
-                                inLazyEval = false;
+                                
                                 parseLine("def abstract " + anonymusFuncName + "()");
 
                                 if (a.name.StartsWith("$"))
                                     compVal.Add(new string[] { a.name, anonymusFuncName });
                                 else
-                                    output += parseLine(desugar(a.gameName + "=" + anonymusFuncName));
-                                inLazyEval = true;
+                                    addLazyVal(a.name, anonymusFuncName);
+                                //output += parseLine(desugar(a.gameName + "=" + anonymusFuncName));
+
                                 anonymusFunc = true;
                                 lambdaID++;
                             }
@@ -3870,7 +3878,7 @@ namespace JSharp
                     {
                         thisDef.Pop();
                     }
-                    inLazyEval = false;
+                    
                     output = init+output+"\n"+clear;
                     adjPackage.Pop();
                     lazyOutput.Pop();
@@ -4003,7 +4011,7 @@ namespace JSharp
         public static string functionReturn(string[] arg)
         {
             string ouput = "";
-            if (inLazyEval)
+            if (lazyEvalVar.Count > 0)
             {
                 int i = 0;
 
@@ -4064,7 +4072,11 @@ namespace JSharp
 
             string output = "";
 
-            string funcName = context.GetVariable(func);
+            string funcName;
+            if (containLazyVal(func))
+                funcName = context.GetVariable(getLazyVal(func));
+            else
+                funcName = context.GetVariable(func);
 
             string grp = "m";
 
@@ -5870,7 +5882,7 @@ namespace JSharp
             public string GetVariableName(string func, bool safe = false)
             {
                 func = toInternal(smartEmpty(func));
-                if (inLazyEval && containLazyVal(func))
+                if (containLazyVal(func))
                 {
                     return GetVariableName(getLazyVal(func), safe);
                 }
@@ -5911,7 +5923,7 @@ namespace JSharp
             {
                 func = toInternal(func.Replace(" ", ""));
 
-                if (inLazyEval && containLazyVal(func))
+                if (containLazyVal(func))
                 {
                     return GetVariable(getLazyVal(func), safe);
                 }
