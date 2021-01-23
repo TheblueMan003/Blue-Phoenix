@@ -33,12 +33,18 @@ namespace JSharp
 
         public static string getField(string text)
         {
-            return map(text.Substring(text.LastIndexOf('.') + 1, text.Length - text.LastIndexOf('.') - 1));
+            return text.Substring(text.LastIndexOf('.') + 1, text.Length - text.LastIndexOf('.') - 1);
         }
-        public static string map(string text)
+        public static bool isSameAs(string v1, string v2)
         {
-            loadDict();
-            return nbt_map[text];
+            string[] field = new string[4];
+            field[0] = v1.Substring(0, v1.LastIndexOf('.'));
+            field[1] = getField(v1);
+
+            field[2] = v2.Substring(0, v2.LastIndexOf('.'));
+            field[3] = getField(v2);
+
+            return field[0] == field[2] && field[1] == field[3];
         }
         public static string parseGet(string text, float scale)
         {
@@ -46,8 +52,7 @@ namespace JSharp
             string[] field = new string[2];
             field[0] = text.Substring(0, text.LastIndexOf('.'));
             field[1] = getField(text);
-            
-            return "data get entity " + limitedEntity(Compiler.smartEmpty(field[0])) + " " + field[1]+" "+scale.ToString();
+            return parseGet(field[0], field[1], scale);
         }
 
         public static string parseGet(string entity, string value, float scale)
@@ -56,8 +61,11 @@ namespace JSharp
             string[] field = new string[2];
             field[0] = limitedEntity(entity);
             field[1] = value;
-            
-            return "data get entity " + limitedEntity(Compiler.smartEmpty(field[0])) + " " + nbt_map[field[1]] + " " + scale.ToString();
+
+            if (nbt_map.ContainsKey(field[1]))
+                return "data get entity " + limitedEntity(Compiler.smartEmpty(field[0])) + " " + nbt_map[field[1]] + " " + scale.ToString();
+            else
+                return getEntityVar(field[0], field[1]);
         }
 
         public static string parseSet(string entity, string value, float scale)
@@ -66,12 +74,50 @@ namespace JSharp
             if (entity.Contains("@"))
             {
                 entity = limitedEntity(entity);
-                return "execute store result entity " + entity + " " + nbt_map[value] + " " + nbt_map_type[value] + " " + scale.ToString() + " run ";
+
+                if (nbt_map.ContainsKey(value))
+                    return "execute store result entity " + entity + " " + nbt_map[value] + " " + nbt_map_type[value] + " " + scale.ToString() + " run ";
+                else
+                    return setEntityVar(entity, value);
             }
             else
-                return "execute store result entity @e[tag=" + entity + ", limit=1] " + nbt_map[value] + " " + nbt_map_type[value] + " " + scale.ToString() + " run ";
+            {
+                if (nbt_map.ContainsKey(value))
+                    return "execute store result entity @e[tag=" + entity + ", limit=1] " + nbt_map[value] + " " + nbt_map_type[value] + " " + scale.ToString() + " run ";
+                else
+                    return setEntityVar(entity, value);
+            }
         }
-
+        private static string setEntityVar(string entity, string value)
+        {
+            if (Compiler.context.GetVariable(value, true) != null)
+            {
+                var var = Compiler.GetVariable(Compiler.context.GetVariable(value));
+                if (var.entity)
+                    return "execute store result score " + var.scoreboard().Replace("@s", entity) + " run ";
+                else
+                    throw new Exception(entity + " isn't an entity variable");
+            }
+            else
+            {
+                throw new Exception("Unknown " + value);
+            }
+        }
+        private static string getEntityVar(string entity, string value)
+        {
+            if (Compiler.context.GetVariable(value, true) != null)
+            {
+                var var = Compiler.GetVariable(Compiler.context.GetVariable(value));
+                if (var.entity)
+                    return "scoreboard players get " + var.scoreboard().Replace("@s", entity);
+                else
+                    throw new Exception(entity + " isn't an entity variable");
+            }
+            else
+            {
+                throw new Exception("Unknown " + value);
+            }
+        }
         public static string limitedEntity(string entity)
         {
             if (!entity.Contains("limit=1") && !entity.Contains("@s") && !entity.Contains("@p") && !entity.Contains("@r"))

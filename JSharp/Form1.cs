@@ -331,10 +331,9 @@ namespace JSharp
             }
             if (Directory.Exists(dir))
             {
-                foreach (var file in Directory.GetFiles(dir))
+                foreach (var file in Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories))
                 {
-                    string fname = Path.GetFileName(file);
-                    fname = fname.Substring(0, fname.Length - Path.GetExtension(file).Length);
+                    string fname = file.Substring(dir.Length,file.Length - dir.Length - Path.GetExtension(file).Length);
 
                     if (!code.ContainsKey(fname.ToLower()))
                     {

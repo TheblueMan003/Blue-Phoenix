@@ -38,7 +38,7 @@ namespace JSharp
         private static Stack<int> condIDStack;
         private static List<File> files;
         private static List<int> constants;
-        private static Context context;
+        public static Context context;
         private static File loadFile;
         private static File mainFile;
         private static int condID;
@@ -1256,12 +1256,12 @@ namespace JSharp
                 {
                     if (val.Contains("@"))
                     {
-                        if (NBT_Data.map(variable.gameName) != NBT_Data.getField(val))
+                        if (!NBT_Data.isSameAs(variable.name+"."+variable.gameName, val))
                             output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + NBT_Data.parseGet(val, 1) + '\n';
                     }
                     else if (context.isEntity(val))
                     {
-                        if (NBT_Data.map(variable.gameName) != NBT_Data.getField(val))
+                        if (!NBT_Data.isSameAs(variable.name + "." + variable.gameName, val))
                             output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + NBT_Data.parseGet(context.ConvertEntity(val), 1) + '\n';
                     }
                     else if (int.TryParse(val, out tmpI))
