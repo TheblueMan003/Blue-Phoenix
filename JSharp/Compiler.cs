@@ -333,17 +333,17 @@ namespace JSharp
             Formatter.loadDict();
         }
 
-        public static void preparseLine(string line2, File limit = null)
+        public static void preparseLine(string line2, File limit = null, bool lazyEval = false)
         {
             string line = line2;
             while (line.StartsWith(" ") || line.StartsWith("\t"))
                 line = line.Substring(1, line.Length - 1);
             if (line != "")
             {
-                if (isInStructMethod)
+                if (isInStructMethod && !lazyEval)
                     structMethodFile.addParsedLine(line);
 
-                if (inGenericStruct)
+                if (inGenericStruct && !lazyEval)
                     structStack.Peek().genericFile.addParsedLine(line);
 
                 if (line.Contains("\\compiler\\//start"))
@@ -3805,6 +3805,7 @@ namespace JSharp
                     File tFile = context.currentFile();
 
                     i = 0;
+                    autoIndented = 0;
                     foreach (string line in funObj.file.parsed)
                     {
                         string modLine = line;
@@ -3821,8 +3822,9 @@ namespace JSharp
                                 match = reg.Match(modLine);
                             }
                         }
-                        //preparseLine(modLine, tFile);
+                        preparseLine(modLine, tFile, true);
                         
+                        /*
                         if (modLine.Contains("\\compiler\\//start"))
                         {
                             isInLazyCompile += 1;
@@ -3870,7 +3872,7 @@ namespace JSharp
 
                         while (modLine.StartsWith(" ")|| modLine.StartsWith("    "))
                             modLine = modLine.Substring(1, modLine.Length - 1);
-                        
+                        */
                         i++;
                     }
 
