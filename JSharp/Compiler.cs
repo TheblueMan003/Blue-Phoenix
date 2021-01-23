@@ -741,6 +741,7 @@ namespace JSharp
             {
                 text = text.Insert(ifsIndex[j], "s");
             }
+ 
             return text;
         }
 
@@ -2788,6 +2789,10 @@ namespace JSharp
                 context.currentFile().AddLine(parseLine("int __elseif_" + wID2.ToString() + " = 0"));
                 LastConds.Push(wID2);
             }
+            else if (mult == 0)
+            {
+                LastConds.Push(-1);
+            }
 
             context.currentFile().AddLine(loop + cmd);
             context.currentFile().cantMergeWith = true;
@@ -2820,7 +2825,6 @@ namespace JSharp
             if (LastCond < 0)
                 throw new Exception("No if statement to apply else");
 
-            LastConds.Push(-1);
             string ret = instIf("__elseif_" + LastCond.ToString() + " == 0", fText);
             LastCond = -1;
             return ret;
@@ -3747,7 +3751,7 @@ namespace JSharp
                         {
                             if (a.name.StartsWith("$"))
                             {
-                                if (a.type == Type.INT)
+                                if (a.type == Type.INT || a.type == Type.FUNCTION || a.type == Type.FLOAT)
                                 {
                                     if (context.GetVariable(smartEmpty(args[i]),true) != null){
                                         compVal.Add(new string[] { a.name + ".scoreboard", GetVariable(context.GetVariable(smartEmpty(args[i]))).scoreboard() });
