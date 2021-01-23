@@ -23,13 +23,16 @@ float variable2 = 1.0
  FLOAT variable2 = dummy
  ```
 ## Conditions
- ```if (variable1 && variable2 == 0){
+ ```
+ if (variable1 && variable2 == 0){
   variable1 ++
- }```
+ }
+ ```
  ### Block && Blocks
-  ```if (block(~ ~ ~ stone)){
+  ```
+ if (block(~ ~ ~ stone)){
   variable1 ++
- }```
-  ```if (blocks(0 0 0 1 1 1 ~ ~ ~)){
+ }
+ if (blocks(0 0 0 1 1 1 ~ ~ ~)){
   variable1 ++
  }```
