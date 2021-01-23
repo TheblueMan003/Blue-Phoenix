@@ -69,7 +69,7 @@
             this.button6 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
-            this.CodeBox = new JSharp.ColorTextBox();
+            this.CodeBox = new System.Windows.Forms.RichTextBox();
             this.button9 = new System.Windows.Forms.Button();
             this.button10 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
@@ -598,7 +598,7 @@
         private System.Windows.Forms.ToolStripMenuItem findAndReplaceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem undoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem redoToolStripMenuItem;
-        private ColorTextBox CodeBox;
+        private System.Windows.Forms.RichTextBox CodeBox;
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.Button button10;
     }

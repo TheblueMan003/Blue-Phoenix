@@ -48,7 +48,7 @@ namespace JSharp
             colorCodings.Add(new ColorCoding(Color.FromArgb(0, 128, 14), wordRegex));
         }
 
-        public static void reformat(ColorTextBox CodeBox, Form f, bool partial)
+        public static void reformat(RichTextBox CodeBox, Form f, bool partial)
         {
             if (!reformating)
             {

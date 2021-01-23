@@ -93,7 +93,7 @@ namespace JSharp
             }
         }
 
-        public static void reformat(ColorTextBox CodeBox,Form f, bool partial)
+        public static void reformat(RichTextBox CodeBox,Form f, bool partial)
         {
             if (!reformating)
             {

@@ -1256,11 +1256,13 @@ namespace JSharp
                 {
                     if (val.Contains("@"))
                     {
-                        output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + NBT_Data.parseGet(val, 1) + '\n';
+                        if (NBT_Data.map(variable.gameName) != NBT_Data.getField(val))
+                            output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + NBT_Data.parseGet(val, 1) + '\n';
                     }
                     else if (context.isEntity(val))
                     {
-                        output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + NBT_Data.parseGet(context.ConvertEntity(val), 1) + '\n';
+                        if (NBT_Data.map(variable.gameName) != NBT_Data.getField(val))
+                            output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + NBT_Data.parseGet(context.ConvertEntity(val), 1) + '\n';
                     }
                     else if (int.TryParse(val, out tmpI))
                     {
@@ -1284,7 +1286,7 @@ namespace JSharp
 
                         output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get c." + tmpI.ToString() + " tbms.const" + '\n';
                     }
-                    else
+                    else if (context.GetVariableName(val, true) != null)
                     {
                         string val2 = context.GetVariableName(val);
                         Variable val2Obj = GetVariable(context.GetVariable(val));
@@ -1293,6 +1295,10 @@ namespace JSharp
                             output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + val2 + '\n';
                         else
                             output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + "scoreboard players get " + val2 + '\n';
+                    }
+                    else
+                    {
+                        throw new Exception("Unsupported operation!");
                     }
                 }
                 else
@@ -1313,7 +1319,6 @@ namespace JSharp
                     }
                     else if (int.TryParse(val, out tmpI))
                     {
-                        tmpI *= 1000;
                         if (!constants.Contains(tmpI))
                         {
                             loadFile.AddStartLine("scoreboard players set c." + tmpI.ToString() + " tbms.const " + tmpI.ToString() + '\n');
@@ -1322,6 +1327,7 @@ namespace JSharp
 
                         output += "execute store result score bin.0 tbms.tmp run " + NBT_Data.parseGet(variable.name, variable.gameName, 1000) + '\n';
                         output += "scoreboard players operation bin.0 tbms.tmp " + op + " c." + tmpI.ToString() + " tbms.const" + '\n';
+
                         output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get bin.0 tbms.tmp" + '\n';
                     }
                     else if (float.TryParse(val, out tmpF))
@@ -1335,6 +1341,24 @@ namespace JSharp
 
                         output += "execute store result score bin.0 tbms.tmp run " + NBT_Data.parseGet(variable.name, variable.gameName, 1000) + '\n';
                         output += "scoreboard players operation bin.0 tbms.tmp " + op + " c." + tmpI.ToString() + " tbms.const" + '\n';
+                        if (op == "*=")
+                        {
+                            if (!constants.Contains(1000))
+                            {
+                                loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
+                                constants.Add(1000);
+                            }
+                            output += "scoreboard players operation bin.0 tbms.tmp /= c.1000 tbms.const" + '\n';
+                        }
+                        if (op == "/=")
+                        {
+                            if (!constants.Contains(1000))
+                            {
+                                loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
+                                constants.Add(1000);
+                            }
+                            output += "scoreboard players operation bin.0 tbms.tmp *= c.1000 tbms.const" + '\n';
+                        }
                         output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get bin.0 tbms.tmp" + '\n';
                     }
                     else
@@ -1346,7 +1370,27 @@ namespace JSharp
                         output += "scoreboard players operation bin.0 tbms.tmp " + op + " " + val2 + '\n';
 
                         if (val2Obj.type == Type.FLOAT)
+                        {
+                            if (op == "*=")
+                            {
+                                if (!constants.Contains(1000))
+                                {
+                                    loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
+                                    constants.Add(1000);
+                                }
+                                output += "scoreboard players operation bin.0 tbms.tmp /= c.1000 tbms.const" + '\n';
+                            }
+                            if (op == "/=")
+                            {
+                                if (!constants.Contains(1000))
+                                {
+                                    loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
+                                    constants.Add(1000);
+                                }
+                                output += "scoreboard players operation bin.0 tbms.tmp *= c.1000 tbms.const" + '\n';
+                            }
                             output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get bin.0 tbms.tmp" + '\n';
+                        }
                         else
                             output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + "scoreboard players get bin.0 tbms.tmp" + '\n';
                     }

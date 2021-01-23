@@ -31,14 +31,23 @@ namespace JSharp
             }
         }
 
+        public static string getField(string text)
+        {
+            return map(text.Substring(text.LastIndexOf('.') + 1, text.Length - text.LastIndexOf('.') - 1));
+        }
+        public static string map(string text)
+        {
+            loadDict();
+            return nbt_map[text];
+        }
         public static string parseGet(string text, float scale)
         {
             loadDict();
             string[] field = new string[2];
             field[0] = text.Substring(0, text.LastIndexOf('.'));
-            field[1] = text.Substring(text.LastIndexOf('.')+1, text.Length- text.LastIndexOf('.')-1);
+            field[1] = getField(text);
             
-            return "data get entity " + Compiler.smartEmpty(field[0]) + " " + nbt_map[field[1]]+" "+scale.ToString();
+            return "data get entity " + limitedEntity(Compiler.smartEmpty(field[0])) + " " + field[1]+" "+scale.ToString();
         }
 
         public static string parseGet(string entity, string value, float scale)
@@ -48,7 +57,7 @@ namespace JSharp
             field[0] = limitedEntity(entity);
             field[1] = value;
             
-            return "data get entity " + Compiler.smartEmpty(field[0]) + " " + nbt_map[field[1]] + " " + scale.ToString();
+            return "data get entity " + limitedEntity(Compiler.smartEmpty(field[0])) + " " + nbt_map[field[1]] + " " + scale.ToString();
         }
 
         public static string parseSet(string entity, string value, float scale)
@@ -65,7 +74,7 @@ namespace JSharp
 
         public static string limitedEntity(string entity)
         {
-            if (!entity.Contains("limit=1") && !entity.Contains("@s"))
+            if (!entity.Contains("limit=1") && !entity.Contains("@s") && !entity.Contains("@p") && !entity.Contains("@r"))
                 if (entity.Contains("]"))
                     entity = entity.Substring(0, entity.LastIndexOf("]")) + ",limit=1]";
                 else
