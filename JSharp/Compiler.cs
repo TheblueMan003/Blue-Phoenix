@@ -5370,14 +5370,19 @@ namespace JSharp
                     if (LastConds.Count > 0)
                         LastCond = LastConds.Pop();
                 }
-                if (((type == "if" || (type == "with" && !cantMergeWith) || type == "at" || type == "case") && lineCount == 1 && !content.StartsWith("#"))
-                    || type == "switch")
+                if ((type == "if" || (type == "with" && !cantMergeWith) || type == "at" || type == "case") && lineCount == 1 && !content.StartsWith("#"))
                 {
                     File f = context.currentFile();
                     string tmp = f.content.Substring(0, f.content.LastIndexOf(' '));
                     tmp = tmp.Substring(0, tmp.LastIndexOf(' '));
                     tmp += " "+content;
                     f.content = tmp;
+                    files.Remove(this);
+                }
+                if (type == "switch")
+                {
+                    File f = context.currentFile();
+                    f.AddLine(content);
                     files.Remove(this);
                 }
                 if (type == "withContext")
