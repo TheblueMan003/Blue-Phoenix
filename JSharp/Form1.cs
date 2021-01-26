@@ -404,7 +404,7 @@ namespace JSharp
                 newP = true;
 
                 code.Clear();
-                code.Add("import", "\n");
+                code.Add("import", "import standard.java\nimport standard.entity_id\n");
                 code.Add("load", "package main\n");
                 code.Add("main", "package main\n");
 

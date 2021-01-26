@@ -49,11 +49,11 @@ namespace JSharp
             {
                 if (selector != "")
                 {
-                    return selector + " " + offuscate(var1.gameName);
+                    return var1.scoreboard().Replace("@s", selector);
                 }
                 else
                 {
-                    return "@s " + offuscate(var1.gameName);
+                    return var1.scoreboard();
                 }
             }
             else
@@ -64,7 +64,7 @@ namespace JSharp
                 }
                 else
                 {
-                    return offuscate(var1.gameName) + (var1.isConst ? " tbms.const" : " tbms.value");
+                    return var1.scoreboard();
                 }
             }
         }
@@ -73,7 +73,7 @@ namespace JSharp
         {
             if (var.entity)
             {
-                return "scoreboard objective add " + offuscate(var.gameName) + " " + var.def;
+                return "scoreboard objectives add " + var.scoreboard().Replace("@s ","") + " " + var.def;
             }
             else
                 return "";
@@ -81,14 +81,28 @@ namespace JSharp
 
         public override string VariableOperation(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
         {
-            return "scoreboard players operation " + GetSelector(var1, selector1) + " "+op+" " + GetSelector(var2, selector2);
+            return "scoreboard players operation " + GetSelector(var1, selector1) + " "+op+" " + GetSelector(var2, selector2)+"\n";
         }
-
-        public override string VariableSetImmediate(Compiler.Variable var, string value, string selector = "")
+        public override string VariableOperation(Compiler.Variable var, int value, string op, string selector = "")
         {
-            return "scoreboard players set "+ GetSelector(var, selector)+ " " + value;
+            if (op == "=")
+                return "scoreboard players set "+ GetSelector(var, selector)+ " " + value.ToString()+"\n";
+            if (op == "+=")
+                return "scoreboard players add " + GetSelector(var, selector) + " " + value.ToString() + "\n";
+            if (op == "-=")
+                return "scoreboard players remove " + GetSelector(var, selector) + " " + value.ToString() + "\n";
+            if (op == "*=")
+                return "scoreboard players operation " + GetSelector(var, selector) + " *= " + GetSelector(Compiler.GetConstant(value), "") + "\n";
+            if (op == "/=")
+                return "scoreboard players operation " + GetSelector(var, selector) + " /= " + GetSelector(Compiler.GetConstant(value), "") + "\n";
+            if (op == "%=")
+                return "scoreboard players operation " + GetSelector(var, selector) + " %= " + GetSelector(Compiler.GetConstant(value), "") + "\n";
+            throw new Exception("Unsupported Operator: " + op);
         }
-
+        public override string VariableCompare(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
+        {
+            return "score " + GetSelector(var1, selector2) + " " + op + " " + GetSelector(var2, selector2)+" ";
+        }
         public override string VariableSetNull(Compiler.Variable var, string selector = "")
         {
             return "scoreboard players reset " + GetSelector(var, selector);

@@ -10,7 +10,8 @@ namespace JSharp
     {
         public abstract string DefineVariable(Compiler.Variable var);
         public abstract string VariableOperation(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "");
-        public abstract string VariableSetImmediate(Compiler.Variable var, string value, string selector = "");
+        public abstract string VariableOperation(Compiler.Variable var, int value, string op, string selector = "");
+        public abstract string VariableCompare(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "");
         public abstract string VariableSetNull(Compiler.Variable var, string selector = "");
 
         public abstract string DefineFunction(string name);

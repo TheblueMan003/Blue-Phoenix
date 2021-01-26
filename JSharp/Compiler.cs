@@ -1,5 +1,4 @@
-﻿using AutocompleteMenuNS;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -14,6 +13,7 @@ namespace JSharp
     public class Compiler
     {
         public static Dictionary<string, List<Function>> functions;
+        public static HashSet<Function> abstractFunctionsNeeded;
         public static Dictionary<string, Variable> variables;
         public static Dictionary<string, List<string>> enums;
         public static Dictionary<string, Structure> structs;
@@ -37,7 +37,7 @@ namespace JSharp
         private static Stack<Structure> structStack;
         private static Stack<int> condIDStack;
         private static List<File> files;
-        private static List<int> constants;
+        private static Dictionary<int, Variable> constants;
         public static Context context;
         private static File loadFile;
         private static File mainFile;
@@ -50,7 +50,7 @@ namespace JSharp
         private static bool isInStructMethod;
         private static bool isInStaticMethod;
         private static bool forcedUnsed = false;
-        private static bool isInlazyFunc = false;
+
         private static Stack<string> lazyCall = new Stack<string>();
         private static Stack<List<Variable>> lazyOutput;
         private static File structMethodFile;
@@ -72,10 +72,10 @@ namespace JSharp
         private static Stack<int> LastConds;
         private static int LastCond;
         private static string projectFolder;
-        public static Dictionary<string, AutocompleteItem[]> enviroments;
         private static long[] pow64 = new long[11];
         private static string dirVar;
         private static bool OffuscateNeed;
+        private static CompilerCore Core;
 
         #region Regexs
         private static Regex funcReg = new Regex(@"^(@?\w+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])*\s+)+\w+\s*\(.*\)");
@@ -115,6 +115,7 @@ namespace JSharp
 
         public static List<File> compile(string project, List<File> codes, Debug debug, bool offuscated, ProjectVersion version, string pctFolder)
         {
+            Core = new CompilerCoreJava(offuscated, project);
             for (int i = 0; i < 11; i++)
             {
                 pow64[i] = IntPow(alphabet.Length, i);
@@ -133,13 +134,12 @@ namespace JSharp
 
             try
             {
-                enviroments = new Dictionary<string, AutocompleteItem[]>();
                 functions = new Dictionary<string, List<Function>>();
                 variables = new Dictionary<string, Variable>();
                 enums = new Dictionary<string, List<string>>();
                 structs = new Dictionary<string, Structure>();
                 switches = new Stack<Variable>();
-                constants = new List<int>();
+                constants = new Dictionary<int, Variable>();
                 structMap = new Dictionary<string, string>();
                 functDelegated = new Dictionary<string, List<Function>>();
                 functDelegatedFile = new Dictionary<string, File>();
@@ -155,7 +155,6 @@ namespace JSharp
 
                 isInStructMethod = false;
                 isInStaticMethod = false;
-                isInlazyFunc = false;
                 forcedUnsed = false;
                 structMethodFile = null;
                 loadFile = new File("load", "");
@@ -202,54 +201,7 @@ namespace JSharp
                 throw new Exception("Error in " + currentFile + " on line " + currentLine.ToString() + ": " + e.ToString());
             }
         }
-        public static void getEnvironment(string file)
-        {
-            string realName(string t)
-            {
-                t = t.Replace(context.GetVar(), "");
-
-                if (t.StartsWith(Project.ToLower() + "."))
-                    t = t.Substring(0, t.IndexOf(".")+1);
-
-                return t;
-            }
-
-            List<AutocompleteItem> env = new List<AutocompleteItem>();
-            if (variables != null)
-            {
-                foreach(string s in variables.Keys)
-                {
-                    env.Add(new AutocompleteItem(realName(s)));
-                }
-                foreach (string s in functions.Keys)
-                {
-                    env.Add(new AutocompleteItem(realName(s) + "()"));
-                }
-                foreach (string s in enums.Keys)
-                {
-                    env.Add(new AutocompleteItem(realName(s)));
-                }
-                foreach (List<string> s1 in enums.Values)
-                {
-                    foreach (string s in s1)
-                    {
-                        env.Add(new AutocompleteItem(realName(s)));
-                    }
-                }
-                foreach (string s in structs.Keys)
-                {
-                    env.Add(new AutocompleteItem(realName(s)));
-                }
-            }
-
-            env.Sort((x, y) => x.Text.Length - y.Text.Length);
-            env.RemoveAll((x) => x.Text.Contains("__") || x.Text.Contains("w_") || x.Text.Contains("i_"));
-
-            if (enviroments.ContainsKey(file))
-                enviroments[file] = env.ToArray();
-            else
-                enviroments.Add(file, env.ToArray());
-        }
+        
         private static void compileFile(File f, bool notUsed = false, bool import = false)
         {
             structStack = new Stack<Structure>();
@@ -826,6 +778,28 @@ namespace JSharp
             }
             throw new Exception(key + " not in dic.");
         }
+        public static Variable GetVariableByName(string name)
+        {
+            string key = context.GetVariable(name);
+            if (variables.ContainsKey(key))
+            {
+                return variables[key];
+            }
+            throw new Exception(key + " not in dic.");
+        }
+        public static Variable GetConstant(int value)
+        {
+            if (!constants.ContainsKey(value))
+            {
+                string name = "c." + value.ToString();
+                Variable var = new Variable(name, name,Type.INT,false);
+                var.isConst = true;
+                variables.Add(name, var);
+                loadFile.AddStartLine("scoreboard players set "+ var.scoreboard() + " tbms.const "+value.ToString() + '\n');
+                constants.Add(value, var);
+            }
+            return constants[value];
+        }
         public static Function GetFunction(string funcName, string[] args)
         {
             Function funObj = null;
@@ -1004,7 +978,7 @@ namespace JSharp
             {
                 return eval(getLazyVal(val), variable, ca, op);
             }
-
+            
             if (context.IsFunction(val.Replace(" ", "")) && !val.Contains("(") && context.GetVariable(val, true) == null
                 && ca != Type.FUNCTION && !(ca == Type.ENUM && enums[variable.enums].Contains(val.ToLower())))
             {
@@ -1018,12 +992,12 @@ namespace JSharp
             if (nullReg.Matches(val).Count > 0)
             {
                 if (ca != Type.STRUCT)
-                    output = "scoreboard players reset " + variable.scoreboard()+"\n";
+                    return Core.VariableSetNull(variable);
                 else
                 {
                     foreach (Variable struV in structs[variable.enums].fields)
                     {
-                        output += parseLine(desugar(variable.gameName + "." + struV.name + "= null" ));
+                        output += parseLine(desugar(variable.gameName + "." + struV.name + "= null"));
                     }
                 }
             }
@@ -1045,6 +1019,10 @@ namespace JSharp
                 || smartContains(val, '/')) && ca != Type.FUNCTION && ca != Type.BOOL && ca != Type.STRING)
             {
                 return splitEval(val, variable, ca, op);
+            }
+            else if (val.Contains("(") && context.IsFunction(val.Substring(0, val.IndexOf('('))))
+            {
+                return functionEval(val, new string[] { variable.gameName }, op);
             }
             else if (ca == Type.ARRAY)
             {
@@ -1106,10 +1084,6 @@ namespace JSharp
                 if (val.Contains("=>"))
                 {
                     return instLamba(val, variable);
-                }
-                else if (val.Contains("(") && context.IsFunction(val.Substring(0, val.IndexOf('('))))
-                {
-                    return functionEval(val, new string[] { variable.gameName }, op);
                 }
                 else if (context.GetVariable(val, true) == null)
                 {
@@ -1220,10 +1194,6 @@ namespace JSharp
                 {
                     output += parseLine(variable.gameName + ".__init__" + val.Substring(val.IndexOf('('), val.LastIndexOf(')') - val.IndexOf('(') + 1));
                 }
-                else if (val.Contains("(") && context.IsFunction(val.Substring(0, val.IndexOf('('))))
-                {
-                    return functionEval(val, new string[] { variable.gameName }, op);
-                }
                 else
                 {
                     Structure stru2 = structs[GetVariable(context.GetVariable(val)).enums];
@@ -1255,6 +1225,22 @@ namespace JSharp
                     {
                         output += parseLine(variable.name + ".__div__(" + val + ")");
                     }
+                    else if (op == "&=")
+                    {
+                        output += parseLine(variable.name + ".__and__(" + val + ")");
+                    }
+                    else if (op == "|=")
+                    {
+                        output += parseLine(variable.name + ".__or__(" + val + ")");
+                    }
+                    else if (op == "^=")
+                    {
+                        output += parseLine(variable.name + ".__xor__(" + val + ")");
+                    }
+                    else if (op == "%=")
+                    {
+                        output += parseLine(variable.name + ".__mod__(" + val + ")");
+                    }
                 }
             }
             else if (ca == Type.ENTITY_COMPONENT)
@@ -1273,25 +1259,20 @@ namespace JSharp
                     }
                     else if (int.TryParse(val, out tmpI))
                     {
-                        tmpI *= 1000;
-                        if (!constants.Contains(tmpI))
+                        if (NBT_Data.getType(variable.gameName) == "int")
                         {
-                            loadFile.AddStartLine("scoreboard players set c." + tmpI.ToString() + " tbms.const " + tmpI.ToString() + '\n');
-                            constants.Add(tmpI);
+                            output += NBT_Data.parseSet(variable.name, variable.gameName, 1f) + "scoreboard players get " + GetConstant(tmpI).scoreboard() + '\n';
                         }
-
-                        output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get c." + tmpI.ToString() + " tbms.const" + '\n';
+                        else
+                        {
+                            tmpI *= 1000;
+                            output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + GetConstant(tmpI) + '\n';
+                        }
                     }
                     else if (float.TryParse(val, out tmpF))
                     {
                         tmpI = (int)(tmpF * 1000);
-                        if (!constants.Contains(tmpI))
-                        {
-                            loadFile.AddStartLine("scoreboard players set c." + tmpI.ToString() + " tbms.const " + tmpI.ToString() + '\n');
-                            constants.Add(tmpI);
-                        }
-
-                        output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get c." + tmpI.ToString() + " tbms.const" + '\n';
+                        output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + GetConstant(tmpI) + '\n';
                     }
                     else if (context.GetVariableName(val, true) != null)
                     {
@@ -1303,104 +1284,11 @@ namespace JSharp
                         else
                             output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + "scoreboard players get " + val2 + '\n';
                     }
-                    else
-                    {
-                        throw new Exception("Unsupported operation!");
-                    }
                 }
                 else
                 {
-                    if (val.Contains("@"))
-                    {
-                        output += "execute store result score bin.0 tbms.tmp run " + NBT_Data.parseGet(val, 1) + '\n';
-                        output += "execute store result score bin.1 tbms.tmp run " + NBT_Data.parseGet(variable.name, variable.gameName, 1) + '\n';
-                        output += "scoreboard players operation bin.1 tbms.tmp " + op + " bin.0 tbms.tmp" + '\n';
-                        output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + "scoreboard players get bin.1 tbms.tmp" + '\n';
-                    }
-                    else if (context.isEntity(val))
-                    {
-                        output += "execute store result score bin.0 tbms.tmp run " + NBT_Data.parseGet(context.ConvertEntity(val), 1) + '\n';
-                        output += "execute store result score bin.1 tbms.tmp run " + NBT_Data.parseGet(variable.name, variable.gameName, 1) + '\n';
-                        output += "scoreboard players operation bin.1 tbms.tmp " + op + " bin.0 tbms.tmp" + '\n';
-                        output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + "scoreboard players get bin.1 tbms.tmp" + '\n';
-                    }
-                    else if (int.TryParse(val, out tmpI))
-                    {
-                        if (!constants.Contains(tmpI))
-                        {
-                            loadFile.AddStartLine("scoreboard players set c." + tmpI.ToString() + " tbms.const " + tmpI.ToString() + '\n');
-                            constants.Add(tmpI);
-                        }
-
-                        output += "execute store result score bin.0 tbms.tmp run " + NBT_Data.parseGet(variable.name, variable.gameName, 1000) + '\n';
-                        output += "scoreboard players operation bin.0 tbms.tmp " + op + " c." + tmpI.ToString() + " tbms.const" + '\n';
-
-                        output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get bin.0 tbms.tmp" + '\n';
-                    }
-                    else if (float.TryParse(val, out tmpF))
-                    {
-                        tmpI = (int)(tmpF * 1000);
-                        if (!constants.Contains(tmpI))
-                        {
-                            loadFile.AddStartLine("scoreboard players set c." + tmpI.ToString() + " tbms.const " + tmpI.ToString() + '\n');
-                            constants.Add(tmpI);
-                        }
-
-                        output += "execute store result score bin.0 tbms.tmp run " + NBT_Data.parseGet(variable.name, variable.gameName, 1000) + '\n';
-                        output += "scoreboard players operation bin.0 tbms.tmp " + op + " c." + tmpI.ToString() + " tbms.const" + '\n';
-                        if (op == "*=")
-                        {
-                            if (!constants.Contains(1000))
-                            {
-                                loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
-                                constants.Add(1000);
-                            }
-                            output += "scoreboard players operation bin.0 tbms.tmp /= c.1000 tbms.const" + '\n';
-                        }
-                        if (op == "/=")
-                        {
-                            if (!constants.Contains(1000))
-                            {
-                                loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
-                                constants.Add(1000);
-                            }
-                            output += "scoreboard players operation bin.0 tbms.tmp *= c.1000 tbms.const" + '\n';
-                        }
-                        output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get bin.0 tbms.tmp" + '\n';
-                    }
-                    else
-                    {
-                        string val2 = context.GetVariableName(val);
-                        Variable val2Obj = GetVariable(context.GetVariable(val));
-
-                        output += "execute store result score bin.0 tbms.tmp run " + NBT_Data.parseGet(variable.name, variable.gameName, 1) + '\n';
-                        output += "scoreboard players operation bin.0 tbms.tmp " + op + " " + val2 + '\n';
-
-                        if (val2Obj.type == Type.FLOAT)
-                        {
-                            if (op == "*=")
-                            {
-                                if (!constants.Contains(1000))
-                                {
-                                    loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
-                                    constants.Add(1000);
-                                }
-                                output += "scoreboard players operation bin.0 tbms.tmp /= c.1000 tbms.const" + '\n';
-                            }
-                            if (op == "/=")
-                            {
-                                if (!constants.Contains(1000))
-                                {
-                                    loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
-                                    constants.Add(1000);
-                                }
-                                output += "scoreboard players operation bin.0 tbms.tmp *= c.1000 tbms.const" + '\n';
-                            }
-                            output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get bin.0 tbms.tmp" + '\n';
-                        }
-                        else
-                            output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + "scoreboard players get bin.0 tbms.tmp" + '\n';
-                    }
+                    output += parseLine(NBT_Data.getType(variable.gameName) +" tmp.0 = " + variable.name + "." + variable.gameName + op[0] + "(" + val + ")");
+                    output += eval("tmp.0", variable, ca, "=");
                 }
             }
             else if (ca == Type.INT || ca == Type.ENUM)
@@ -1408,7 +1296,9 @@ namespace JSharp
                 val = smartEmpty(val);
                 if (variable.enums != null && enums[variable.enums].Contains(val.ToLower()))
                 {
-                    return "scoreboard players set " + variable.scoreboard() + " " + enums[variable.enums].IndexOf(val.ToLower()).ToString() + '\n';
+                    if (op != "=")
+                        throw new Exception("Unsupported Operator: " + op);
+                    return Core.VariableOperation(variable, enums[variable.enums].IndexOf(val.ToLower()), "=");
                 }
                 else if (val.Contains("/"))
                 {
@@ -1422,33 +1312,29 @@ namespace JSharp
                 }
                 else if (val.Contains("@"))
                 {
-                    return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(val, 1) + '\n';
+                    if (op == "=")
+                        return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(val, 1) + '\n';
+                    else
+                    {
+                        output += parseLine("int tmp.0 = " + val);
+                        output += eval("tmp.0", variable, ca, op);
+                        return output;
+                    }
                 }
                 else if (context.isEntity(val))
                 {
-                    return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(context.ConvertEntity(val), 1) + '\n';
+                    if (op == "=")
+                        return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(context.ConvertEntity(val), 1) + '\n';
+                    else
+                    {
+                        output += parseLine("int tmp.0 = " + val);
+                        output += eval("tmp.0", variable, ca, op);
+                        return output;
+                    }
                 }
                 else if (int.TryParse(val, out tmpI))
                 {
-                    if (op == "=")
-                        output += "scoreboard players set " + variable.scoreboard() + " " + tmpI.ToString() + '\n';
-                    else if (op == "+=")
-                        output += "scoreboard players add " + variable.scoreboard() + " " + tmpI.ToString() + '\n';
-                    else if (op == "-=")
-                        output += "scoreboard players remove " + variable.scoreboard() + " " + tmpI.ToString() + '\n';
-                    else
-                    {
-                        if (!constants.Contains(tmpI))
-                        {
-                            loadFile.AddStartLine("scoreboard players set c." + tmpI.ToString() + " tbms.const " + tmpI.ToString() + '\n');
-                            constants.Add(tmpI);
-                        }
-                        output += "scoreboard players operation " + variable.scoreboard() + " " + op + " c." + tmpI.ToString() + " tbms.const" + '\n';
-                    }
-                }
-                else if (val.Contains("(") && context.IsFunction(val.Substring(0, val.IndexOf('('))))
-                {
-                    return functionEval(val, new string[] { variable.gameName }, op);
+                    return Core.VariableOperation(variable, tmpI, op);
                 }
                 else
                 {
@@ -1457,9 +1343,19 @@ namespace JSharp
                         if (op != "=" || smartEmpty(context.GetVariableName(val)) != smartEmpty(variable.scoreboard()))
                         {
                             if (op == "#=")
-                                output += "scoreboard players operation " + variable.scoreboard() + " " + op + " " + context.GetVariableName(val) + "" + '\n';
+                                return Core.VariableOperation(variable, GetVariableByName(val), "=");
                             else
-                                output += "scoreboard players operation " + variable.scoreboard() + " " + op + " " + context.GetVariableName(val) + "" + '\n';
+                            {
+                                var val2 = GetVariableByName(val);
+                                if (val2.type != Type.FLOAT)
+                                    return Core.VariableOperation(variable, GetVariableByName(val), op);
+                                else
+                                {
+                                    output += parseLine("float tmp.0 = " + val+"/1000");
+                                    output += Core.VariableOperation(variable, GetVariableByName("tmp.0"), op);
+                                    return output;
+                                }
+                            }
                         }
                     }
                     catch (Exception e)
@@ -1472,95 +1368,52 @@ namespace JSharp
             {
                 if (val.Contains("@"))
                 {
-                    return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(val, 1000) + '\n';
+                    if (op == "=")
+                        return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(val, 1000) + '\n';
+                    else
+                    {
+                        output += parseLine("float tmp.0 = " + val);
+                        output += eval("tmp.0", variable, ca, op);
+                        return output;
+                    }
                 }
                 else if (context.isEntity(val))
                 {
-                    return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(context.ConvertEntity(val), 1000) + '\n';
+                    if (op == "=")
+                        return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(context.ConvertEntity(val), 1000) + '\n';
+                    else
+                    {
+                        output += parseLine("float tmp.0 = " + val);
+                        output += eval("tmp.0", variable, ca, op);
+                        return output;
+                    }
                 }
                 else if (int.TryParse(val, out tmpI))
                 {
-                    if (op == "=")
-                    {
-                        val = (tmpI * 1000).ToString();
-                        output += "scoreboard players set " + variable.scoreboard() + " " + val + '\n';
-                    }
-                    else if (op == "+=")
-                    {
-                        val = (tmpI * 1000).ToString();
-                        output += "scoreboard players add " + variable.scoreboard() + " " + val + '\n';
-                    }
-                    else if (op == "-=")
-                    {
-                        val = (tmpI * 1000).ToString();
-                        output += "scoreboard players remove " + variable.scoreboard() + " " + val + '\n';
-                    }
-                    else
-                    {
-                        if (!constants.Contains(tmpI))
-                        {
-                            loadFile.AddStartLine("scoreboard players set c." + tmpI.ToString() + " tbms.const " + tmpI.ToString() + '\n');
-                            constants.Add(tmpI);
-                        }
-                        output += "scoreboard players operation " + variable.scoreboard() + " " + op + " c." + tmpI.ToString() + " tbms.const" + '\n';
-                    }
+                    int val2 = (tmpI * 1000);
+                    return Core.VariableOperation(variable, val2, op);
                 }
                 else if (float.TryParse(val, out tmpF))
                 {
                     int iVal = ((int)(tmpF * 1000));
                     val = iVal.ToString();
 
-                    if (op == "=")
-                        output += "scoreboard players set " + variable.scoreboard() + " " + val + '\n';
-                    else if (op == "+=")
-                        output += "scoreboard players add " + variable.scoreboard() + " " + val + '\n';
-                    else if (op == "-=")
-                        output += "scoreboard players remove " + variable.scoreboard() + " " + val + '\n';
+                    if (op == "=" || op == "+=" || op == "-=")
+                        return Core.VariableOperation(variable, iVal, op);
                     else if (op == "*=")
                     {
-                        if (!constants.Contains(iVal))
-                        {
-                            loadFile.AddStartLine("scoreboard players set c." + val + " tbms.const " + val + '\n');
-                            constants.Add(iVal);
-                        }
-                        output += "scoreboard players operation " + variable.scoreboard() + " " + op + " c." + val + " tbms.const" + '\n';
-
-                        if (!constants.Contains(1000))
-                        {
-                            loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
-                            constants.Add(1000);
-                        }
-                        output += "scoreboard players operation " + variable.scoreboard() + " /= c.1000 tbms.const" + '\n';
+                        output += Core.VariableOperation(variable, iVal, op);
+                        return output + Core.VariableOperation(variable, 1000, "/=");
                     }
                     else if (op == "/=")
                     {
-                        if (!constants.Contains(iVal))
-                        {
-                            loadFile.AddStartLine("scoreboard players set c." + val + " tbms.const " + val + '\n');
-                            constants.Add(iVal);
-                        }
-                        output += "scoreboard players operation " + variable.scoreboard() + " " + op + " c." + val + " tbms.const" + '\n';
-
-                        if (!constants.Contains(1000))
-                        {
-                            loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
-                            constants.Add(1000);
-                        }
-                        output += "scoreboard players operation " + variable.scoreboard() + " *= c.1000 tbms.const" + '\n';
+                        output += Core.VariableOperation(variable, iVal, op);
+                        return output + Core.VariableOperation(variable, 1000, "*=");
                     }
                     else
                     {
-                        if (!constants.Contains(iVal))
-                        {
-                            loadFile.AddStartLine("scoreboard players set c." + val + " tbms.const " + val + '\n');
-                            constants.Add(iVal);
-                        }
-                        output += "scoreboard players operation " + variable.scoreboard() + " " + op + " c." + val + " tbms.const" + '\n';
+                        return Core.VariableOperation(variable, iVal, op);
                     }
-                }
-                else if (val.Contains("(") && context.IsFunction(val.Substring(0, val.IndexOf('('))))
-                {
-                    return functionEval(val, new string[] { variable.gameName }, op);
                 }
                 else
                 {
@@ -1571,54 +1424,31 @@ namespace JSharp
                     {
                         if (var2.type == Type.INT && (op == "+=" || op == "-="))
                         {
-                            output += "scoreboard players operation cast.0 tbms.tmp" + " = " + context.GetVariableName(val) + "" + '\n';
-                            if (!constants.Contains(1000))
-                            {
-                                loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
-                                constants.Add(1000);
-                            }
-                            output += "scoreboard players operation cast.0 tbms.tmp *= c.1000 tbms.const" + '\n';
-                            output += "scoreboard players operation " + variable.scoreboard() + " " + op + " cast.0 tbms.tmp" + '\n';
+                            output += parseLine("int tmp.1 = 1000*" + val);
+                            return output + Core.VariableOperation(variable, GetVariableByName("tmp.1"), op);
                         }
                         else if (var2.type == Type.INT && op == "#=")
                         {
-                            output += "scoreboard players operation " + variable.scoreboard() + " = " + context.GetVariableName(val) + "" + '\n';
+                            return output + Core.VariableOperation(variable, GetVariableByName(val), "=");
                         }
                         else if (var2.type == Type.INT && op == "=")
                         {
-                            output += "scoreboard players operation " + variable.scoreboard() + " = " + context.GetVariableName(val) + "" + '\n';
-                            if (!constants.Contains(1000))
-                            {
-                                loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
-                                constants.Add(1000);
-                            }
-                            output += "scoreboard players operation " + variable.scoreboard() + " *= c.1000 tbms.const" + '\n';
+                            output += Core.VariableOperation(variable, GetVariableByName(val), op);
+                            return output + Core.VariableOperation(variable, 1000, "*=");
                         }
                         else if (var2.type == Type.FLOAT && op == "*=")
                         {
-                            output += "scoreboard players operation " + variable.scoreboard() + " " + op + " " + context.GetVariableName(val) + "" + '\n';
-
-                            if (!constants.Contains(1000))
-                            {
-                                loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
-                                constants.Add(1000);
-                            }
-                            output += "scoreboard players operation " + variable.scoreboard() + " /= c.1000 tbms.const" + '\n';
+                            output += Core.VariableOperation(variable, GetVariableByName(val), op);
+                            return output + Core.VariableOperation(variable, 1000, "/=");
                         }
                         else if (var2.type == Type.FLOAT && op == "/=")
                         {
-                            if (!constants.Contains(1000))
-                            {
-                                loadFile.AddStartLine("scoreboard players set c.1000 tbms.const 1000" + '\n');
-                                constants.Add(1000);
-                            }
-                            output += "scoreboard players operation " + variable.scoreboard() + " *= c.1000 tbms.const" + '\n';
-
-                            output += "scoreboard players operation " + variable.scoreboard() + " " + op + " " + context.GetVariableName(val) + "" + '\n';
+                            output += Core.VariableOperation(variable, 1000, "*=");
+                            return output + Core.VariableOperation(variable, GetVariableByName(val), op);
                         }
                         else
                         {
-                            output += "scoreboard players operation " + variable.scoreboard() + " " + op + " " + context.GetVariableName(val) + "" + '\n';
+                            return Core.VariableOperation(variable, GetVariableByName(val), op);
                         }
                     }
                 }
@@ -1630,70 +1460,65 @@ namespace JSharp
                 {
                     if (context.GetVariable(val, true) != null)
                     {
-                        output += "scoreboard players operation " + variable.scoreboard() + " *= " + context.GetVariableName(val) + '\n';
+                        return Core.VariableOperation(variable, GetVariableByName(val), "*=");
                     }
                     else
                     {
-                        string[] cond = getCond(val);
-                        output += cond[1];
-                        output += "execute unless " + cond[0] + "run scoreboard players set " + variable.scoreboard() + " 0\n";
+                        string cond = getCondition("!"+val);
+                        return cond + Core.VariableOperation(variable, 0, "=");
                     }
                 }
                 else if (op == "|=" || op == "+=")
                 {
                     if (context.GetVariable(val, true) != null)
                     {
-                        output += "scoreboard players operation " + variable.scoreboard() + " += " + context.GetVariableName(val) + '\n';
-                        output += "execute if score " + variable.scoreboard() + " matches 2 run scoreboard players set " + variable.scoreboard() + " 1" + '\n';
+                        output += Core.VariableOperation(variable, GetVariableByName(val), "+=");
+                        string cond = getCondition(val +">= 2");
+                        return output+cond + Core.VariableOperation(variable,1, "=");
                     }
                     else
                     {
-                        string[] cond = getCond(val);
-                        output += cond[1];
-                        output += "execute if " + cond[0] + "run scoreboard players set " + variable.scoreboard() + " 1\n";
+                        string cond = getCondition(val);
+                        return cond + Core.VariableOperation(variable, 1, "=");
                     }
                 }
                 else if (op == "^=")
                 {
                     if (context.GetVariable(val, true) != null)
                     {
-                        output += "scoreboard players operation " + variable.scoreboard() + " += " + context.GetVariableName(val) + '\n';
-                        output += "execute if score " + variable.scoreboard() + " matches 2 run scoreboard players set " + variable.scoreboard() + " 0" + '\n';
+                        output += Core.VariableOperation(variable, GetVariableByName(val), "+=");
+                        string cond = getCondition(val + ">= 2");
+                        output += cond + Core.VariableOperation(variable, 0, "=");
+                        return output;
                     }
                     else
                     {
-                        string[] cond = getCond(val);
-                        output += cond[1];
-                        string[] cond2 = getCond(variable.gameName);
-                        output += cond[1];
-                        output += cond2[1];
-                        output += "execute if " + cond[0] + "run scoreboard players set " + variable.scoreboard() + " 1\n";
-                        output += "execute if " + cond[0] + "if "+ cond2[0] +"run scoreboard players set " + variable.scoreboard() + " 0\n";
+                        string cond = getCondition(val);
+                        string cond2 = getCondition(val+"&&"+variable.gameName);
+
+                        output += cond + Core.VariableOperation(variable, 1, "=");
+                        output += cond2 + Core.VariableOperation(variable, 0, "=");
+                        return output;
                     }
                 }
                 else if (ve.ToLower() == "true" || ve == "1")
                 {
-                    output += "scoreboard players set " + variable.scoreboard() + " 1" + '\n';
+                    return Core.VariableOperation(variable, 1, "=");
                 }
                 else if (ve.ToLower() == "false" || ve == "0")
                 {
-                    output += "scoreboard players set " + variable.scoreboard() + " 0" + '\n';
-                }
-                else if (val.Contains("(") && context.IsFunction(val.Substring(0, val.IndexOf('('))))
-                {
-                    return functionEval(val, new string[] { variable.gameName }, op);
+                    return Core.VariableOperation(variable, 0, "=");
                 }
                 else if (context.GetVariable(val, true) != null)
                 {
                     if (op != "=" || smartEmpty(context.GetVariableName(val)) != smartEmpty(variable.scoreboard()))
-                        output += "scoreboard players operation " + variable.scoreboard() + " = " + context.GetVariableName(val) + "" + '\n';
+                        return Core.VariableOperation(variable, GetVariableByName(val), "=");
                 }
                 else
                 {
-                    string[] cond = getCond(val);
-                    output += cond[1];
-                    output += "scoreboard players set " + variable.scoreboard() + " 0\n";
-                    output += "execute if " + cond[0] + "run scoreboard players set " + variable.scoreboard() + " 1\n";
+                    output += Core.VariableOperation(variable, 0, "=");
+                    string cond = getCondition(val);
+                    return output + cond + Core.VariableOperation(variable, 1, "=");
                 }
             }
             else if (ca == Type.ENTITY)
@@ -1718,11 +1543,7 @@ namespace JSharp
             }
             else if (ca == Type.STRING)
             {
-                if (val.Contains("(") && context.IsFunction(val.Substring(0, val.IndexOf('('))))
-                {
-                    return functionEval(val, new string[] { variable.gameName }, op);
-                }
-                else if (val.Contains("\""))
+                if (val.Contains("\""))
                 {
                     output += "scoreboard players set " + variable.scoreboard() + " " + getStringID(val).ToString() + '\n';
                 }
@@ -1741,7 +1562,7 @@ namespace JSharp
             }
             else if (ca == Type.VOID)
                 throw new Exception("Cannot moddifie type void");
-            
+
             if (context.GetVariable(val,true) != null && variables[context.GetVariable(val, true)].type == Type.VOID)
                 throw new Exception("Cannot get value type void");
 
@@ -2135,23 +1956,12 @@ namespace JSharp
 
                 if ((t == Type.INT || t == Type.ENUM) && int.TryParse(arg[1], out tmpI))
                 {
-                    if (!constants.Contains(tmpI))
-                    {
-                        loadFile.AddStartLine("scoreboard players set c." + tmpI.ToString() + " tbms.const " + tmpI.ToString() + '\n');
-                        constants.Add(tmpI);
-                    }
-
-                    return new string[] { "score " + var + " " + op + " c." + tmpI.ToString() + " tbms.const ", pre };
+                    return new string[] { "score " + var + " " + op + " " + GetConstant(tmpI).scoreboard() + " ", pre };
                 }
                 else if (t == Type.FLOAT && float.TryParse(arg[1], out tmpF))
                 {
                     int tmpL = ((int)(tmpF * 1000));
-                    if (!constants.Contains(tmpL))
-                    {
-                        loadFile.AddStartLine("scoreboard players set c." + tmpL.ToString() + " tbms.const " + tmpL.ToString() + '\n');
-                        constants.Add(tmpL);
-                    }
-                    return new string[] { "score " + var + " " + op + " c." + tmpL.ToString() + " tbms.const ", pre };
+                    return new string[] { "score " + var + " " + op + " "+ GetConstant(tmpL).scoreboard() + " ", pre };
                 }
                 else if (context.GetVariable(arg[1],true)!=null)
                 {
@@ -2582,7 +2392,6 @@ namespace JSharp
             {
                 structMethodFile = fFile;
                 fFile.isLazy = true;
-                isInlazyFunc = true;
             }
             if (!isAbstract)
             {
@@ -3037,29 +2846,34 @@ namespace JSharp
         }
         public static string instAligned(string text, string fText)
         {
-            string execute = "execute ";
+            if (text.Split(' ').Length == 1)
+            {
+                string execute = "execute ";
 
-            if (text.Contains("x")) execute += "align x ";
-            if (text.Contains("y")) execute += "align y ";
-            if (text.Contains("z")) execute += "align z ";
+                execute += "align " + smartEmpty(text).Replace("\"","");
 
 
-            execute += " run ";
+                execute += " run ";
 
-            int wID = whileID++;
-            string funcName = context.GetFun() + "w_" + wID.ToString();
+                int wID = whileID++;
+                string funcName = context.GetFun() + "w_" + wID.ToString();
 
-            string cmd = "function " + funcName + '\n';
+                string cmd = "function " + funcName + '\n';
 
-            context.currentFile().AddLine(execute + cmd);
+                context.currentFile().AddLine(execute + cmd);
 
-            File fFile = new File(context.GetFile() + "w_" + wID, "", "at");
-            context.Sub("w_" + wID, fFile);
-            files.Add(fFile);
+                File fFile = new File(context.GetFile() + "w_" + wID, "", "at");
+                context.Sub("w_" + wID, fFile);
+                files.Add(fFile);
 
-            autoIndent(fText);
+                autoIndent(fText);
 
-            return "";
+                return "";
+            }
+            else
+            {
+                return functionEval(fText);
+            }
         }
         public static string instEnum(string text)
         {
@@ -3227,9 +3041,23 @@ namespace JSharp
             }
             if (context.IsFunction(f1))
             {
-                string funcID = (context.GetFun() + f2).Replace(':', '.').Replace('/', '.');
+                string funcID = (context.GetFun() + f2).Replace(':', '.').Replace('/', '.').ToLower();
                 if (!functions.ContainsKey(funcID))
                     functions.Add(funcID, functions[context.GetFunctionName(f1)]);
+                else if (functions[funcID][0].isAbstract)
+                {
+                    GobalDebug(functions[funcID][0].gameName + " was overrided", Color.Yellow);
+                }
+                else
+                {
+                    throw new Exception(funcID + " already exists");
+                }
+            }
+            else if (context.IsFunction(f2))
+            {
+                string funcID = (context.GetFun() + f1).Replace(':', '.').Replace('/', '.').ToLower();
+                if (!functions.ContainsKey(funcID))
+                    functions.Add(funcID, functions[context.GetFunctionName(f2)]);
                 else if (functions[funcID][0].isAbstract)
                 {
                     GobalDebug(functions[funcID][0].gameName + " was overrided", Color.Yellow);
@@ -3244,6 +3072,13 @@ namespace JSharp
                 if (!variables.ContainsKey(context.GetVar() + f2))
                 {
                     variables.Add(context.GetVar() + f2, variables[context.GetVariable(f1)]);
+                }
+            }
+            else if (context.GetVariable(f2, true) != null)
+            {
+                if (!variables.ContainsKey(context.GetVar() + f1))
+                {
+                    variables.Add(context.GetVar() + f1, variables[context.GetVariable(f2)]);
                 }
             }
             else
@@ -5215,15 +5050,13 @@ namespace JSharp
                 {
                     if (forcedOffuscation == "")
                     {
-                        score = offuscationMapAdd(gameName);
-                        loadFile.AddScoreboardDefLine("scoreboard objectives add " + score + " " + def);
-                        score = "@s " + score;
+                        score = "@s " + offuscationMapAdd(gameName);
+                        loadFile.AddScoreboardDefLine(Core.DefineVariable(this));
                     }
                     else
                     {
-                        score = forcedOffuscation;
-                        loadFile.AddScoreboardDefLine("scoreboard objectives add " + score + " " + def);
-                        score = "@s " + score;
+                        score = "@s "+forcedOffuscation;
+                        loadFile.AddScoreboardDefLine(Core.DefineVariable(this));
                     }
                 }
                 else
@@ -5231,6 +5064,7 @@ namespace JSharp
                     if (forcedOffuscation != "")
                     {
                         score = forcedOffuscation + (isConst ? " tbms.const" : " tbms.value");
+                        loadFile.AddScoreboardDefLine(Core.DefineVariable(this));
                     }
                 }
             }
@@ -5586,10 +5420,6 @@ namespace JSharp
                     content = "";
                     isInStructMethod = false;
                 }
-                if (isLazy)
-                {
-                    isInlazyFunc = false;
-                }
             }
 
             public void addParsedLine(string a)
@@ -5678,7 +5508,7 @@ namespace JSharp
                 this.value = value;
             }
         }
-
+        
         public class Context
         {
             public List<string> directories = new List<string>();
@@ -5698,7 +5528,7 @@ namespace JSharp
             public Context(string project, string file, File f)
             {
                 directories.Add(project);
-                File root = new File("root", "");
+                File root = loadFile;
                 files.Add(root);
                 fileDir[GetFile()] = root;
 

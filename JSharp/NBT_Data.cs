@@ -67,7 +67,25 @@ namespace JSharp
             else
                 return getEntityVar(field[0], field[1]);
         }
-
+        public static string getType(string nbt)
+        {
+            loadDict();
+            if (nbt_map_type.ContainsKey(nbt))
+            {
+                if (nbt_map_type[nbt] == "double")
+                    return "float";
+                if (nbt_map_type[nbt] == "short")
+                    return "int";
+                if (nbt_map_type[nbt] == "long")
+                    return "int";
+                return nbt_map_type[nbt];
+            }
+            else
+            {
+                var var = Compiler.GetVariable(Compiler.context.GetVariable(nbt));
+                return var.type.ToString().ToLower();
+            }
+        }
         public static string parseSet(string entity, string value, float scale)
         {
             loadDict();
