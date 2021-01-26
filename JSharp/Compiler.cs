@@ -795,7 +795,7 @@ namespace JSharp
                 Variable var = new Variable(name, name,Type.INT,false);
                 var.isConst = true;
                 variables.Add(name, var);
-                loadFile.AddStartLine("scoreboard players set "+ var.scoreboard() + " tbms.const "+value.ToString() + '\n');
+                loadFile.AddStartLine(Core.VariableOperation(var, value, "="));
                 constants.Add(value, var);
             }
             return constants[value];
@@ -991,8 +991,12 @@ namespace JSharp
             
             if (nullReg.Matches(val).Count > 0)
             {
-                if (ca != Type.STRUCT)
+                if (op != "=")
+                    throw new Exception("Invalid Operation " + op + " with null");
+                if (ca != Type.STRUCT && ca != Type.FUNCTION)
                     return Core.VariableSetNull(variable);
+                if (ca == Type.FUNCTION)
+                    return Core.VariableOperation(variable, -1, "=");
                 else
                 {
                     foreach (Variable struV in structs[variable.enums].fields)

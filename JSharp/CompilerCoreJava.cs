@@ -17,10 +17,7 @@ namespace JSharp
         public CompilerCoreJava(bool offuscate, string project)
         {
             OffuscateNeed = offuscate;
-            for (int i = 0; i < 11; i++)
-            {
-                pow64[i] = IntPow(alphabet.Length, i);
-            }
+
             dirVar = project.Substring(0, Math.Min(3, project.Length));
         }
 
@@ -107,62 +104,5 @@ namespace JSharp
         {
             return "scoreboard players reset " + GetSelector(var, selector);
         }
-
-
-
-        #region offuscation
-        public static long IntPow(long x, long pow)
-        {
-            long ret = 1;
-            while (pow != 0)
-            {
-                if ((pow & 1) == 1)
-                    ret *= x;
-                x *= x;
-                pow >>= 1;
-            }
-            return ret;
-        }
-        public string offuscate(string text)
-        {
-            if (!OffuscateNeed)
-                return text;
-
-            if (offuscationMap.ContainsKey(text))
-                return offuscationMap[text];
-
-            string rText = "";
-            foreach (char ch in text.Reverse())
-            {
-                rText += ch;
-            }
-            long hash = text.GetHashCode() + rText.GetHashCode() * (long)(int.MaxValue);
-            long c = Math.Abs(hash % pow64[10]);
-
-            string map = getMap(c);
-
-            if (offuscationMap.ContainsKey(map))
-            {
-                return offuscate(text + "'");
-            }
-
-            offuscationMap.Add(text, map);
-            return map;
-        }
-        public string getMap(long c)
-        {
-            return dirVar + "."
-                        + "" + alphabet[(int)((c >> 52) & 63)]
-                        + "" + alphabet[(int)((c >> 48) & 63)]
-                        + "" + alphabet[(int)((c >> 42) & 63)]
-                        + "" + alphabet[(int)((c >> 36) & 63)]
-                        + "" + alphabet[(int)((c >> 30) & 63)]
-                        + "" + alphabet[(int)((c >> 24) & 63)]
-                        + "" + alphabet[(int)((c >> 18) & 63)]
-                        + "" + alphabet[(int)((c >> 12) & 63)]
-                        + "" + alphabet[(int)((c >> 6) & 63)]
-                        + "" + alphabet[(int)(c & 63)];
-        }
-        #endregion
     }
 }
