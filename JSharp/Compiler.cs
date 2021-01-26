@@ -1151,43 +1151,38 @@ namespace JSharp
                             if (args.Length > 0)
                                 args = args.Substring(0, args.Length - 1);
 
+                            if (!variables.ContainsKey("__mux__" + grp))
+                            {
+                                addVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
+                            }
+                            Variable mux = GetVariable("__mux__" + grp);
+                            int id = functDelegated[grp].IndexOf(func);
+                            string cond = getCondition(mux.gameName + "== " + id.ToString());
                             foreach (string line in parseLine(val + "(" + args + ")").Split('\n'))
                             {
                                 if (line != "" && !line.StartsWith("#"))
                                 {
-                                    if (!variables.ContainsKey("__mux__" + grp))
-                                    {
-                                        addVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
-                                    }
-                                    Variable mux = GetVariable("__mux__" + grp);
-                                    fFile.AddLine("execute if score "+mux.scoreboard()+ " matches " + functDelegated[grp].IndexOf(func).ToString()
-                                        + " run " + line);
+                                    fFile.AddLine(cond + line);
                                 }
                             }
+                            func.file.AddLine(cond + Core.VariableOperation(mux, -1,"="));
                             int i = 0;
                             foreach (Variable outputVar in variable.outputs)
                             {
                                 string line = parseLine("__mux__." + grp + ".ret_" + i.ToString() + "=" + func.outputs[i].gameName);
                                 if (line != "" && !line.StartsWith("#"))
                                 {
-                                    if (!variables.ContainsKey("__mux__" + grp))
-                                    {
-                                        addVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
-                                    }
-                                    Variable mux = GetVariable("__mux__" + grp);
-                                    fFile.AddLine("execute if score "+mux.scoreboard()+" matches " + functDelegated[grp].IndexOf(func).ToString()
-                                        + " run " + line);
+                                    fFile.AddLine(cond + line);
                                 }
                                 i++;
                             }
                         }
-
-                        output += "scoreboard players set " + variable.scoreboard() + " " + functDelegated[grp].IndexOf(func) + '\n';
+                        return Core.VariableOperation(variable, functDelegated[grp].IndexOf(func), "=");
                     }
                 }
                 else
                 {
-                    output += "scoreboard players operation " + variable.scoreboard() + " = " + context.GetVariableName(val) + '\n';
+                    return Core.VariableOperation(variable, GetVariableByName(val), "=");
                 }
             }
             else if (ca == Type.STRUCT)
@@ -3993,8 +3988,8 @@ namespace JSharp
             {
                 for (int j = 0; j < outVar.Length; j++)
                 {
-                    string v = context.GetVariableName(outVar[j]);
-                    output += "scoreboard players operation " + v + " " + op + " " + context.GetVariableName("__mux__."+grp+".ret_"+j.ToString()) + '\n';
+                    var v = GetVariableByName(outVar[j]);
+                    output += eval("__mux__." + grp + ".ret_" + j.ToString(), GetVariableByName(outVar[j]), v.type, "=");
                 }
             }
 
@@ -5375,7 +5370,8 @@ namespace JSharp
                     if (LastConds.Count > 0)
                         LastCond = LastConds.Pop();
                 }
-                if ((type == "if" || (type == "with" && !cantMergeWith) || type == "at" || type == "case") && lineCount == 1 && !content.StartsWith("#"))
+                if (((type == "if" || (type == "with" && !cantMergeWith) || type == "at" || type == "case") && lineCount == 1 && !content.StartsWith("#"))
+                    || type == "switch")
                 {
                     File f = context.currentFile();
                     string tmp = f.content.Substring(0, f.content.LastIndexOf(' '));
