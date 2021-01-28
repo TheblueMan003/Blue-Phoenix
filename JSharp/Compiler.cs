@@ -1051,9 +1051,10 @@ namespace JSharp
                 }
                 else if (context.GetVariable(val, true) != null)
                 {
-                    if (GetVariable(context.GetVariable(val, false)).type == Type.ARRAY)
+                    var val2 = GetVariableByName(val);
+                    if (val2.type == Type.ARRAY)
                     {
-                        if (GetVariable(context.GetVariable(val, false)).arraySize != variable.arraySize)
+                        if (val2.arraySize != variable.arraySize)
                             throw new Exception("Array don't the same size");
 
                         output = "";
@@ -1195,7 +1196,7 @@ namespace JSharp
                 }
                 else
                 {
-                    Structure stru2 = structs[GetVariable(context.GetVariable(val)).enums];
+                    Structure stru2 = structs[GetVariableByName(val).enums];
                     if (!stru2.canBeAssignIn(stru1))
                     {
                         throw new Exception("Cannot use " + op + " between " + stru2.name + " inside " + stru1.name);
@@ -1276,7 +1277,7 @@ namespace JSharp
                     else if (context.GetVariableName(val, true) != null)
                     {
                         string val2 = context.GetVariableName(val);
-                        Variable val2Obj = GetVariable(context.GetVariable(val));
+                        Variable val2Obj = GetVariableByName(val);
 
                         if (val2Obj.type == Type.FLOAT)
                             output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + val2 + '\n';
@@ -1416,8 +1417,7 @@ namespace JSharp
                 }
                 else
                 {
-                    Variable var2 = GetVariable(context.GetVariable(val));
-
+                    Variable var2 = GetVariableByName(val);
 
                     if (op != "=" || smartEmpty(context.GetVariableName(val)) != smartEmpty(variable.scoreboard()))
                     {
@@ -2425,7 +2425,7 @@ namespace JSharp
                 {
                     Type ca = getType(r + " ");
                     parseLine(smartEmpty(r.Replace("{","")) + " ret_" + i.ToString());
-                    function.outputs.Add(GetVariable(context.GetVariable("ret_" + i.ToString())));
+                    function.outputs.Add(GetVariableByName("ret_" + i.ToString()));
                     i++;
                 }
             }
@@ -2436,7 +2436,7 @@ namespace JSharp
                 {
                     Type ca = getType(r + " ");
                     parseLine(smartEmpty(r.Replace("{", "")) + " ret_" + i.ToString());
-                    function.outputs.Add(GetVariable(context.GetVariable("ret_" + i.ToString())));
+                    function.outputs.Add(GetVariableByName("ret_" + i.ToString()));
                     i++;
                 }
             }
@@ -3409,8 +3409,8 @@ namespace JSharp
             }
             else
             {
-                left = smartEmpty(smartSplit(text.Replace(op, "§"),'§',1)[0]).Split(',');
-                right = smartEmpty(smartSplit(text.Replace(op, "§"), '§', 1)[1]).Split(',');
+                left = smartSplit(smartEmpty(smartSplit(text.Replace(op, "§"),'§',1)[0]),',');
+                right = smartSplit(smartEmpty(smartSplit(text.Replace(op, "§"), '§', 1)[1]),',');
             }
 
             if (right[0].Contains("(") && context.IsFunction(right[0].Substring(0, right[0].IndexOf('(')))
@@ -3430,7 +3430,7 @@ namespace JSharp
                     }
                     else
                     {
-                        var = GetVariable(context.GetVariable(left[i]));
+                        var = GetVariableByName(left[i]);
                     }
                     if (right.Length > 1)
                         output += eval(right[i], var, var.type, op);
@@ -3525,7 +3525,7 @@ namespace JSharp
                     {
                         for (int j = 0; j < outVar.Length; j++)
                         {
-                            lazyOutput.Peek().Add(GetVariable(context.GetVariable(outVar[j])));
+                            lazyOutput.Peek().Add(GetVariableByName(outVar[j]));
                         }
                     }
 
@@ -3575,7 +3575,6 @@ namespace JSharp
                                     compVal.Add(new string[] { a.name, anonymusFuncName });
                                 else
                                     addLazyVal(a.name, anonymusFuncName);
-                                //output += parseLine(desugar(a.gameName + "=" + anonymusFuncName));
 
                                 anonymusFunc = true;
                                 lambdaID++;
@@ -3588,7 +3587,7 @@ namespace JSharp
                                 if (a.type == Type.INT || a.type == Type.FUNCTION || a.type == Type.FLOAT)
                                 {
                                     if (context.GetVariable(smartEmpty(args[i]),true) != null){
-                                        compVal.Add(new string[] { a.name + ".scoreboard", GetVariable(context.GetVariable(smartEmpty(args[i]))).scoreboard() });
+                                        compVal.Add(new string[] { a.name + ".scoreboard", GetVariableByName(smartEmpty(args[i])).scoreboard() });
                                     }
                                     compVal.Add(new string[] { a.name, smartEmpty(args[i]) });
                                 }
@@ -3613,7 +3612,7 @@ namespace JSharp
                                     compVal.Add(new string[] { a.name, args[i] });
                                 else
                                 {
-                                    compVal.Add(new string[] { a.name + ".scoreboard", GetVariable(context.GetVariable(smartEmpty(args[i]))).scoreboard() });
+                                    compVal.Add(new string[] { a.name + ".scoreboard", GetVariableByName(smartEmpty(args[i])).scoreboard() });
                                     compVal.Add(new string[] { a.name, context.GetVariable(args[i]) });
                                 }
                             }
@@ -3662,55 +3661,6 @@ namespace JSharp
                         }
                         preparseLine(modLine, tFile, true);
                         
-                        /*
-                        if (modLine.Contains("\\compiler\\//start"))
-                        {
-                            isInLazyCompile += 1;
-                        }
-
-                        if (smartContains(modLine, '{') && isInLazyCompile > 0)
-                        {
-                            isInLazyCompile += 1;
-                        }
-                        if (smartContains(modLine, '}') && isInLazyCompile > 0)
-                        {
-                            isInLazyCompile -= 1;
-                        }
-
-                        if (isInLazyCompile > 0)
-                            context.currentFile().addParsedLine(modLine);
-
-                        string res;
-                        if (isInLazyCompile == 0)
-                            res = parseLine(modLine);
-                        else
-                        {
-                            res = "";
-
-                            if (modLine.Contains("\\compiler\\//end"))
-                            {
-                                isInLazyCompile -= 1;
-                            }
-                        }
-
-                        if (res != "")
-                        {
-                            context.currentFile().AddLine(res);
-                        }
-
-                        if ((line == "}" || autoIndented == 1) && isInLazyCompile == 0 && tFile != context.currentFile())
-                        {
-                            context.currentFile().Close();
-                        }
-                        if (autoIndented > 0)
-                        {
-                            autoIndented--;
-                        }
-
-
-                        while (modLine.StartsWith(" ")|| modLine.StartsWith("    "))
-                            modLine = modLine.Substring(1, modLine.Length - 1);
-                        */
                         i++;
                     }
 
@@ -3816,9 +3766,9 @@ namespace JSharp
                         {
                             throw new Exception("Function "+ funObj.gameName+" do not return any value. ");
                         }
-                        else if (GetVariable(context.GetVariable(outVar[0])).type == Type.ARRAY && funObj.outputs[0].type != Type.ARRAY)
+                        else if (GetVariableByName(outVar[0]).type == Type.ARRAY && funObj.outputs[0].type != Type.ARRAY)
                         {
-                            if (GetVariable(context.GetVariable(outVar[0])).arraySize != funObj.outputs.Count)
+                            if (GetVariableByName(outVar[0]).arraySize != funObj.outputs.Count)
                                 throw new Exception("Cannot cast function output into array");
 
                             for (int j = 0; j < funObj.outputs.Count; j++)
@@ -4410,7 +4360,7 @@ namespace JSharp
 
             if (context.GetVariable(empty, true) != null)
             {
-                var var = GetVariable(context.GetVariable(empty));
+                var var = GetVariableByName(empty);
                 lst.Add(new ImpliciteVar(var.enums, var.type, text));
             }
 
@@ -5361,10 +5311,6 @@ namespace JSharp
                     }
                 }
 
-                if (debug == true && type == "if")
-                {
-                    MessageBox.Show(lineCount.ToString());
-                }
                 if (type == "if")
                 {
                     if (LastConds.Count > 0)
@@ -5379,7 +5325,7 @@ namespace JSharp
                     f.content = tmp;
                     files.Remove(this);
                 }
-                if (type == "switch")
+                if (type == "switch" || type == "forgenerate")
                 {
                     File f = context.currentFile();
                     f.AddLine(content);
@@ -5394,16 +5340,6 @@ namespace JSharp
                     files.Remove(this);
                     context.popImpliciteVar();
                 }
-                if (type == "forgenerate")
-                {
-                    File f = context.currentFile();
-                    f.AddLine(content);
-                    files.Remove(this);
-                }
-                //if (type == "switch")
-                //{
-                //   switchID--;
-                //}
                 
                 lineCount = content.Split('\n').Length - 1;
                 if (lineCount >= 65536)
