@@ -256,14 +256,13 @@ namespace JSharp
 
                 if (subargs[0].StartsWith("\""))
                 {
-                    for (int j = 0; j < subargs[0].Length - 1; j++)
+                    for (int j = 1; j < subargs[0].Length - 1; j++)
                     {
                         if (subargs[0][j] == '\\'){
                             if (subargs[0][j+1] == 'u')
                             {
                                 while(Char.IsHighSurrogate((char)Convert.ToInt32(subargs[0].Substring(j, 6).ToUpper().Replace("\\U", "0x"), 16)))
                                 {
-                                    MessageBox.Show(subargs[0].Substring(j, 6).ToUpper().Replace("\\U", "0x"));
                                     j += 6;
                                 }
                                 j += 5;
