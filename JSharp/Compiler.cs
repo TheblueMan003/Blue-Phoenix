@@ -5742,6 +5742,8 @@ namespace JSharp
             {
                 if (value.Contains("@"))
                 {
+                    if (!CommandParser.isValidSelector(value.Split('.')[0]))
+                        throw new Exception("Invalid Selctor " + value.Split('.')[0]);
                     return value.Split('.')[0];
                 }
                 if (value.Contains('.'))
@@ -5760,6 +5762,8 @@ namespace JSharp
                     string t = context.GetVariable(value.Split('.')[0]);
                     if (t.Contains("@"))
                     {
+                        if (!CommandParser.isValidSelector(value))
+                            throw new Exception("Invalid Selctor " + value);
                         return t;
                     }
                     else
@@ -5773,6 +5777,8 @@ namespace JSharp
                     string t = context.GetVariable(value.Split('.')[0]);
                     if (t.Contains("@"))
                     {
+                        if (!CommandParser.isValidSelector(value))
+                            throw new Exception("Invalid Selctor " + value);
                         return t;
                     }
                     else
@@ -5787,7 +5793,11 @@ namespace JSharp
             public string GetEntitySelector(string value, bool single = true)
             {
                 if (value.Contains("@"))
+                {
+                    if (!CommandParser.isValidSelector(value))
+                        throw new Exception("Invalid Selctor "+value);
                     return smartEmpty(value);
+                }
                 else if (single)
                     return "@e[tag=" + context.GetVariableName(value.Split('.')[0]).Split(' ')[0] + "]";
                 else
