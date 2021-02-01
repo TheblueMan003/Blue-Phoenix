@@ -810,11 +810,11 @@ namespace JSharp
             {
                 return part[1] == "nearest" || part[1] == "furthest" || part[1] == "random" || part[1] == "arbitrary";
             }
-            if (part[0] == "tag" || part[0] == "name" || part[0] == "team")
+            if (part[0] == "tag" || part[0] == "name" || part[0] == "team" || part[0] == "type")
             {
                 return !part[1].Contains("\"");
             }
-            if (part[0].StartsWith("nbt‌") || part[0] == "advancements‌" || part[0] == "predicate‌" || part[0] == "scores")
+            if ("nbt".StartsWith(part[0]) || part[0] == "advancements‌" || part[0] == "predicate‌" || part[0] == "scores")
             {
                 return true;
             }
