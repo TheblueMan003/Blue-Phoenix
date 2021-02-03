@@ -158,6 +158,37 @@ namespace JSharp
         {
             return "execute " + val + "run ";
         }
+
+        public override string AsAt(string entity, string cond = "")
+        {
+            if (cond == "")
+                return "execute as " + entity + " at @s run ";
+            else
+                return "execute as " + entity + " at @s "+cond+"run ";
+        }
+        public override string As(string entity, string cond = "")
+        {
+            if (cond == "")
+                return "execute as " + entity + " run ";
+            else
+                return "execute as " + entity + " "+cond+"run ";
+        }
+        public override string At(string entity, string cond = "")
+        {
+            if (cond == "")
+                return "execute at " + entity + " run ";
+            else
+                return "execute at " + entity + " " + cond + "run ";
+        }
+        public override string Positioned(string value)
+        {
+            return "execute positioned " + value+" run ";
+        }
+        public override string Align(string value)
+        {
+            return "execute align " + value+" run ";
+        }
+
         public override string VariableSetNull(Compiler.Variable var, string selector = "")
         {
             return "scoreboard players reset " + GetSelector(var, selector);

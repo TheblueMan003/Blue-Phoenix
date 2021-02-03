@@ -21,6 +21,12 @@ namespace JSharp
         public abstract string Condition(string val);
         public abstract string VariableSetNull(Compiler.Variable var, string selector = "");
 
+        public abstract string AsAt(string entity, string cond = "");
+        public abstract string As(string entity, string cond = "");
+        public abstract string At(string entity, string cond = "");
+        public abstract string Positioned(string value);
+        public abstract string Align(string value);
+
         public abstract string DefineFunction(string name);
         public abstract string CallFunction(string name);
     }

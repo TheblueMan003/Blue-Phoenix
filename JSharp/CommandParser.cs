@@ -757,7 +757,7 @@ namespace JSharp
                     return false;
                 string args = selector.Substring(selector.IndexOf("[") + 1,
                     selector.LastIndexOf("]") - selector.IndexOf("[") - 1);
-                foreach (string arg in Compiler.smartSplit(args, ','))
+                foreach (string arg in Compiler.smartSplitJson(args, ',',-1))
                 {
                     if (!isValidSelectorArgument(arg))
                         return false;

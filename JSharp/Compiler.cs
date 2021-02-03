@@ -2272,6 +2272,10 @@ namespace JSharp
             
             string func = funArgType[funArgType.Length - 1];
             func = func.Substring(0, func.Length - 1).ToLower();
+            if (func.EndsWith(" ") || func.EndsWith("("))
+            {
+                func = func.Substring(0, func.Length - 1);
+            }
             bool isStatic = false;
             bool lazy = false;
             bool isAbstract = false;
@@ -2693,32 +2697,29 @@ namespace JSharp
         {
             if (context.isEntity(text[0]))
             {
-                string execute = "execute as ";
-
-                if (text[0].Contains("@"))
-                {
-                    execute += smartEmpty(text[0]) + " ";
-                }
-                else
-                {
-                    execute += "@e[tag=" + context.GetVariable(text[0]) + "] ";
-                }
-
-                if (text.Length > 1 && smartEmpty(text[1]) == "true") execute += "at @s ";
+                string pre;
                 if (text.Length > 2)
                 {
                     string[] v = getConditionSplit(text[2]);
-                    execute = v[0] + execute + v[1];
+                    if (smartEmpty(text[1]) == "true")
+                        pre = v[0] + Core.AsAt(context.GetEntitySelector(text[0]), v[1]);
+                    else
+                        pre = v[0] + Core.As(context.GetEntitySelector(text[0]), v[1]);
                 }
-
-                execute += "run ";
+                else
+                {
+                    if (text.Length > 1 && smartEmpty(text[1]) == "true")
+                        pre = Core.AsAt(context.GetEntitySelector(text[0]));
+                    else
+                        pre = Core.As(context.GetEntitySelector(text[0]));
+                }
 
                 int wID = whileID++;
                 string funcName = context.GetFun() + "w_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
 
-                context.currentFile().AddLine(execute + cmd);
+                context.currentFile().AddLine(pre + cmd);
 
                 File fFile = new File(context.GetFile() + "w_" + wID, "", "with");
                 context.Sub("w_" + wID, fFile);
@@ -2749,31 +2750,25 @@ namespace JSharp
         {
             if (context.isEntity(text[0]))
             {
-                string execute = "execute at ";
-
-                if (text[0].Contains("@"))
-                {
-                    execute += smartEmpty(text[0]) + " ";
-                }
-                else
-                {
-                    execute += "@e[tag=" + context.GetVariable(text[0]) + "] ";
-                }
+                string pre = "";
 
                 if (text.Length > 1)
                 {
-                    string[] v = getConditionSplit(text[2]);
-                    execute = v[0] + execute + v[1];
+                    string[] v = getConditionSplit(text[1]);
+                    pre = v[0] + Core.At(context.GetEntitySelector(text[0]), v[1]);
+                }
+                else
+                {
+                    pre = Core.At(context.GetEntitySelector(text[0]));
                 }
 
-                execute += "run ";
 
                 int wID = whileID++;
                 string funcName = context.GetFun() + "w_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
 
-                context.currentFile().AddLine(execute + cmd);
+                context.currentFile().AddLine(pre + cmd);
 
                 File fFile = new File(context.GetFile() + "w_" + wID, "", "at");
                 context.Sub("w_" + wID, fFile);
@@ -2785,16 +2780,14 @@ namespace JSharp
             }
             else if (text[0].Split(' ').Length == 3)
             {
-                string execute = "execute positioned " + text[0];
-
-                execute += " run ";
+                string pre = Core.Positioned(text[0]);
 
                 int wID = whileID++;
                 string funcName = context.GetFun() + "w_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
 
-                context.currentFile().AddLine(execute + cmd);
+                context.currentFile().AddLine(pre + cmd);
 
                 File fFile = new File(context.GetFile() + "w_" + wID, "", "at");
                 context.Sub("w_" + wID, fFile);
@@ -2813,16 +2806,14 @@ namespace JSharp
         {
             if (text.Split(' ').Length == 3)
             {
-                string execute = "execute positioned " + text;
-
-                execute += " run ";
+                string pre = Core.Positioned(text);
 
                 int wID = whileID++;
                 string funcName = context.GetFun() + "w_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
 
-                context.currentFile().AddLine(execute + cmd);
+                context.currentFile().AddLine(pre + cmd);
 
                 File fFile = new File(context.GetFile() + "w_" + wID, "", "at");
                 context.Sub("w_" + wID, fFile);
@@ -2841,19 +2832,14 @@ namespace JSharp
         {
             if (text.Split(' ').Length == 1)
             {
-                string execute = "execute ";
-
-                execute += "align " + smartEmpty(text).Replace("\"","");
-
-
-                execute += " run ";
+                string pre = Core.Positioned(smartEmpty(text));
 
                 int wID = whileID++;
                 string funcName = context.GetFun() + "w_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
 
-                context.currentFile().AddLine(execute + cmd);
+                context.currentFile().AddLine(pre + cmd);
 
                 File fFile = new File(context.GetFile() + "w_" + wID, "", "at");
                 context.Sub("w_" + wID, fFile);
@@ -3036,7 +3022,7 @@ namespace JSharp
             {
                 string funcID = (context.GetFun() + f2).Replace(':', '.').Replace('/', '.').ToLower();
                 if (!functions.ContainsKey(funcID))
-                    functions.Add(funcID, functions[context.GetFunctionName(f1)]);
+                    functions.Add(funcID, functions[context.GetFunctionName(f1.ToLower())]);
                 else if (functions[funcID][0].isAbstract)
                 {
                     GobalDebug(functions[funcID][0].gameName + " was overrided", Color.Yellow);
@@ -3986,6 +3972,83 @@ namespace JSharp
                     current += text[i];
                 }
                 else if (text[i] == ')' && !inString)
+                {
+                    ind -= 1;
+                    current += text[i];
+                }
+                else if (text[i] == '[' && !inString)
+                {
+                    ind += 1;
+                    current += text[i];
+                }
+                else if (text[i] == ']' && !inString)
+                {
+                    ind -= 1;
+                    current += text[i];
+                }
+                else if (text[i] == '<' && c == ',' && !inString)
+                {
+                    ind += 1;
+                    current += text[i];
+                }
+                else if (text[i] == '>' && c == ',' && !inString)
+                {
+                    ind -= 1;
+                    current += text[i];
+                }
+                else if (text[i] == '"')
+                {
+                    if (inString)
+                    {
+                        ind -= 1;
+                        current += text[i];
+                        inString = false;
+                    }
+                    else
+                    {
+                        ind += 1;
+                        current += text[i];
+                        inString = true;
+                    }
+                }
+                else if (text[i] == c && ind == 0 && max != 0 && !inString)
+                {
+                    output.Add(current);
+                    current = "";
+                    max--;
+                }
+                else { current += text[i]; }
+            }
+            if (current != "")
+                output.Add(current);
+
+            return output.ToArray();
+        }
+        public static string[] smartSplitJson(string text, char c, int max = -1)
+        {
+            List<string> output = new List<string>();
+            int ind = 0;
+            string current = "";
+            bool inString = false;
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '(' && !inString)
+                {
+                    ind += 1;
+                    current += text[i];
+                }
+                else if (text[i] == ')' && !inString)
+                {
+                    ind -= 1;
+                    current += text[i];
+                }
+                if (text[i] == '{' && !inString)
+                {
+                    ind += 1;
+                    current += text[i];
+                }
+                else if (text[i] == '}' && !inString)
                 {
                     ind -= 1;
                     current += text[i];
