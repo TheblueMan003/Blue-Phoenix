@@ -41,10 +41,6 @@ namespace JSharp
             return "execute @s " + value + " ";
         }
 
-        public override string CallFunction(Compiler.Function function)
-        {
-            return "function " + name;
-        }
 
         public override string[] CompareVariable(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
         {
@@ -103,6 +99,10 @@ namespace JSharp
         public override string DefineFunction(Compiler.Function function)
         {
             throw new NotImplementedException();
+        }
+        public override string CallFunction(Compiler.Function function)
+        {
+            return "function " + function.gameName.Replace(":", "/");
         }
 
         public override string DefineVariable(Compiler.Variable var)

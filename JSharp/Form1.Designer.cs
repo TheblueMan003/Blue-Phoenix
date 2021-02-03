@@ -81,7 +81,7 @@
             this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button1.ForeColor = System.Drawing.Color.Lime;
-            this.button1.Location = new System.Drawing.Point(1038, 27);
+            this.button1.Location = new System.Drawing.Point(1038, 31);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(142, 23);
             this.button1.TabIndex = 3;
@@ -345,7 +345,7 @@
             this.isLibraryCheckbox.AutoSize = true;
             this.isLibraryCheckbox.Checked = true;
             this.isLibraryCheckbox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.isLibraryCheckbox.Location = new System.Drawing.Point(815, 31);
+            this.isLibraryCheckbox.Location = new System.Drawing.Point(815, 35);
             this.isLibraryCheckbox.Name = "isLibraryCheckbox";
             this.isLibraryCheckbox.Size = new System.Drawing.Size(69, 17);
             this.isLibraryCheckbox.TabIndex = 12;
@@ -527,7 +527,7 @@
             this.button11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button11.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button11.ForeColor = System.Drawing.Color.Lime;
-            this.button11.Location = new System.Drawing.Point(890, 27);
+            this.button11.Location = new System.Drawing.Point(890, 31);
             this.button11.Name = "button11";
             this.button11.Size = new System.Drawing.Size(142, 23);
             this.button11.TabIndex = 18;

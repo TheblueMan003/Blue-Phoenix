@@ -1399,7 +1399,7 @@ namespace JSharp
                 }
                 else if (int.TryParse(val, out tmpI))
                 {
-                    int val2 = (tmpI * 1000);
+                    int val2 = tmpI * ((op != "*=" && op != "/=")?1000:1);
                     return Core.VariableOperation(variable, val2, op);
                 }
                 else if (float.TryParse(val, out tmpF))
