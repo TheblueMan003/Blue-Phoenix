@@ -113,9 +113,9 @@ namespace JSharp
 
         private Compiler() { }
 
-        public static List<File> compile(string project, List<File> codes, Debug debug, bool offuscated, ProjectVersion version, string pctFolder)
+        public static List<File> compile(CompilerCore core,string project, List<File> codes, Debug debug, bool offuscated, ProjectVersion version, string pctFolder)
         {
-            Core = new CompilerCoreJava(offuscated, project);
+            Core = core;
             for (int i = 0; i < 11; i++)
             {
                 pow64[i] = IntPow(alphabet.Length, i);
@@ -158,9 +158,10 @@ namespace JSharp
                 forcedUnsed = false;
                 structMethodFile = null;
                 loadFile = new File("load", "");
-                loadFile.AddScoreboardDefLine("scoreboard objectives add tbms.value dummy\n" + "scoreboard objectives add tbms.const dummy\n" + "scoreboard objectives add tbms.tmp dummy\n");
+                loadFile.AddScoreboardDefLine(Core.LoadBase());
                 files.Add(loadFile);
                 mainFile = new File("main", "");
+                mainFile.AddScoreboardDefLine(Core.MainBase());
                 files.Add(mainFile);
 
                 stringInit();
@@ -780,6 +781,14 @@ namespace JSharp
         }
         public static Variable GetVariableByName(string name)
         {
+            if (name.StartsWith("@") && context.isEntity(smartSplitJson(name, '.', 1)[0]))
+            {
+                string[] val = smartSplitJson(name, '.', 1);
+                if (val.Length == 2)
+                {
+                    return GetVariableByName(val[1]).Select(val[0]);
+                }
+            }
             string key = context.GetVariable(name);
             if (variables.ContainsKey(key))
             {
@@ -1693,7 +1702,7 @@ namespace JSharp
             }
             return new string[] { output, cond };
         }
-        private static string getCondition(string text)
+        public static string getCondition(string text)
         {
             string[] v = getConditionSplit(text);
             condIDStack.Push(condID);
@@ -5039,6 +5048,7 @@ namespace JSharp
             public List<Argument> args = new List<Argument>();
             public List<Variable> outputs = new List<Variable>();
 
+            private Variable() { }
             public Variable(string name, string gameName, Type type, bool entity = false, string def="dummy", string forcedOffuscation="")
             {
                 this.name = name;
@@ -5074,11 +5084,11 @@ namespace JSharp
                     }
                 }
             }
-            public void SetEnum(string enums)
+            public virtual void SetEnum(string enums)
             {
                 this.enums = enums;
             }
-            public string scoreboard()
+            public virtual string scoreboard()
             {
                 if (isPrivate && !context.GetVar().StartsWith(privateContext))
                     throw new Exception("can not asign private variable in context: "+ context.GetVar() +" from "+ privateContext);
@@ -5148,7 +5158,27 @@ namespace JSharp
                 }
                 return variable;
             }
+            public Variable Select(string entitySelector)
+            {
+                Variable var = new Variable();
+                var.name = name;
+                var.gameName = gameName;
+                var.enums = enums;
+                var.isConst = isConst;
+                var.type = type;
+                var.entity = entity;
+                var.isConst = isConst;
+                var.def = def;
+                var.isPrivate = isPrivate;
+                var.privateContext = privateContext;
+                var.arraySize = arraySize;
+                var.isStructureVar = isStructureVar;
+                var.score = score.Replace("@s",entitySelector);
+                var.args = args;
+                var.outputs = outputs;
 
+                return var;
+            }
             public string GetTypeString()
             {
                 if (type == Type.ENUM || type == Type.STRUCT)
@@ -5173,6 +5203,7 @@ namespace JSharp
                     return type.ToString();
             }
         }
+ 
         public class Argument : Variable
         {
             public string defValue = null;
@@ -5867,7 +5898,7 @@ namespace JSharp
             }
             public bool isEntity(string value)
             {
-                if (value.Contains("@"))
+                if (value.StartsWith("@"))
                 {
                     return true;
                 }

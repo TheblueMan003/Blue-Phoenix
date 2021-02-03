@@ -64,6 +64,7 @@
     </Compile>
     <Compile Include="Compiler.cs" />
     <Compile Include="CompilerCore.cs" />
+    <Compile Include="CompilerCoreBedrock.cs" />
     <Compile Include="CompilerCoreJava.cs" />
     <Compile Include="DataPackMeta.cs" />
     <Compile Include="EffectForm.cs">

@@ -59,7 +59,7 @@ namespace JSharp
         private void button1_Click(object sender, EventArgs e)
         {
             exporting = false;
-            Compile(true);
+            CompileJava(true);
             UpdateCodeBox();
         }
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -353,7 +353,7 @@ namespace JSharp
             Debug("Project Loaded: " + projectPath+" ("+i.ToString()+" Files)", Color.Aqua);
             noReformat = false;
             exporting = false;
-            Compile();
+            CompileJava();
             UpdateCodeBox();
             ignorNextListboxUpdate = false;
         }
@@ -544,7 +544,7 @@ namespace JSharp
                 files.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
             }
 
-            List<Compiler.File> cFiles = Compiler.compile(projectName, files, DebugThread, true, projectVersion, Path.GetDirectoryName(projectPath));
+            List<Compiler.File> cFiles = Compiler.compile(new CompilerCoreJava(),projectName, files, DebugThread, true, projectVersion, Path.GetDirectoryName(projectPath));
             foreach (Compiler.File f in cFiles)
             {
                 string fileName = path + "/data/" + projectName.ToLower() + "/functions/" + f.name + ".mcfunction";
@@ -640,7 +640,7 @@ namespace JSharp
                 Debug("Compile Order Changed", Color.Aqua);
             }
         }
-        public void Compile(bool showForm = false)
+        public void CompileJava(bool showForm = false)
         {
             if (isCompiling == 0)
             {
@@ -653,17 +653,58 @@ namespace JSharp
                 }
 
                 code[previous] = CodeBox.Text;
-                Thread t = new Thread(new ThreadStart(CompileThreaded));
+                Thread t = new Thread(new ThreadStart(CompileJavaThreaded));
                 t.Start();
             }
         }
-        
-        public void CompileThreaded()
+        public void CompileBedrock(bool showForm = false)
+        {
+            if (isCompiling == 0)
+            {
+                this.showForm = showForm;
+                projectVersion.Build();
+                compileFile = new List<Compiler.File>();
+                foreach (string f in listBox1.Items)
+                {
+                    compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
+                }
+
+                code[previous] = CodeBox.Text;
+                Thread t = new Thread(new ThreadStart(CompileBedrockThreaded));
+                t.Start();
+            }
+        }
+
+        public void CompileJavaThreaded()
         {
             try
             {
                 isCompiling = 1;
-                compileFiled = Compiler.compile(projectName, compileFile, DebugThread, exporting, projectVersion,
+                compileFiled = Compiler.compile(new CompilerCoreJava(),projectName, compileFile, DebugThread, exporting, projectVersion,
+                    Path.GetDirectoryName(projectPath));
+
+                if (showForm)
+                {
+                    isCompiling = 2;
+                }
+                else
+                {
+                    isCompiling = 0;
+                }
+            }
+            catch (Exception er)
+            {
+                isCompiling = 0;
+                DebugThread(er, Color.Red);
+            }
+
+        }
+        public void CompileBedrockThreaded()
+        {
+            try
+            {
+                isCompiling = 1;
+                compileFiled = Compiler.compile(new CompilerCoreBedrock(), projectName, compileFile, DebugThread, exporting, projectVersion,
                     Path.GetDirectoryName(projectPath));
 
                 if (showForm)
@@ -982,9 +1023,11 @@ namespace JSharp
             fp.Show();
         }
 
-        private void isLibrary_CheckedChanged(object sender, EventArgs e)
+        private void button11_Click(object sender, EventArgs e)
         {
-
+            exporting = false;
+            CompileBedrock(true);
+            UpdateCodeBox();
         }
     }
 

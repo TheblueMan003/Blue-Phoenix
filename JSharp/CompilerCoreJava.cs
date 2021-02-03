@@ -8,25 +8,23 @@ namespace JSharp
 {
     public class CompilerCoreJava : CompilerCore
     {
-        private bool OffuscateNeed;
-        private static long[] pow64 = new long[11];
-        private Dictionary<string, string> offuscationMap;
-        public static string alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._";
-        private string dirVar;
-
-        public CompilerCoreJava(bool offuscate, string project)
+        public override string LoadBase()
         {
-            OffuscateNeed = offuscate;
-
-            dirVar = project.Substring(0, Math.Min(3, project.Length));
+            return "scoreboard objectives add tbms.value dummy\n" +
+                "scoreboard objectives add tbms.const dummy\n" +
+                "scoreboard objectives add tbms.tmp dummy\n";
+        }
+        public override string MainBase()
+        {
+            return "";
         }
 
-        public override string CallFunction(string name)
+        public override string CallFunction(Compiler.Function function)
         {
-            return "function " + name;
+            return "function " + function.gameName;
         }
 
-        public override string DefineFunction(string name)
+        public override string DefineFunction(Compiler.Function function)
         {
             throw new NotImplementedException();
         }
@@ -86,6 +84,10 @@ namespace JSharp
             if (op == "%=")
                 return "scoreboard players operation " + GetSelector(var, selector) + " %= " + GetSelector(Compiler.GetConstant(value), "") + "\n";
             throw new Exception("Unsupported Operator: " + op);
+        }
+        public override string VariableSetNull(Compiler.Variable var, string selector = "")
+        {
+            return "scoreboard players reset " + GetSelector(var, selector);
         }
 
         public override string[] CompareVariable(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
@@ -187,11 +189,6 @@ namespace JSharp
         public override string Align(string value)
         {
             return "execute align " + value+" run ";
-        }
-
-        public override string VariableSetNull(Compiler.Variable var, string selector = "")
-        {
-            return "scoreboard players reset " + GetSelector(var, selector);
         }
     }
 }
