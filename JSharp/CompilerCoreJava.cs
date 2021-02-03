@@ -26,15 +26,6 @@ namespace JSharp
             return "function " + name;
         }
 
-        public override string Condition(string name)
-        {
-            throw new NotImplementedException();
-        }
-        public override string ConditionBlock(string name)
-        {
-            throw new NotImplementedException();
-        }
-
         public override string DefineFunction(string name)
         {
             throw new NotImplementedException();
@@ -55,7 +46,7 @@ namespace JSharp
             }
             else
             {
-                if (selector != "")
+                if (selector.Length>1)
                 {
                     throw new Exception("Can not asign " + var1.gameName + " to " + selector);
                 }
@@ -96,9 +87,76 @@ namespace JSharp
                 return "scoreboard players operation " + GetSelector(var, selector) + " %= " + GetSelector(Compiler.GetConstant(value), "") + "\n";
             throw new Exception("Unsupported Operator: " + op);
         }
-        public override string VariableCompare(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
+
+        public override string[] CompareVariable(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
         {
-            return "score " + GetSelector(var1, selector2) + " " + op + " " + GetSelector(var2, selector2)+" ";
+            if (op == "==")
+                op = "=";
+            return new string[] { "if score " + GetSelector(var1, selector1) + " " + op + " " + GetSelector(var2, selector2) + " " ,""};
+        }
+        public override string[] CompareVariable(Compiler.Variable var1, int value, string op, string selector1 = "")
+        {
+            if (op == "=" || op == "==")
+            {
+                return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + value.ToString() + " ", "" };
+            }
+            else if (op == "<=")
+            {
+                return new string[] { "if score " + GetSelector(var1, selector1) + " matches .." + value.ToString() + " ", "" };
+            }
+            else if (op == "<")
+            {
+                return new string[] { "if score " + GetSelector(var1, selector1) + " matches .." + (value-1).ToString() + " ", "" };
+            }
+            else if (op == ">=")
+            {
+                return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + value.ToString() + ".. ", "" };
+            }
+            else if (op == ">")
+            {
+                return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + (value+1).ToString() + ".. ", "" };
+            }
+            else if (op == "!=")
+            {
+                return new string[] { "unless score " + GetSelector(var1, selector1) + " matches " + value.ToString() + " ", "" };
+            }
+            else
+            {
+                throw new Exception("Unundelled Operation: "+op);
+            }
+        }
+        public override string[] CompareVariable(Compiler.Variable var1, int value1, int value2, string selector1 = "")
+        {
+            return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + value1.ToString() + ".."+ value2.ToString()+" ", "" };
+        }
+        public override string[] ConditionEntity(string entity)
+        {
+            return new string[] { "if entity " + entity+" ", "" };
+        }
+        public override string[] ConditionInverse(string[] val)
+        {
+            if (val[0].StartsWith("if "))
+            {
+                return new string[] { "unless " + val[0].Substring(3, val[0].Length - 3),val[1]};
+            }
+            else if (val[0].StartsWith("unless "))
+            {
+                return new string[] { "if " + val[0].Substring(7, val[0].Length - 7),val[1]};
+            }
+            else
+                throw new Exception("Invalid Condition"+val[0]+";"+val[1]);
+        }
+        public override string[] ConditionBlock(string val)
+        {
+            return new string[] { "if block " + val+" ", "" };
+        }
+        public override string[] ConditionBlocks(string val)
+        {
+            return new string[] { "if blocks " + val+" ", "" };
+        }
+        public override string Condition(string val)
+        {
+            return "execute " + val + "run ";
         }
         public override string VariableSetNull(Compiler.Variable var, string selector = "")
         {

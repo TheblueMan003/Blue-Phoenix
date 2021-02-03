@@ -1675,10 +1675,7 @@ namespace JSharp
                     {
                         string[] in1 = getCond(arg[i].Substring(1, arg[i].Length - 1));
 
-                        if (in1[0].StartsWith("!"))
-                            cond += "if " + in1[0].Substring(1, in1[0].Length - 1);
-                        else
-                            cond += "unless " + in1[0];
+                        cond += Core.ConditionInverse(in1)[0];
 
                         output += in1[1];
                         condList.Add(cond);
@@ -1686,11 +1683,8 @@ namespace JSharp
                     else
                     {
                         string[] in1 = getCond(arg[i]);
-
-                        if (in1[0].StartsWith("!"))
-                            cond += "unless " + in1[0].Substring(1, in1[0].Length-1);
-                        else
-                            cond += "if " + in1[0];
+                        
+                        cond += in1[0];
 
                         output += in1[1];
                         condList.Add(cond);
@@ -1703,7 +1697,7 @@ namespace JSharp
         {
             string[] v = getConditionSplit(text);
             condIDStack.Push(condID);
-            return v[0] + "execute " + v[1] + "run ";
+            return v[0] + Core.Condition(v[1]);
         }
         private static string[] getCondOr(string text)
         {
@@ -1717,11 +1711,13 @@ namespace JSharp
             string[] part = getCond("__eval" + idVal.ToString() + "__");
 
             out2 += part[1];
+            /*
             if (part[0].StartsWith("!"))
                 out1 = "unless "+part[0].Substring(1, part[0].Length-1);
             else
                 out1 = "if " + part[0];
-
+                */
+            out1 = part[0];
             return new string[] { out1, out2 };
         }
         private static string[] getCond(string text)
@@ -1732,26 +1728,23 @@ namespace JSharp
             
             if (context.isEntity(text))
             {
-                return new string[] { "entity " + context.GetEntitySelector(text) + " ", "" };
+                return Core.ConditionEntity(context.GetEntitySelector(text));
             }
             else if (text.Contains("block("))
             {
                 string[] args = getArgs(text);
-                string output = "block " + args[0] + " ";
+                string output = args[0];
                 if (args[0].Contains("#") && !args[0].Contains(":"))
                 {
                     string[] part = args[0].Split(' ');
-                    output = "block " + part[0] + " " + part[1] + " " + part[2] + " #" + Project + ":" + part[3].Replace("#","") + " ";
+                    output = part[0] + " " + part[1] + " " + part[2] + " #" + Project + ":" + part[3].Replace("#","");
                 }
-
-                return new string[] { output, "" };
+                return Core.ConditionBlock(output);
             }
             else if (text.Contains("blocks("))
             {
                 string[] args = getArgs(text);
-                string output = "blocks " + args[0] + " ";
-
-                return new string[] { output, "" };
+                return Core.ConditionBlocks(args[0]);
             }
             else if (text.Contains("=="))
             {
@@ -1764,99 +1757,98 @@ namespace JSharp
                     }
                 }
 
-                string var, var2;
+                Variable var;
                 string pre = "";
                 if (context.GetVariable(arg[0], true) != null)
                 {
-                    var = context.GetVariableName(arg[0]);
-                    var2 = context.GetVariable(arg[0]);
+                    var = GetVariableByName(arg[0]);
                 }
                 else
                 {
                     int idVal3 = condID++;
                     pre += parseLine(getExprType(arg[0]).ToString().ToLower() + " cond_" + idVal3.ToString() + " = " + arg[0]);
-                    var = context.GetVariableName("cond_" + idVal3);
-                    var2 = context.GetVariable("cond_" + idVal3);
+                    var = GetVariableByName("cond_" + idVal3);
                 }
+
 
                 arg[1] = smartEmpty(arg[1]);
 
-                Type t = GetVariable(var2).type;
+                Type t = var.type;
 
                 if (arg[1] == "null")
                 {
-                    return new string[] { "!score " + var + " = " + var + " ", "" };
+                    return Core.ConditionInverse(Core.CompareVariable(GetVariableByName(arg[0]), GetVariableByName(arg[0]), "="));
                 }
 
                 if (t == Type.STRUCT)
                 {
-                    return getCond(var + ".__equal__("+var2+")");
+                    return getCond(var + ".__equal__("+var.gameName+")");
                 }
                 else if ((t == Type.INT || t == Type.ENUM || t == Type.FUNCTION))
                 {
                     if (arg[1].Contains(".."))
                     {
                         string[] part = arg[1].Replace("..", ",").Split(',');
-                        string p1 = "";
-                        string p2 = "";
+                        int p1 = int.MinValue;
+                        int p2 = int.MaxValue;
 
                         if (part[0]!= "")
-                            p1 = ((int)(int.Parse(part[0]))).ToString();
+                            p1 = ((int)(int.Parse(part[0])));
                         if (part[1] != "")
-                            p2 = ((int)(int.Parse(part[1]))).ToString();
+                            p2 = ((int)(int.Parse(part[1])));
 
-                        return new string[] { "score " + var + " matches " + p1 + ".." + p2 + " ", "" };
+                        return Core.CompareVariable(var, p1,p2, "=");
                     }
                     else if(int.TryParse(arg[1], out tmpI))
                     {
-                        return new string[] { "score " + var + " matches " + tmpI.ToString() + " ", "" };
+                        return Core.CompareVariable(var, tmpI, "=");
                     }
-                    var v = GetVariable(var2);
-                    if (v.enums != null && enums[v.enums].Contains(smartEmpty(arg[1].ToLower())))
+                    
+                    if (var.enums != null && enums[var.enums].Contains(smartEmpty(arg[1].ToLower())))
                     {
-                        return new string[] { "score " + v.scoreboard() + " matches " + enums[v.enums].IndexOf(smartEmpty(arg[1].ToLower())).ToString() + " " , " "};
+                        return Core.CompareVariable(var, enums[var.enums].IndexOf(smartEmpty(arg[1].ToLower())), "=");
                     }
-                    return new string[] { "score " + var + " = " + context.GetVariableName(arg[1]) + " ", "" };
+                    return Core.CompareVariable(var, GetVariableByName(arg[1]), "=");
                 }
                 else if (t == Type.FLOAT && arg[1].Contains(".."))
                 {
                     string[] part = arg[1].Replace("..", ",").Split(',');
-                    string p1 = "";
-                    string p2 = "";
+                    int p1 = int.MinValue;
+                    int p2 = int.MaxValue;
 
                     if (part[0] != "")
-                        p1 = ((int)(float.Parse(part[0])*1000)).ToString();
+                        p1 = ((int)(float.Parse(part[0])*1000));
                     if (part[1] != "")
-                        p2 = ((int)(float.Parse(part[1])*1000)).ToString();
+                        p2 = ((int)(float.Parse(part[1])*1000));
 
-                    return new string[] { "score " + var + " matches " + p1 + ".." + p2 + " ", "" };
+                    return Core.CompareVariable(var, p1, p2, "=");
                 }
                 else if (t == Type.FLOAT && float.TryParse(arg[1], out tmpF))
                 {
-                    return new string[] { "score " + var + " matches " + ((int)(tmpF * 1000)).ToString() + " ", "" };
+                    return Core.CompareVariable(var, (int)(tmpF * 1000), "=");
                 }
                 else if (t == Type.BOOL)
                 {
                     if (arg[1] == "true")
-                        return new string[] { "score " + var + " matches 1 ", "" };
+                        return Core.CompareVariable(var, 1, "=");
                     else if (arg[1] == "false")
-                        return new string[] { "score " + var + " matches 0 ", "" };
+                        return Core.CompareVariable(var, 0, "=");
                     else
-                        return new string[] { "score " + var + " = " + context.GetVariableName(arg[1]) + " ", "" };
+                        return Core.CompareVariable(var, GetVariableByName(arg[1]), "=");
                 }
                 else if (t == Type.STRING && arg[1].Contains("\""))
                 {
-                    return new string[] { "score " + var + " matches " + getStringID(arg[1]).ToString() + " ", "" };
+                    return Core.CompareVariable(var, getStringID(arg[1]), "=");
                 }
                 else if (context.GetVariable(arg[1], true) != null)
                 {
-                    return new string[] { "score " + var + " = " + context.GetVariableName(arg[1]) + " ", "" };
+                    return Core.CompareVariable(var, GetVariableByName(arg[1]), "=");
                 }
                 else
                 {
                     int idVal2 = condID++;
                     pre += parseLine(getExprType(arg[1]).ToString().ToLower() + " cond_" + idVal2.ToString() + " = " + arg[1]);
-                    return new string[] { "score " + var + " = " + context.GetVariableName("cond_" + idVal2) + " ", pre };
+                    return appendPreCond(Core.CompareVariable(var, GetVariableByName("cond_" + idVal2), "="), pre);
                 }
 
             }
@@ -1866,32 +1858,30 @@ namespace JSharp
 
                 if (arg[1].Replace(" ","") == "null")
                 {
-                    string var;
+                    Variable var;
                     string pre = "";
 
                     if (context.GetVariable(arg[0], true) != null)
                     {
-                        var = context.GetVariable(arg[0]);
+                        var = GetVariableByName(arg[0]);
                     }
                     else
                     {
                         int idVal3 = condID++;
                         pre += parseLine(getExprType(arg[0]).ToString().ToLower() + " cond_" + idVal3.ToString() + " = " + arg[0]);
-                        var = context.GetVariable("cond_" + idVal3);
+                        var = GetVariableByName("cond_" + idVal3);
                     }
 
-                    return new string[] { "score " + GetVariable(var).scoreboard() + " = " + GetVariable(var).scoreboard() + " ", "" };
+                    return Core.CompareVariable(var, var, "==");
                 }
                 else
                 {
-                    string[] outs = getCond(text.Replace("!=", "=="));
-                    outs[0] = "!" + outs[0];
-                    return outs;
+                    return Core.ConditionInverse(getCond(text.Replace("!=", "==")));
                 }
             }
             else if (context.isEntity(text) || text.StartsWith("@"))
             {
-                return new string[] { "entity " + context.GetEntitySelector(text) + " ", "" };
+                return Core.ConditionEntity(context.GetEntitySelector(text));
             }
             else if (text.Contains("(") && context.IsFunction(text.Substring(0, text.IndexOf('('))) && !text.Contains("<") && !text.Contains("=") && !text.Contains(">"))
             {
@@ -1911,7 +1901,7 @@ namespace JSharp
 
                 Function funObj = GetFunction(funcName, args);
 
-                return new string[] { "score "+funObj.outputs[0].scoreboard()+" matches 1 ", parseLine(text) };
+                return appendPreCond(Core.CompareVariable(funObj.outputs[0], 1, "=="), parseLine(text));
             }
             else
             {
@@ -1924,9 +1914,9 @@ namespace JSharp
                 if (op == "")
                 {
                     if (text.StartsWith("!"))
-                        return new string[] { "score " + context.GetVariableName(text.Replace("!", "")) + " matches 0 ", "" };
+                        return Core.CompareVariable(GetVariableByName(text.Replace("!", "")), 0, "=");
                     else
-                        return new string[] { "score " + context.GetVariableName(text.Replace("!", "")) + " matches 1 ", "" };
+                        return Core.CompareVariable(GetVariableByName(text.Replace("!", "")), 1, "=");
                 }
 
                 string[] arg = text.Replace(op, "=").Split('=');
@@ -1939,40 +1929,44 @@ namespace JSharp
                     }
                 }
 
-                string var;
+                Variable var;
                 string pre = "";
                 if (context.GetVariable(arg[0], true) != null){
-                    var = context.GetVariableName(arg[0]);
+                    var = GetVariableByName(arg[0]);
                 }
                 else
                 {
                     int idVal3 = condID++;
                     pre += parseLine(getExprType(arg[0]).ToString().ToLower() + " cond_" + idVal3.ToString() + " = " + arg[0]);
-                    var = context.GetVariableName("cond_" + idVal3);
+                    var = GetVariableByName("cond_" + idVal3);
                 }
 
                 Type t = getExprType(arg[0]);
 
                 if ((t == Type.INT || t == Type.ENUM) && int.TryParse(arg[1], out tmpI))
                 {
-                    return new string[] { "score " + var + " " + op + " " + GetConstant(tmpI).scoreboard() + " ", pre };
+                    return appendPreCond(Core.CompareVariable(var, tmpI, op), pre);
                 }
                 else if (t == Type.FLOAT && float.TryParse(arg[1], out tmpF))
                 {
                     int tmpL = ((int)(tmpF * 1000));
-                    return new string[] { "score " + var + " " + op + " "+ GetConstant(tmpL).scoreboard() + " ", pre };
+                    return appendPreCond(Core.CompareVariable(var, tmpL, op), pre);
                 }
                 else if (context.GetVariable(arg[1],true)!=null)
                 {
-                    return new string[] { "score " + var + " " + op + " " + context.GetVariableName(arg[1]) + " ", pre };
+                    return appendPreCond(Core.CompareVariable(var, GetVariableByName(arg[1]), op), pre);
                 }
                 else
                 {
                     int idVal2 = condID++;
                     pre += parseLine(getExprType(arg[1]).ToString().ToLower() + " cond_" + idVal2.ToString() + " = " + arg[1]);
-                    return new string[] { "score " + var + " " + op + " " + context.GetVariableName("cond_" + idVal2) + " ", pre };
+                    return appendPreCond(Core.CompareVariable(var, GetVariableByName("cond_" + idVal2), op), pre);
                 }
             }
+        }
+        private static string[] appendPreCond(string[] text, string val)
+        {
+            return new string[] { text[0], text[1] + "\n" + val };
         }
         private static int getStringID(string text)
         {
