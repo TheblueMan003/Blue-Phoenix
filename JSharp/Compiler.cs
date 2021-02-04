@@ -825,9 +825,15 @@ namespace JSharp
                         bool isGood = true;
                         for (int i = 0; i < args.Length; i++)
                         {
-                            if (getExprType(args[i]) != f.args[i].type)
+                            try
                             {
-                                isGood = false;
+                                if (getExprType(args[i]) != f.args[i].type)
+                                {
+                                    isGood = false;
+                                }
+                            }
+                            catch {
+                                isGood = true;
                             }
                         }
                         if (isGood)
@@ -844,9 +850,42 @@ namespace JSharp
                         bool isGood = true;
                         for (int i = 0; i < args.Length; i++)
                         {
-                            if (getExprType(args[i]) != f.args[i].type && getExprType(args[i]) != Type.INT && f.args[i].type != Type.INT && getExprType(args[i]) != Type.FLOAT && f.args[i].type != Type.FLOAT)
+                            try
+                            {
+                                if (getExprType(args[i]) != f.args[i].type && getExprType(args[i]) != Type.INT && f.args[i].type != Type.INT && getExprType(args[i]) != Type.FLOAT && f.args[i].type != Type.FLOAT)
+                                {
+                                    isGood = false;
+                                }
+                            }
+                            catch
                             {
                                 isGood = false;
+                            }
+                        }
+                        if (isGood)
+                        {
+                            funObj = f;
+                            break;
+                        }
+                    }
+                }
+                foreach (Function f in functions[funcName])
+                {
+                    if (funObj == null && f.lazy && args.Length == f.args.Count)
+                    {
+                        bool isGood = true;
+                        for (int i = 0; i < args.Length; i++)
+                        {
+                            try
+                            {
+                                if (getExprType(args[i]) != f.args[i].type && getExprType(args[i]) != Type.INT && f.args[i].type != Type.INT && getExprType(args[i]) != Type.FLOAT && f.args[i].type != Type.FLOAT)
+                                {
+                                    isGood = false;
+                                }
+                            }
+                            catch
+                            {
+                                
                             }
                         }
                         if (isGood)
@@ -1258,7 +1297,7 @@ namespace JSharp
                 {
                     if (val.Contains("@"))
                     {
-                        if (!NBT_Data.isSameAs(variable.name+"."+variable.gameName, val))
+                        if (!NBT_Data.isSameAs(variable.name + "." + variable.gameName, val))
                             output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + NBT_Data.parseGet(val, 1) + '\n';
                     }
                     else if (context.isEntity(val))
@@ -1275,23 +1314,26 @@ namespace JSharp
                         else
                         {
                             tmpI *= 1000;
-                            output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + GetConstant(tmpI) + '\n';
+                            output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + GetConstant(tmpI).scoreboard() + '\n';
                         }
                     }
                     else if (float.TryParse(val, out tmpF))
                     {
                         tmpI = (int)(tmpF * 1000);
-                        output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + GetConstant(tmpI) + '\n';
+                        output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + GetConstant(tmpI).scoreboard() + '\n';
+                    }
+                    else if (context.IsFunction(val))
+                    {
+                        return functionEval(val, new string[] { variable.name + "." + variable.gameName });
                     }
                     else if (context.GetVariableName(val, true) != null)
                     {
-                        string val2 = context.GetVariableName(val);
                         Variable val2Obj = GetVariableByName(val);
 
                         if (val2Obj.type == Type.FLOAT)
-                            output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + val2 + '\n';
+                            output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + val2Obj.scoreboard() + '\n';
                         else
-                            output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + "scoreboard players get " + val2 + '\n';
+                            output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + "scoreboard players get " + val2Obj.scoreboard() + '\n';
                     }
                 }
                 else
@@ -3755,7 +3797,7 @@ namespace JSharp
                         {
                             throw new Exception("Function "+ funObj.gameName+" do not return any value. ");
                         }
-                        else if (GetVariableByName(outVar[0]).type == Type.ARRAY && funObj.outputs[0].type != Type.ARRAY)
+                        else if (context.GetVariable(outVar[0],true)!=null && GetVariableByName(outVar[0]).type == Type.ARRAY && funObj.outputs[0].type != Type.ARRAY)
                         {
                             if (GetVariableByName(outVar[0]).arraySize != funObj.outputs.Count)
                                 throw new Exception("Cannot cast function output into array");
@@ -3770,8 +3812,8 @@ namespace JSharp
                         {
                             for (int j = 0; j < outVar.Length; j++)
                             {
-                                string v = context.GetVariable(outVar[j]);
-                                output += parseLine(desugar(v + " " + op + " " + funObj.outputs[j].gameName)) + '\n';
+                                //string v = context.GetVariable(outVar[j]);
+                                output += parseLine(desugar(outVar[j] + " " + op + " " + funObj.outputs[j].gameName)) + '\n';
                             }
                         }
                     }
@@ -5898,7 +5940,7 @@ namespace JSharp
             }
             public bool isEntity(string value)
             {
-                if (value.StartsWith("@"))
+                if (smartEmpty(value).StartsWith("@"))
                 {
                     return true;
                 }

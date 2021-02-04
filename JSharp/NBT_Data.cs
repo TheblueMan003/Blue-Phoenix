@@ -50,8 +50,7 @@ namespace JSharp
         {
             loadDict();
             string[] field = new string[2];
-            field[0] = text.Substring(0, text.LastIndexOf('.'));
-            field[1] = getField(text);
+            field = Compiler.smartSplitJson(text, '.', 1);
             return parseGet(field[0], field[1], scale);
         }
 
