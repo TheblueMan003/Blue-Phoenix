@@ -2334,7 +2334,9 @@ namespace JSharp
             bool isLoading = false;
             bool isHelper = false;
             bool isPrivate = false;
-            
+            string arg = getArg(text);
+            string[] args = smartSplit(arg, ',');
+
             List<string> outputType = new List<string>();
             List<string> tags = new List<string>();
             if (funArgType.Length > 1)
@@ -2429,10 +2431,14 @@ namespace JSharp
                         if (f.gameName == function.gameName && f != function)
                         {
                             contain = true;
+
+                            if (f.args.Count == 0 && args.Length == 0)
+                            {
+                                throw new Exception(funcID + " already exists");
+                            }
                         }
                     }
                 }
-                //throw new Exception(funcID + " already exists");
             }
             function.lazy = lazy;
             function.isAbstract = isAbstract;
@@ -2462,7 +2468,7 @@ namespace JSharp
                 isInStaticMethod = true;
             }
 
-            string arg = getArg(text);
+            
             string[] tmp = text.Split(':');
             if (tmp.Length == 2)
             {
@@ -2489,7 +2495,6 @@ namespace JSharp
                     i++;
                 }
             }
-            string[] args = smartSplit(arg, ',');
 
             foreach (string a in args)
             {
@@ -3619,6 +3624,7 @@ namespace JSharp
                                 {
                                     if (context.GetVariable(smartEmpty(args[i]),true) != null){
                                         compVal.Add(new string[] { a.name + ".scoreboard", GetVariableByName(smartEmpty(args[i])).scoreboard() });
+                                        compVal.Add(new string[] { a.name + ".scoreboardname", GetVariableByName(smartEmpty(args[i])).scoreboard().Split(' ')[1] });
                                     }
                                     compVal.Add(new string[] { a.name, smartEmpty(args[i]) });
                                 }
@@ -3812,7 +3818,6 @@ namespace JSharp
                         {
                             for (int j = 0; j < outVar.Length; j++)
                             {
-                                //string v = context.GetVariable(outVar[j]);
                                 output += parseLine(desugar(outVar[j] + " " + op + " " + funObj.outputs[j].gameName)) + '\n';
                             }
                         }
