@@ -2888,7 +2888,7 @@ namespace JSharp
         {
             if (text.Split(' ').Length == 1)
             {
-                string pre = Core.Positioned(smartEmpty(text));
+                string pre = Core.Align(smartEmpty(text));
 
                 int wID = whileID++;
                 string funcName = context.GetFun() + "w_" + wID.ToString();
@@ -3350,6 +3350,11 @@ namespace JSharp
             if (context.IsFunction(t))
             {
                 return variables[context.GetFunctionName(t)].outputs[0].type;
+            }
+            if (smartEmpty(t).StartsWith("-"))
+            {
+                string v = smartEmpty(t);
+                return getExprType(v.Substring(1,v.Length-1));
             }
             if (t.Contains("*") || t.Contains("+") || t.Contains("-") || t.Contains("/")||
                 t.Contains("^") || t.Contains("|") || t.Contains("&") || t.Contains("%"))
