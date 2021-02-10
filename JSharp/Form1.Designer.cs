@@ -477,7 +477,6 @@
             this.CodeBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.CodeBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.CodeBox.DetectUrls = false;
-            this.CodeBox.EnableAutoDragDrop = true;
             this.CodeBox.Font = new System.Drawing.Font("Courier New", 10F);
             this.CodeBox.ForeColor = System.Drawing.Color.White;
             this.CodeBox.Location = new System.Drawing.Point(270, 62);

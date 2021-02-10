@@ -44,5 +44,9 @@ namespace JSharp
         public int build = 0;
 
         public void Build() { build++; }
+        public override string ToString()
+        {
+            return major.ToString()+"."+minor.ToString()+"."+patch.ToString()+"."+build.ToString();
+        }
     }
 }

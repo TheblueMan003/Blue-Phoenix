@@ -42,6 +42,7 @@ namespace JSharp
         private bool exporting;
         private int index = 0;
         private int changedTime;
+        private bool selfShift;
 
 
         public Form1(string project = null)
@@ -152,6 +153,12 @@ namespace JSharp
         {
             if (projectPath == null)
                 NewProject();
+
+            if (!CodeBox.AutoWordSelection)
+            {
+                CodeBox.AutoWordSelection = true;
+                CodeBox.AutoWordSelection = false;
+            }
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -925,12 +932,68 @@ namespace JSharp
 
                 // '}'
                 case '}':
-                    // si on a appuyé sur "}", c'est qu'on finit un groupe et on enlève une indentation
-                    this.Focus();
-                    SendKeys.Send("^(%()){LEFT}{BKSP}{RIGHT}");
+                    SendKeys.Send("{LEFT}{BACKSPACE}{RIGHT}");
                     break;
 
                 default:
+                    break;
+            }
+            switch (e.KeyCode)
+            {
+                case Keys.Home:
+                    string line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)];
+                    int start = CodeBox.GetFirstCharIndexFromLine(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart));
+                    int shift = 0;
+                    string tmp2 = "";
+                    while (line.StartsWith("\t"))
+                    {
+                        tmp2 += "{RIGHT}";
+                        shift++;
+                        line = line.Substring(1, line.Length - 1);
+                    }
+                    if (start+shift != CodeBox.SelectionStart)
+                        SendKeys.Send(tmp2);
+                    break;
+
+                case Keys.Left:
+                    if (e.Control && !selfShift)
+                    {
+                        int i = CodeBox.SelectionStart-1;
+                        tmp2 = "";
+                        Regex reg = new Regex("[a-zA-Z0-9_\\$]");
+                        while (i > 0 && reg.Match(CodeBox.Text[i].ToString()).Success)
+                        {
+                            i--;
+                            if (CodeBox.Text[i] == '_')
+                            {
+                                tmp2 += "{Left}{Left}";
+                            }
+                        }
+                        SendKeys.Send(tmp2);
+                        selfShift = true;
+                    }
+                    break;
+                case Keys.Right:
+                    if (e.Control && !selfShift)
+                    {
+                        int i = CodeBox.SelectionStart;
+                        tmp2 = "";
+                        Regex reg = new Regex("[a-zA-Z0-9_\\$]");
+                        while (i < CodeBox.Text.Length && reg.Match(CodeBox.Text[i].ToString()).Success)
+                        {
+                            i++;
+                            if (CodeBox.Text[i] == '_')
+                            {
+                                tmp2 += "{RIGHT}{RIGHT}";
+                            }
+                        }
+                        selfShift = true;
+                        SendKeys.Send(tmp2);
+                    }
+                    break;
+
+                default:
+                    selfShift = false;
                     break;
             }
         }

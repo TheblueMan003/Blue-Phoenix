@@ -76,6 +76,7 @@ namespace JSharp
         private static string dirVar;
         private static bool OffuscateNeed;
         private static CompilerCore Core;
+        private static ProjectVersion projectVersion;
 
         #region Regexs
         private static Regex funcReg = new Regex(@"^(@?\w+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])*\s+)+\w+\s*\(.*\)");
@@ -116,6 +117,7 @@ namespace JSharp
         public static List<File> compile(CompilerCore core,string project, List<File> codes, Debug debug, bool offuscated, ProjectVersion version, string pctFolder)
         {
             Core = core;
+            projectVersion = version;
             for (int i = 0; i < 11; i++)
             {
                 pow64[i] = IntPow(alphabet.Length, i);
@@ -569,19 +571,8 @@ namespace JSharp
         }
         public static string desugar(string text)
         {
+            text = text.Replace("$projectName", Project.ToLower()).Replace("$projectVersion", projectVersion.ToString());
             Match match;
-            MatchCollection matches = ifsDesugarReg.Matches(text);
-            /*
-            while (matches.Count > 0)
-            {
-                foreach (Match match_ in matches)
-                {
-                    text = text.Substring(0, match_.Index) +
-                                "ifs" + match_.Value.Substring(2, match_.Value.Length - 2)+
-                                text.Substring(match_.Index + match_.Length, text.Length - match_.Index - match_.Length);
-                }
-                matches = ifsReg.Matches(text);
-            }*/
             text = ifelseDetect(text);
             
             match = oppReg.Match(text);

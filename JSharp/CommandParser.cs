@@ -414,6 +414,36 @@ namespace JSharp
 
                 return output + '\n';
             }
+            else if (args.Length == 2 && context.isEntity(args[1]))
+            {
+                int tmpI;
+                string output;
+                if (int.TryParse(args[0], out tmpI))
+                {
+                    output = "gamemode " + difficulties[tmpI] + " " + context.GetEntitySelector(args[1]);
+                }
+                else
+                {
+                    output = "gamemode " + Compiler.smartEmpty(args[0]) + " " + context.GetEntitySelector(args[1]);
+                }
+
+                return output + '\n';
+            }
+            else if (args.Length == 1)
+            {
+                int tmpI;
+                string output;
+                if (int.TryParse(args[0], out tmpI))
+                {
+                    output = "gamemode " + difficulties[tmpI] + " @s";
+                }
+                else
+                {
+                    output = "gamemode " + Compiler.smartEmpty(args[0]) + " @s";
+                }
+
+                return output + '\n';
+            }
             else
             {
                 return Compiler.functionEval(text);
