@@ -735,7 +735,7 @@ namespace JSharp
         {
             try
             {
-                Regex reg = new Regex(@"\b((if)|(for)|(while))\b");
+                Regex reg = new Regex(@"(?s)^\s*((if)|(for)|(while))\b");
                 Stack<char> chars = new Stack<char>();
                 string[] textArr = CodeBox.Text.Split('\n');
                 string text = "";
@@ -903,7 +903,7 @@ namespace JSharp
         {
             new StructureImport(projectPath.Replace(Path.GetFileName(projectPath),"")).ShowDialog();
         }
-
+        
         private void CodeBox_KeyDown(object sender, KeyEventArgs e)
         {
             switch (e.KeyValue)
