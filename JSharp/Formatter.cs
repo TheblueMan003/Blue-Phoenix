@@ -12,7 +12,7 @@ namespace JSharp
     public static class Formatter
     {
         private static string[] funKeyword = { "debug" ,"print"};
-        private static string[] typKeyword = { "int", "float", "entity", "string", "bool", "function"};
+        private static string[] typKeyword = { "int", "float", "entity", "string", "bool", "function", "selector"};
         private static string[] compKeyword = { "json", "params", "implicite"};
         private static string[] blueWord = { "true", "false" };
         private static string[] importWord = { "import", "package", "using","as" };
