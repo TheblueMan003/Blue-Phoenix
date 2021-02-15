@@ -15,7 +15,7 @@ namespace JSharp
         public static Dictionary<string, List<Function>> functions;
         public static HashSet<Function> abstractFunctionsNeeded;
         public static Dictionary<string, Variable> variables;
-        public static Dictionary<string, List<string>> enums;
+        public static Dictionary<string, Enum> enums;
         public static Dictionary<string, Structure> structs;
         public static Dictionary<string, Class> classes;
         public static Dictionary<string, TagsList> blockTags;
@@ -105,7 +105,7 @@ namespace JSharp
         private static Regex whileReg = new Regex(@"^while\s*\(");
         private static Regex forgenerateReg = new Regex(@"^forgenerate\s*\(");
         private static Regex forReg = new Regex(@"^for\s*\(");
-        private static Regex enumReg = new Regex(@"^enum\s+\w+\s*=");
+        private static Regex enumReg = new Regex(@"^(\w+\s+)*enum\s+\w+\s*=");
         private static Regex blocktagReg = new Regex(@"^blocktags\s+\w+\s*=");
         private static Regex varInstReg = new Regex(@"^\w+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+[\w$]+\s*");
         private static Regex elseReg = new Regex(@"^else\s*");
@@ -139,7 +139,7 @@ namespace JSharp
             {
                 functions = new Dictionary<string, List<Function>>();
                 variables = new Dictionary<string, Variable>();
-                enums = new Dictionary<string, List<string>>();
+                enums = new Dictionary<string, Enum>();
                 structs = new Dictionary<string, Structure>();
                 switches = new Stack<Variable>();
                 constants = new Dictionary<int, Variable>();
@@ -278,9 +278,13 @@ namespace JSharp
         {
             Formatter.setEnum(new List<string>(enums.Keys));
             List<string> formEnums = new List<string>();
-            foreach (List<string> s in enums.Values)
+            
+            foreach (Enum s in enums.Values)
             {
-                formEnums.AddRange(s);
+                foreach(Enum.EnumValue v in s.values)
+                {
+                    formEnums.Add(v.value);
+                }
             }
             Formatter.setEnumValue(formEnums);
             Formatter.setStructs(new List<string>(structs.Keys));
@@ -2616,24 +2620,24 @@ namespace JSharp
                 {
                     if (!tag.StartsWith("__"))
                     {
-                        if (functionTags.Contains(tag))
+                        if (functionTags.Contains(tag.ToLower()))
                         {
-                            Function f = GetFunction(context.GetFunctionName("__tags__." + tag), new string[] { });
+                            Function f = GetFunction(context.GetFunctionName("__tags__." + tag.ToLower()), new string[] { });
                             f.file.AddLine(parseLine(func + "()"));
                             fFile.use();
                         }
                         else
                         {
-                            functionTags.Add(tag);
+                            functionTags.Add(tag.ToLower());
 
-                            File tagFile = new File("__tags__/" + tag);
-                            Function tagFunc = new Function(tag, Project + ":__tags__/" + tag, tagFile);
+                            File tagFile = new File("__tags__/" + tag.ToLower());
+                            Function tagFunc = new Function(tag, Project + ":__tags__/" + tag.ToLower(), tagFile);
                             tagFile.AddLine(parseLine(func + "()"));
                             files.Add(tagFile);
                             List<Function> f = new List<Function>();
                             f.Add(tagFunc);
-                            functions.Add(Project + ".__tags__." + tag, f);
-                            functionTags.Add(tag);
+                            functions.Add(Project + ".__tags__." + tag.ToLower(), f);
+                            functionTags.Add(tag.ToLower());
 
                             tagFile.use();
                             fFile.use();
@@ -2945,10 +2949,41 @@ namespace JSharp
         }
         public static string instEnum(string text)
         {
-            string[] field = smartSplit(smartEmpty(text), '=');
-            
-            enums.Add(smartEmpty(field[0].Substring(4,field[0].Length-4).ToLower()),
-                new List<string>(smartSplit(field[1].ToLower(), ',')));
+            string[] field = smartSplit(text, '=');
+            string[] subField1 = smartSplit(field[0], ' ');
+            bool final = false;
+            bool overriding = false;
+
+            string name = "";
+            for (int i = 0; i < subField1.Length; i++)
+            {
+                if (subField1[i] == "final")
+                {
+                    final = true;
+                }
+                else if (subField1[i] == "override")
+                {
+                    overriding = true;
+                }
+                else if (subField1[i] == "enum" || subField1[i] == "")
+                {
+                    
+                }
+                else if (name == "")
+                {
+                    name = subField1[i].ToLower();
+                }
+                else
+                {
+                    throw new Exception("Unknown keyword: " + subField1[i]);
+                }
+            }
+            if (overriding && enums.ContainsKey(name))
+                enums.Remove(name);
+
+            enums.Add(name,
+                new Enum(smartSplit(field[1].ToLower(), ','),final));
+
             return "";
         }
         public static string instBlockTag(string text)
@@ -3544,20 +3579,20 @@ namespace JSharp
                 if (func.StartsWith("@"))
                 {
                     string tag = func.Substring(1, func.Length - 1);
-                    if (!functionTags.Contains(tag))
+                    if (!functionTags.Contains(tag.ToLower()))
                     {
-                        functionTags.Add(tag);
+                        functionTags.Add(tag.ToLower());
 
-                        File tagFile = new File("__tags__/" + tag);
-                        Function tagFunc = new Function(tag, Project + ":__tags__/" + tag, tagFile);
+                        File tagFile = new File("__tags__/" + tag.ToLower());
+                        Function tagFunc = new Function(tag.ToLower(), Project + ":__tags__/" + tag.ToLower(), tagFile);
                         files.Add(tagFile);
                         List<Function> f = new List<Function>();
                         f.Add(tagFunc);
                         tagFile.use();
-                        functions.Add(Project + ".__tags__." + tag, f);
+                        functions.Add(Project + ".__tags__." + tag.ToLower(), f);
                     }
 
-                    func = "__tags__." + tag;
+                    func = "__tags__." + tag.ToLower();
                 }
 
                 string funcName = context.GetFunctionName(func);
@@ -4502,7 +4537,7 @@ namespace JSharp
 
             foreach (var key in enums.Keys)
             {
-                foreach (var val in enums[key])
+                foreach (var val in enums[key].Values())
                 {
                     if (val == lower)
                         lst.Add(new ImpliciteVar(key, Type.ENUM, text));
@@ -4627,48 +4662,6 @@ namespace JSharp
                         + "" + alphabet[(int)(c & 63)];
         }
 
-        public static void offuscate(List<File> files)
-        {
-            /*
-            offuscationMap = new Dictionary<string, string>();
-            offuscationSet = new HashSet<string>();
-            List<string> keys = new List<string>(variables.Keys);
-            keys.Sort((a, b) => b.Length.CompareTo(a.Length));
-            bool showPercent = keys.Count > 1000;
-            int count = 0;
-            int rCount = 0;
-            int ignore = 0;
-            float max = keys.Count;
-
-            foreach (string var in keys)
-            {
-                if (!variables[var].isStructureVar)
-                {
-                    string oldName = var;
-                    string newName = offuscationMapAdd(var);
-                    offuscationMap.Add(oldName, newName);
-                    foreach (File f in files)
-                    {
-                        f.content = f.content.Replace(oldName, newName);
-                    }
-                    rCount++;
-                }
-                else
-                {
-                    ignore++;
-                }
-                if (showPercent)
-                {
-                    count++;
-                    if (count % 1000 == 0)
-                    {
-                        GobalDebug("Offuscation: "+((int)(count/ max*100)).ToString()+"%", Color.LimeGreen); ;
-                    }
-                }
-            }
-            
-            GobalDebug("Offuscated " + rCount.ToString() + " variables. Ignored: "+ ignore.ToString(), Color.LimeGreen);*/
-        }
         public static ParenthiseError checkParenthisation(File file)
         {
             Stack<char> chars = new Stack<char>();
@@ -5295,7 +5288,80 @@ namespace JSharp
                     return type.ToString();
             }
         }
- 
+        public class Enum
+        {
+            public class EnumValue
+            {
+                public string value;
+                public Dictionary<string, string> fields = new Dictionary<string, string>();
+
+                public EnumValue(string value)
+                {
+                    this.value = value;
+                }
+            }
+
+            public List<EnumValue> values = new List<EnumValue>();
+            public List<string> fields = new List<string>();
+            public bool final = false;
+
+            public Enum(string[] values, bool final = false)
+            {
+                foreach (string value in values)
+                {
+                    Add(value);
+                }
+                this.final = final;
+            }
+
+            public bool Contains(string value)
+            {
+                foreach (EnumValue v in values)
+                {
+                    if (v.value.ToLower() == value.ToLower())
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            public int IndexOf(string value)
+            {
+                int i = 0;
+                foreach (EnumValue v in values)
+                {
+                    if (v.value.ToLower() == value.ToLower())
+                    {
+                        return i;
+                    }
+                    i++;
+                }
+                return -1;
+            }
+            public void Add(string value)
+            {
+                value = smartEmpty(value);
+                if (final)
+                {
+                    throw new Exception("Cannot add To final enum");
+                }
+                if (!Contains(value))
+                {
+                    values.Add(new EnumValue(value));
+                }
+            }
+            public List<string> Values()
+            {
+                List<string> lst = new List<string>();
+                foreach (EnumValue v in values)
+                {
+                    lst.Add(v.value);
+                }
+                return lst;
+            }
+        }
+
         public class Argument : Variable
         {
             public string defValue = null;
@@ -5476,8 +5542,8 @@ namespace JSharp
                     }
                     else if (enumGen != null )
                     {
-                        genAmount = enums[enumGen].Count;
-                        foreach (string value in enums[enumGen])
+                        genAmount = enums[enumGen].values.Count;
+                        foreach (string value in enums[enumGen].Values())
                         {
                             generate(value);
                         }

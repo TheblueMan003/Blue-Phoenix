@@ -19,7 +19,7 @@ namespace JSharp
         private static string[] selector = { "@a", "@e", "@p", "@s", "@r" };
         private static string[] defWord = { "def", "class", "object", "if", "ifs", "then", "else", "elseif", "elif", "elsif",
             "while", "for", "with", "forgenerate", "interface", "foreach" , "return", "&&", "||", "at",
-            "switch", "case", "const", 
+            "switch", "case", "const","final","override",
             "struct", "extends", "static", "positioned", "lazy", "abstract", "this", "align", "alias",
             "ticking", "loading", "helper", "void", "null", "enum", "blocktags", "public","private", "new"};
 
