@@ -700,12 +700,15 @@ namespace JSharp
                             {
                                 output += ",{\"text\":" + "\"[\"";
                                 output += jsonSubArg(subargs, context);
+                                output += "}";
                             }
-                            string[] v = context.GetVariableName(subargs[0]).Split(' ');
+                            string[] v = context.GetVariableName(subargs[0]+"."+j.ToString()).Split(' ');
                             output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
                             output += jsonSubArg(subargs, context);
+                            output += "}";
                             output += ",{\"text\":" + "\", \"";
                             output += jsonSubArg(subargs, context);
+                            output += "}";
                             if (j == nb - 1)
                             {
                                 output += ",{\"text\":" + "\"]\"";
