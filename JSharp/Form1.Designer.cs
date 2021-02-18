@@ -481,6 +481,7 @@
             this.CodeBox.ForeColor = System.Drawing.Color.White;
             this.CodeBox.Location = new System.Drawing.Point(270, 62);
             this.CodeBox.Name = "CodeBox";
+            this.CodeBox.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedBoth;
             this.CodeBox.ShowSelectionMargin = true;
             this.CodeBox.Size = new System.Drawing.Size(762, 390);
             this.CodeBox.TabIndex = 0;

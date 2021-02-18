@@ -43,17 +43,24 @@ namespace JSharp
         {
             if (Codebox.SelectedText == textBox1.Text)
             {
+                int s = Codebox.SelectionStart;
                 string a = Codebox.Text.Substring(0, Codebox.SelectionStart);
                 string b = Codebox.Text.Substring(Codebox.SelectionStart+Codebox.SelectionLength, Codebox.Text.Length - (Codebox.SelectionStart + Codebox.SelectionLength));
 
                 Codebox.Text = a + textBox2.Text + b;
+                Formatter.reformat(Codebox,this,false);
                 Find();
+
+                Codebox.SelectionStart=s;
             }
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
+            int s = Codebox.SelectionStart;
             Codebox.Text = Codebox.Text.Replace(textBox1.Text, textBox2.Text);
+            Formatter.reformat(Codebox, this, false);
+            Codebox.SelectionStart = s;
         }
     }
 }

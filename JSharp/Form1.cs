@@ -945,7 +945,7 @@ namespace JSharp
                     int start = CodeBox.GetFirstCharIndexFromLine(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart));
                     int length = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)].Length;
                     
-                    if (start+length != CodeBox.SelectionStart)
+                    if (start+length != CodeBox.SelectionStart && e.Shift)
                         SendKeys.Send("{LEFT}");
                     break;
 
