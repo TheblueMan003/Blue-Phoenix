@@ -28,6 +28,8 @@ namespace JSharp
         private static List<string> enumsValue = new List<string>();
         private static List<string> package = new List<string>();
         private static List<string> tags = new List<string>();
+        private static List<string> defWordMore1 = new List<string>();
+        private static List<string> defWordMore2 = new List<string>();
 
         private static Regex numberRegex = new Regex(@"(-?\b)(\d+\.\d+|\d+)\b");
         private static Regex wordRegex = new Regex("(\"[^\\n\"]+\"|\"\")");
@@ -44,6 +46,7 @@ namespace JSharp
             colorCodings.Add(ColorCoding.Get(importWord, Color.FromArgb(74, 156, 199)));
             colorCodings.Add(ColorCoding.Get(CommandParser.funcName, Color.FromArgb(0, 185, 255)));
             colorCodings.Add(ColorCoding.Get(defWord, Color.FromArgb(74, 156, 199)));
+            colorCodings.Add(ColorCoding.Get(defWordMore1.ToArray(), Color.FromArgb(74, 156, 199)));
             colorCodings.Add(ColorCoding.Get(funKeyword, Color.Magenta));
             colorCodings.Add(ColorCoding.Get(typKeyword, Color.Orange));
             colorCodings.Add(ColorCoding.Get(compKeyword, Color.Magenta));
@@ -61,6 +64,7 @@ namespace JSharp
             colorCodings.Add(ColorCoding.Get(enumsValue.ToArray(), Color.LightGreen));
             colorCodings.Add(ColorCoding.Get(structs.ToArray(), Color.LimeGreen));
             colorCodings.Add(ColorCoding.GetPackage(package.ToArray(), Color.LightSteelBlue));
+            colorCodings.Add(ColorCoding.GetPackage(defWordMore2.ToArray(), Color.LightSteelBlue));
 
             colorCodings.Add(ColorCoding.GetSelector(selector, Color.LightBlue));
             colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex));
@@ -90,6 +94,18 @@ namespace JSharp
             foreach(string tag in keys)
             {
                 tags.Add("@"+tag);
+            }
+        }
+        public static void setDefWord(List<string> keys)
+        {
+            defWordMore1 = new List<string>();
+            defWordMore2 = new List<string>();
+            foreach (string tag in keys)
+            {
+                if (tag.Contains("."))
+                    defWordMore2.Add(tag.Replace(".","\\."));
+                else
+                    defWordMore1.Add(tag);
             }
         }
 

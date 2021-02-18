@@ -52,7 +52,7 @@ namespace JSharp
         private static bool isInStaticMethod;
         private static bool forcedUnsed = false;
 
-        private static Stack<string> lazyCall = new Stack<string>();
+        private static Stack<Function> lazyCall = new Stack<Function>();
         private static Stack<List<Variable>> lazyOutput;
         private static File structMethodFile;
         private static File stringPool;
@@ -78,6 +78,8 @@ namespace JSharp
         private static bool OffuscateNeed;
         private static CompilerCore Core;
         private static ProjectVersion projectVersion;
+
+        private static List<string> funcDef;
 
         #region Regexs
         private static Regex funcReg = new Regex(@"^(@?\w+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])*\s+)+\w+\s*\(.*\)");
@@ -134,6 +136,7 @@ namespace JSharp
             condID = 0;
             switchID = -1;
             lambdaID = 0;
+            funcDef = new List<string>();
 
             try
             {
@@ -213,7 +216,7 @@ namespace JSharp
             condIDStack = new Stack<int>();
             LastConds = new Stack<int>();
             lazyOutput = new Stack<List<Variable>>();
-            lazyCall = new Stack<string>();
+            lazyCall = new Stack<Function>();
             lazyEvalVar = new List<Dictionary<string, string>>();
             LastCond = -1;
             currentFile = f.name;
@@ -290,6 +293,7 @@ namespace JSharp
             Formatter.setStructs(new List<string>(structs.Keys));
             Formatter.setpackage(packages);
             Formatter.setTags(functionTags);
+            Formatter.setDefWord(funcDef);
             Formatter.loadDict();
         }
 
@@ -475,12 +479,13 @@ namespace JSharp
                     return instWith(args, text);
                 }
                 //at
+                /*
                 else if (atReg.Match(text).Success)
                 {
                     string[] args = getArgs(text);
 
                     return instAt(args, text);
-                }
+                }*/
                 //positioned
                 else if (positonedReg.Match(text).Success)
                 {
@@ -825,6 +830,7 @@ namespace JSharp
                     if (funObj == null)
                     {
                         bool isGood = true;
+
                         if (!numericalOnly && f.lazy && f.tags.Contains("__numerical_only__"))
                             isGood = false;
 
@@ -832,13 +838,13 @@ namespace JSharp
                         {
                             try
                             {
-                                if (getExprType(args[i]) != f.args[i].type)
+                                if (getExprType(args[i]) != f.args[i].type || (f.lazy && f.args[i].name.StartsWith("$") && !f.tags.Contains("__numerical_only__")))
                                 {
                                     isGood = false;
                                 }
                             }
                             catch {
-                                isGood = true;
+                                isGood = false;
                             }
                         }
                         if (isGood)
@@ -853,6 +859,7 @@ namespace JSharp
                     if (funObj == null)
                     {
                         bool isGood = true;
+
                         if (!numericalOnly && f.lazy && f.tags.Contains("__numerical_only__"))
                             isGood = false;
 
@@ -860,7 +867,9 @@ namespace JSharp
                         {
                             try
                             {
-                                if (getExprType(args[i]) != f.args[i].type && getExprType(args[i]) != Type.INT && f.args[i].type != Type.INT && getExprType(args[i]) != Type.FLOAT && f.args[i].type != Type.FLOAT)
+                                if ((getExprType(args[i]) != f.args[i].type && getExprType(args[i]) != Type.INT
+                                    && f.args[i].type != Type.INT && getExprType(args[i]) != Type.FLOAT && f.args[i].type != Type.FLOAT)
+                                    || (f.lazy && f.args[i].name.StartsWith("$") && !f.tags.Contains("__numerical_only__")))
                                 {
                                     isGood = false;
                                 }
@@ -886,7 +895,9 @@ namespace JSharp
                         {
                             try
                             {
-                                if (getExprType(args[i]) != f.args[i].type && getExprType(args[i]) != Type.INT && f.args[i].type != Type.INT && getExprType(args[i]) != Type.FLOAT && f.args[i].type != Type.FLOAT)
+                                if ((getExprType(args[i]) != f.args[i].type && getExprType(args[i]) != Type.INT 
+                                    && f.args[i].type != Type.INT && getExprType(args[i]) != Type.FLOAT && f.args[i].type != Type.FLOAT)
+                                    || (f.lazy && f.args[i].name.StartsWith("$") && !f.tags.Contains("__numerical_only__")))
                                 {
                                     isGood = false;
                                 }
@@ -902,6 +913,29 @@ namespace JSharp
                             break;
                         }
                     }
+                }
+                bool wasEmpty = (funObj == null);
+                
+                foreach (Function f in functions[funcName])
+                {
+                    int functionCount = 0;
+                    foreach(var arg in f.args)
+                    {
+                        if (arg.type == Type.FUNCTION)
+                        {
+                            functionCount++;
+                        }
+                    }
+                    if (funObj == null && f.lazy && args.Length >= f.args.Count - functionCount && args.Length <= f.args.Count)
+                    {
+                        funObj = f;
+                    }
+                    if (wasEmpty && f.lazy && args.Length == 1 && f.args.Count > 1
+                        && smartSplit(args[0], ' ').Length >= f.args.Count - functionCount
+                        && smartSplit(args[0], ' ').Length <= f.args.Count)
+                    {
+                        funObj = f;
+                    }                       
                 }
                 if (funObj == null)
                 {
@@ -1963,8 +1997,14 @@ namespace JSharp
                 string funcName = context.GetFunctionName(func);
 
                 Function funObj = GetFunction(funcName, args);
-
-                return appendPreCond(Core.CompareVariable(funObj.outputs[0], 1, "=="), parseLine(text));
+                if (!funObj.lazy)
+                    return appendPreCond(Core.CompareVariable(funObj.outputs[0], 1, ">="), parseLine(text));
+                else
+                {
+                    int idVal3 = condID++;
+                    string line = parseLine(funObj.outputs[0].type.ToString().ToLower() + " cond_" + idVal3.ToString() + "=" + text);
+                    return appendPreCond(Core.CompareVariable(GetVariableByName("cond_" + idVal3.ToString()), 1, ">="), line);
+                }
             }
             else
             {
@@ -2364,6 +2404,7 @@ namespace JSharp
             bool isLoading = false;
             bool isHelper = false;
             bool isPrivate = false;
+            bool isLambda = false;
             string arg = getArg(text);
             string[] args = smartSplit(arg, ',');
 
@@ -2373,10 +2414,7 @@ namespace JSharp
             {
                 for (int i = 0; i < funArgType.Length - 1; i++)
                 {
-                    if (funArgType[i] == "def")
-                    {
-
-                    }
+                    if (funArgType[i] == "def"){}
                     else if (funArgType[i] == "static")
                     {
                         isStatic = true;
@@ -2392,6 +2430,10 @@ namespace JSharp
                     else if(funArgType[i] == "loading")
                     {
                         isLoading = true;
+                    }
+                    else if (funArgType[i] == "__lambda__")
+                    {
+                        isLambda = true;
                     }
                     else if(funArgType[i] == "lazy")
                     {
@@ -2416,9 +2458,15 @@ namespace JSharp
                     }
                 }
             }
-            
-            File fFile = new File(context.GetFile() + func);
-            Function function = new Function(func, context.GetFun() + func, fFile);
+
+            string fullName = context.GetFun() + func;
+            string funcID = fullName.Replace(':', '.').Replace('/', '.');
+            string subName = fullName.Substring(fullName.IndexOf(":") + 1, fullName.Length - fullName.IndexOf(":") - 1);
+
+            File fFile = new File(subName);
+            Function function = new Function(func, fullName, fFile);
+
+            funcDef.Add(subName.Replace("/","."));
             function.desc = functionDesc;
             fFile.function = function;
             
@@ -2427,11 +2475,10 @@ namespace JSharp
             function.isHelper = isHelper;
             function.tags = tags;
             function.isPrivate = isPrivate;
+            function.isLambda = isLambda;
+
+            
             function.privateContext = context.GetVar();
-
-
-            string funcID = (context.GetFun() + func).Replace(':', '.').Replace('/', '.');
-
 
             if (!functions.ContainsKey(funcID))
             {
@@ -2442,8 +2489,14 @@ namespace JSharp
             else if (functions[funcID][0].isAbstract)
             {
                 Function prev = functions[funcID][0];
-                //GobalDebug(function.gameName + " was overrided", Color.Yellow);
                 fFile.notUsed = prev.file.notUsed;
+
+                function.isLoading = prev.isLoading || isLoading;
+                function.isTicking = prev.isTicking || isTicking;
+                function.isHelper = prev.isHelper || isHelper;
+                function.tags.AddRange(prev.tags);
+                function.isPrivate = prev.isPrivate || isPrivate;
+                function.isLambda = prev.isLambda || isLambda;
             }
             else
             {
@@ -2897,8 +2950,9 @@ namespace JSharp
         }
         public static string instPositioned(string text,string fText)
         {
-            if (text.Split(' ').Length == 3)
+            if (text.Split(' ').Length == 3 && !text.Contains(","))
             {
+
                 if (isString(text))
                     text = extractString(text);
 
@@ -3039,7 +3093,7 @@ namespace JSharp
 
             string cmd = "function " + funcName + '\n';
 
-            context.currentFile().AddLine(init+ cmd);
+            context.currentFile().AddLine(init);
             File fFile = new File(context.GetFile() + "s_" + wID, "", "switch");
             context.Sub("s_" + wID, fFile);
             files.Add(fFile);
@@ -3372,6 +3426,10 @@ namespace JSharp
         }
         public static Type getExprType(string t)
         {
+            if (t.StartsWith("(") && t.EndsWith(")"))
+            {
+                return getExprType(getParenthis(t));
+            }
             if (t.ToLower() == "true" || t.ToLower() == "false")
             {
                 return Type.BOOL;
@@ -3610,10 +3668,10 @@ namespace JSharp
 
                 string funcName = context.GetFunctionName(func);
 
-                if (lazyCall.Contains(funcName))
-                    throw new Exception("Cannot have recursive Lazy Recursive Function.");
 
                 Function funObj = GetFunction(funcName, args);
+                if (lazyCall.Contains(funObj))
+                    throw new Exception("Cannot have recursive Lazy Recursive Function.");
                 if (funObj.isPrivate && !context.GetVar().StartsWith(funObj.privateContext))
                 {
                     throw new Exception("can not call private function " + funObj.name);
@@ -3629,6 +3687,21 @@ namespace JSharp
                 if (!funObj.lazy)
                 {
                     if (args.Length == 1 && funObj.args.Count == smartSplit(args[0],' ').Length)
+                    {
+                        args = smartSplit(args[0], ' ');
+                    }
+                }
+                else
+                {
+                    int functionCount = 0;
+                    foreach (var a in funObj.args)
+                    {
+                        if (a.type == Type.FUNCTION)
+                        {
+                            functionCount++;
+                        }
+                    }
+                    if (args.Length == 1 && funObj.args.Count > 1 && smartSplit(args[0], ' ').Length >= funObj.args.Count - functionCount)
                     {
                         args = smartSplit(args[0], ' ');
                     }
@@ -3652,7 +3725,7 @@ namespace JSharp
                     }
 
 
-                    lazyCall.Push(funcName);
+                    lazyCall.Push(funObj);
                     string clear = "";
                     string init = "";
                     if (funObj.varOwner!= null)
@@ -3691,8 +3764,9 @@ namespace JSharp
                             {
                                 anonymusFuncName = "lamba_" + lambdaID.ToString();
                                 
-                                parseLine("def abstract " + anonymusFuncName + "()");
+                                parseLine("def abstract __lambda__ " + anonymusFuncName + "()");
 
+                                compVal.Add(new string[] { a.name + ".name", functions[context.GetFunctionName(anonymusFuncName)][0].gameName });
                                 if (a.name.StartsWith("$"))
                                     compVal.Add(new string[] { a.name, anonymusFuncName });
                                 else
@@ -3709,8 +3783,15 @@ namespace JSharp
                                 if (a.type == Type.INT || a.type == Type.FUNCTION || a.type == Type.FLOAT)
                                 {
                                     if (context.GetVariable(smartEmpty(args[i]),true) != null){
+                                        compVal.Add(new string[] { a.name + ".enums", GetVariableByName(smartEmpty(args[i])).enums });
+                                        compVal.Add(new string[] { a.name + ".type", GetVariableByName(smartEmpty(args[i])).GetTypeString() });
+                                        compVal.Add(new string[] { a.name + ".name", GetVariableByName(smartEmpty(args[i])).gameName });
                                         compVal.Add(new string[] { a.name + ".scoreboard", GetVariableByName(smartEmpty(args[i])).scoreboard() });
                                         compVal.Add(new string[] { a.name + ".scoreboardname", GetVariableByName(smartEmpty(args[i])).scoreboard().Split(' ')[1] });
+                                    }
+                                    if (a.type == Type.FUNCTION)
+                                    {
+                                        compVal.Add(new string[] { a.name + ".name", functions[context.GetFunctionName(smartEmpty(args[i]))][0].gameName });
                                     }
                                     compVal.Add(new string[] { a.name, smartEmpty(args[i]) });
                                 }
@@ -3736,6 +3817,9 @@ namespace JSharp
                                 else
                                 {
                                     compVal.Add(new string[] { a.name + ".scoreboard", GetVariableByName(smartEmpty(args[i])).scoreboard() });
+                                    compVal.Add(new string[] { a.name + ".enums", GetVariableByName(smartEmpty(args[i])).enums });
+                                    compVal.Add(new string[] { a.name + ".type", GetVariableByName(smartEmpty(args[i])).GetTypeString() });
+                                    compVal.Add(new string[] { a.name + ".name", GetVariableByName(smartEmpty(args[i])).gameName });
                                     compVal.Add(new string[] { a.name, context.GetVariable(args[i]) });
                                 }
                             }
@@ -4753,6 +4837,7 @@ namespace JSharp
             public bool isTicking;
             public bool isLoading;
             public bool isHelper;
+            public bool isLambda;
             public bool isPrivate = false;
             public string privateContext;
             public bool isStructMethod = false;
@@ -5427,7 +5512,7 @@ namespace JSharp
 
             public bool notUsed = false;
             public List<File> childs = new List<File>();
-            
+            public File parent;
 
             public File(string name, string content = "", string type="")
             {
@@ -5576,6 +5661,14 @@ namespace JSharp
                     if (LastConds.Count > 0)
                         LastCond = LastConds.Pop();
                 }
+
+                if (function != null && function.isLambda && (parent == null || parent.function != function) && lineCount == 1 && !content.StartsWith("#"))
+                {
+                    File f = context.currentFile();
+                    string tmp = f.content.Replace("function "+function.gameName, content);
+                    f.content = tmp;
+                    files.Remove(this);
+                }
                 if ((type == "if" || (type == "with" && !cantMergeWith) || type == "at" || type == "case") && lineCount == 1 && !content.StartsWith("#"))
                 {
                     File f = context.currentFile();
@@ -5638,6 +5731,7 @@ namespace JSharp
                     file.notUsed = notUsed;
                 if (file.function == null)
                     file.function = function;
+                file.parent = this;
 
                 childs.Add(file);
             }
