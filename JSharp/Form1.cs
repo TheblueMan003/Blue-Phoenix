@@ -940,9 +940,18 @@ namespace JSharp
             }
             switch (e.KeyCode)
             {
-                case Keys.Home:
+                case Keys.End:
                     string line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)];
                     int start = CodeBox.GetFirstCharIndexFromLine(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart));
+                    int length = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)].Length;
+                    
+                    if (start+length != CodeBox.SelectionStart)
+                        SendKeys.Send("{LEFT}");
+                    break;
+
+                case Keys.Home:
+                    line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)];
+                    start = CodeBox.GetFirstCharIndexFromLine(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart));
                     int shift = 0;
                     string tmp2 = "";
                     while (line.StartsWith("\t"))

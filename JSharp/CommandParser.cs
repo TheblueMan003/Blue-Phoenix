@@ -691,6 +691,7 @@ namespace JSharp
                             tmp += "tag @e[tag=__str__,tag=!__str__tag__] add __str__tag__" +  "\n";
                             output += ",{\"selector\":\"" + "@e[tag=__str_" + strTag.ToString() + "]" + "\"";
                             output += jsonSubArg(subargs, context);
+                            output += "}";
                             strTag++;
                             output2 += tmp;
                         }

@@ -101,8 +101,8 @@ namespace JSharp
 
                 int selectStart = CodeBox.SelectionStart;
 
-                int l = CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart);
-                int v = CodeBox.GetFirstCharIndexFromLine(l);
+                int lineIndex = CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart);
+                int lineCharIndex = CodeBox.GetFirstCharIndexFromLine(lineIndex);
 
                 bool hadFocus = false;
                 //partial = false;
@@ -112,15 +112,14 @@ namespace JSharp
                     hadFocus = true;
                 }
 
-                int start = partial ? Math.Max(v, 0) : 0;
-                if (l < CodeBox.Lines.Length)
+                int start = partial ? Math.Max(lineCharIndex, 0) : 0;
+                if (lineIndex < CodeBox.Lines.Length)
                 {
-                    int end = start + CodeBox.Lines[l].Length;
+                    int end = start + CodeBox.Lines[lineIndex].Length+1;
                     if (!partial)
                     {
                         end = CodeBox.TextLength;
                     }
-                    string line = CodeBox.Text.Substring(start, end - start);
 
                     CodeBox.Select(start, end - start);
                     CodeBox.SelectionColor = Color.White;
@@ -138,14 +137,14 @@ namespace JSharp
             reformating = false;
             }
         }
-        private static List<Word> smartReplace(string t)
+        private static List<Word> smartReplace(string t, int start, int length)
         {
             List<Word> words = new List<Word>(2000);
             
             foreach (ColorCoding colorCoding in colorCodings) {
-                foreach (Match match in colorCoding.r.Matches(t))
+                foreach (Match match in colorCoding.r.Matches(t.Substring(start, length)))
                 {
-                    words.Add(new Word(colorCoding.c, match.Index, match.Length));
+                    words.Add(new Word(colorCoding.c, start+match.Index, match.Length));
                 }
             }
             
@@ -157,7 +156,7 @@ namespace JSharp
         {
             try
             {
-                List<Word> words = smartReplace(CodeBox.Text);
+                List<Word> words = smartReplace(CodeBox.Text, startIndex, endIndex-startIndex);
 
                 int selectStart = CodeBox.SelectionStart;
 
@@ -179,7 +178,7 @@ namespace JSharp
         }
         private static void CheckWords(RichTextBox CodeBox)
         {
-            List<Word> words = smartReplace(CodeBox.Text);
+            List<Word> words = smartReplace(CodeBox.Text,0,CodeBox.Text.Length);
 
             int selectStart = CodeBox.SelectionStart;
 

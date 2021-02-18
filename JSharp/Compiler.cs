@@ -2899,6 +2899,9 @@ namespace JSharp
         {
             if (text.Split(' ').Length == 3)
             {
+                if (isString(text))
+                    text = extractString(text);
+
                 string pre = Core.Positioned(text);
 
                 int wID = whileID++;
@@ -3548,6 +3551,16 @@ namespace JSharp
                 }
                 return output;
             }
+        }
+        public static string extractString(string text)
+        {
+            string tmp = smartEmpty(text);
+            return tmp.Substring(1, tmp.Length - 2);
+        }
+        public static bool isString(string text)
+        {
+            string tmp = smartEmpty(text);
+            return tmp.StartsWith("\"") && tmp.EndsWith("\"");
         }
 
         public static string functionEval(string text, string[] outVar = null, string op = "=")
