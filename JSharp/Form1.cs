@@ -19,6 +19,7 @@ namespace JSharp
     public partial class Form1 : Form
     {
         public Dictionary<string, string> code = new Dictionary<string, string>();
+        public Dictionary<string, string> resources = new Dictionary<string, string>();
         public Dictionary<string, Dictionary<string, TagsList>> TagsList = new Dictionary<string, Dictionary<string, TagsList>>();
         public Dictionary<string, Dictionary<string, TagsList>> MCTagsList = new Dictionary<string, Dictionary<string, TagsList>>();
         public Dictionary<string, string> structures = new Dictionary<string, string>();
@@ -31,6 +32,7 @@ namespace JSharp
         public bool ignorNextListboxUpdate = false;
         public int isCompiling = 0;
         public List<Compiler.File> compileFile;
+        public List<Compiler.File> compileResource;
         public List<Compiler.File> compileFiled;
         private List<DebugMessage> debugMSGs = new List<DebugMessage>();
         private int lastSeen = -1;
@@ -40,6 +42,7 @@ namespace JSharp
         private bool ignoreMod = false;
         private bool noReformat = false;
         private bool exporting;
+        private bool resourceSelected = false;
         private int index = 0;
         private int changedTime;
         private bool selfShift;
@@ -56,7 +59,17 @@ namespace JSharp
                 OpenFile(project);
             }
         }
-
+        private void recallFile()
+        {
+            if (resourceSelected)
+            {
+                resources[previous] = CodeBox.Text;
+            }
+            else
+            {
+                code[previous] = CodeBox.Text;
+            }
+        }
         private void button1_Click(object sender, EventArgs e)
         {
             exporting = false;
@@ -69,24 +82,29 @@ namespace JSharp
             {
                 ignorNextListboxUpdate = false;
             }
-            else if (listBox1.SelectedIndex >= 0)
+            else if (CodeListBox.SelectedIndex >= 0)
             {
                 noReformat = true;
-                code[previous] = CodeBox.Text;
+
+                recallFile();
+                resourceSelected = false;
 
                 PreviousText.Clear();
                 PreviousText.Add(CodeBox.Text);
                 index = 0;
-                if (code.ContainsKey(listBox1.SelectedItem.ToString()))
-                    CodeBox.Text = code[listBox1.SelectedItem.ToString()];
+                if (code.ContainsKey(CodeListBox.SelectedItem.ToString()))
+                    CodeBox.Text = code[CodeListBox.SelectedItem.ToString()];
                 else
                 {
                     CodeBox.Text = "";
                 }
                 
-                previous = listBox1.SelectedItem.ToString();
+                previous = CodeListBox.SelectedItem.ToString();
                 noReformat = false;
                 UpdateCodeBox();
+
+                //ignorNextListboxUpdate = true;
+                ResourceListBox.SelectedIndex = -1;
             }
         }
         private void button2_Click(object sender, EventArgs e)
@@ -113,7 +131,7 @@ namespace JSharp
         }
         private void CodeBox_Leave(object sender, EventArgs e)
         {
-            code[previous] = CodeBox.Text;
+            recallFile();
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
@@ -223,7 +241,7 @@ namespace JSharp
 
         public void Save(string projectPath)
         {
-            code[previous] = CodeBox.Text;
+            recallFile();
 
             int i = 0;
             ProjectSave save = new ProjectSave();
@@ -234,11 +252,13 @@ namespace JSharp
             save.offuscate = isLibraryCheckbox.Checked;
             save.isLibrary = isLibraryCheckbox.Checked;
             List<ProjectSave.FileSave> lst = new List<ProjectSave.FileSave>();
+            List<ProjectSave.FileSave> lstRes = new List<ProjectSave.FileSave>();
             save.compileOrder = new List<string>();
             save.datapackDirectory = currentDataPack;
             string dir = Path.GetDirectoryName(projectPath)+"/scripts/";
-            
-            foreach (string file in listBox1.Items)
+            string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
+
+            foreach (string file in CodeListBox.Items)
             {
                 if (isLibraryCheckbox.Checked)
                 {
@@ -250,7 +270,20 @@ namespace JSharp
                     lst.Add(new ProjectSave.FileSave(file, code[file], i));
                 }
             }
+            foreach (string file in ResourceListBox.Items)
+            {
+                if (isLibraryCheckbox.Checked)
+                {
+                    SafeWriteFile(dirRes + file, resources[file]);
+                    save.compileOrder.Add(file);
+                }
+                else
+                {
+                    lstRes.Add(new ProjectSave.FileSave(file, resources[file], i));
+                }
+            }
             save.files = lst.ToArray();
+            save.resources = lstRes.ToArray();
 
             File.WriteAllText(projectPath,JsonConvert.SerializeObject(save));
         }
@@ -270,7 +303,7 @@ namespace JSharp
         public void Open(string name, string data)
         {
             ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
-            listBox1.Items.Clear();
+            CodeListBox.Items.Clear();
             code.Clear();
             code = new Dictionary<string, string>();
             TagsList = project.TagsList;
@@ -283,6 +316,7 @@ namespace JSharp
             previous = "$$$$$$$$$";
             int i = 0;
             string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
+            string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
             foreach (var file in project.files)
             {
                 ignorNextListboxUpdate = true;
@@ -295,7 +329,7 @@ namespace JSharp
                     Debug("Duplicated " +file.name+"-"+file.content+"////"+code[file.name], Color.Red);
                 }
                 
-                listBox1.Items.Add(file.name);
+                CodeListBox.Items.Add(file.name);
                 
                 if (i == 0)
                 {
@@ -308,6 +342,23 @@ namespace JSharp
                 }
                 i++;
             }
+            foreach (var file in project.resources)
+            {
+                ignorNextListboxUpdate = true;
+                try
+                {
+                    resources.Add(file.name, file.content);
+                }
+                catch
+                {
+                    Debug("Duplicated " + file.name + "-" + file.content + "////" + resources[file.name], Color.Red);
+                }
+
+                ResourceListBox.Items.Add(file.name);
+
+                i++;
+            }
+
             if (project.compileOrder != null)
             {
                 foreach (var file in project.compileOrder)
@@ -322,7 +373,7 @@ namespace JSharp
                         Debug("Exception while reading " + e.ToString(), Color.Red);
                     }
 
-                    listBox1.Items.Add(file);
+                    CodeListBox.Items.Add(file);
 
                     if (i == 0)
                     {
@@ -353,7 +404,28 @@ namespace JSharp
                             Debug("Exception while reading " + e.ToString(), Color.Red);
                         }
 
-                        listBox1.Items.Add(fname.ToLower());
+                        CodeListBox.Items.Add(fname.ToLower());
+                    }
+                }
+            }
+            if (Directory.Exists(dirRes))
+            {
+                foreach (var file in Directory.GetFiles(dirRes, "*.*", SearchOption.AllDirectories))
+                {
+                    string fname = file.Substring(dirRes.Length, file.Length - dirRes.Length);
+
+                    if (!resources.ContainsKey(fname.ToLower()))
+                    {
+                        try
+                        {
+                            resources.Add(fname.ToLower(), File.ReadAllText(file));
+                        }
+                        catch (Exception e)
+                        {
+                            Debug("Exception while reading " + e.ToString(), Color.Red);
+                        }
+
+                        ResourceListBox.Items.Add(fname.ToLower());
                     }
                 }
             }
@@ -387,15 +459,27 @@ namespace JSharp
         public void NewFile()
         {
             NewFile form = new NewFile();
-            if (form.ShowDialog() == DialogResult.OK && !listBox1.Items.Contains(form.filename))
+            if (form.ShowDialog() == DialogResult.OK && !CodeListBox.Items.Contains(form.filename))
             {
-                if (form.filename != "import")
-                    listBox1.Items.Add(form.filename);
-                else
-                    listBox1.Items.Insert(0, form.filename);
-                if (form.type == JSharp.NewFile.Type.STRUCTURE)
+                if (form.type == JSharp.NewFile.Type.RESOURCE)
                 {
-                    code.Add(form.filename, "package " + form.filename + "\n\nstruct " + form.filename + "{\n\tdef __init__(){\n\n\t}\n}");
+                    ResourceListBox.Items.Add(form.filename);
+                    resources.Add(form.filename, "");
+                }
+                else
+                {
+                    if (form.filename != "import") 
+                        CodeListBox.Items.Add(form.filename);
+                    else
+                        CodeListBox.Items.Insert(0, form.filename);
+                    if (form.type == JSharp.NewFile.Type.STRUCTURE)
+                    {
+                        code.Add(form.filename, "package " + form.filename + "\n\nstruct " + form.filename + "{\n\tdef __init__(){\n\n\t}\n}");
+                    }
+                    else
+                    {
+                        code.Add(form.filename, "package " + form.filename);
+                    }
                 }
             }
         }
@@ -546,12 +630,18 @@ namespace JSharp
         public void ExportFiles(string path)
         {
             List<Compiler.File> files = new List<Compiler.File>();
-            foreach (string f in listBox1.Items)
+            foreach (string f in CodeListBox.Items)
             {
                 files.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
             }
 
-            List<Compiler.File> cFiles = Compiler.compile(new CompilerCoreJava(),projectName, files, DebugThread, true, projectVersion, Path.GetDirectoryName(projectPath));
+            List<Compiler.File> resourcesfiles = new List<Compiler.File>();
+            foreach (string f in ResourceListBox.Items)
+            {
+                files.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
+            }
+
+            List<Compiler.File> cFiles = Compiler.compile(new CompilerCoreJava(),projectName, files, resourcesfiles, DebugThread, true, projectVersion, Path.GetDirectoryName(projectPath));
             foreach (Compiler.File f in cFiles)
             {
                 string fileName = path + "/data/" + projectName.ToLower() + "/functions/" + f.name + ".mcfunction";
@@ -638,12 +728,12 @@ namespace JSharp
         }
         public void ChangeCompileOrder()
         {
-            CompileOrder form = new CompileOrder(listBox1.Items, listBox1.Items.Contains("import")?1:0);
+            CompileOrder form = new CompileOrder(CodeListBox.Items, CodeListBox.Items.Contains("import")?1:0);
             if (form.ShowDialog() == DialogResult.OK)
             {
                 ignorNextListboxUpdate = true;
-                listBox1.Items.Clear();
-                listBox1.Items.AddRange(form.Content);
+                CodeListBox.Items.Clear();
+                CodeListBox.Items.AddRange(form.Content);
                 Debug("Compile Order Changed", Color.Aqua);
             }
         }
@@ -654,12 +744,20 @@ namespace JSharp
                 this.showForm = showForm;
                 projectVersion.Build();
                 compileFile = new List<Compiler.File>();
-                foreach (string f in listBox1.Items)
+
+                recallFile();
+
+                foreach (string f in CodeListBox.Items)
                 {
                     compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
                 }
 
-                code[previous] = CodeBox.Text;
+                compileResource = new List<Compiler.File>();
+                foreach (string f in ResourceListBox.Items)
+                {
+                    compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
+                }
+
                 Thread t = new Thread(new ThreadStart(CompileJavaThreaded));
                 t.Start();
             }
@@ -671,12 +769,19 @@ namespace JSharp
                 this.showForm = showForm;
                 projectVersion.Build();
                 compileFile = new List<Compiler.File>();
-                foreach (string f in listBox1.Items)
+
+                recallFile();
+                foreach (string f in CodeListBox.Items)
                 {
                     compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
                 }
 
-                code[previous] = CodeBox.Text;
+                compileResource = new List<Compiler.File>();
+                foreach (string f in ResourceListBox.Items)
+                {
+                    compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
+                }
+
                 Thread t = new Thread(new ThreadStart(CompileBedrockThreaded));
                 t.Start();
             }
@@ -687,7 +792,7 @@ namespace JSharp
             try
             {
                 isCompiling = 1;
-                compileFiled = Compiler.compile(new CompilerCoreJava(),projectName, compileFile, DebugThread, exporting, projectVersion,
+                compileFiled = Compiler.compile(new CompilerCoreJava(),projectName, compileFile, compileResource, DebugThread, exporting, projectVersion,
                     Path.GetDirectoryName(projectPath));
 
                 if (showForm)
@@ -711,7 +816,7 @@ namespace JSharp
             try
             {
                 isCompiling = 1;
-                compileFiled = Compiler.compile(new CompilerCoreBedrock(), projectName, compileFile, DebugThread, exporting, projectVersion,
+                compileFiled = Compiler.compile(new CompilerCoreBedrock(), projectName, compileFile, compileResource, DebugThread, exporting, projectVersion,
                     Path.GetDirectoryName(projectPath));
 
                 if (showForm)
@@ -1100,6 +1205,38 @@ namespace JSharp
             exporting = false;
             CompileBedrock(true);
             UpdateCodeBox();
+        }
+
+        private void ResourceListBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (ignorNextListboxUpdate)
+            {
+                ignorNextListboxUpdate = false;
+            }
+            else if (ResourceListBox.SelectedIndex >= 0)
+            {
+                noReformat = true;
+
+                recallFile();
+                resourceSelected = true;
+
+                PreviousText.Clear();
+                PreviousText.Add(ResourceListBox.Text);
+                index = 0;
+                if (resources.ContainsKey(ResourceListBox.SelectedItem.ToString()))
+                    CodeBox.Text = resources[ResourceListBox.SelectedItem.ToString()];
+                else
+                {
+                    CodeBox.Text = "";
+                }
+
+                previous = ResourceListBox.SelectedItem.ToString();
+                noReformat = false;
+                UpdateCodeBox();
+
+                //ignorNextListboxUpdate = true;
+                CodeListBox.SelectedIndex = -1;
+            }
         }
     }
 

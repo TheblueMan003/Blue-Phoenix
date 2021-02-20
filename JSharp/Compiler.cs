@@ -29,6 +29,7 @@ namespace JSharp
         private static Dictionary<string, List<Function>> functDelegated;
         private static Dictionary<string, File> functDelegatedFile;
         private static Dictionary<string, string> selector;
+        private static Dictionary<string, string> resourceFiles;
         public static List<string> packages;
         private static HashSet<string> offuscationSet;
         private static HashSet<string> imported;
@@ -88,7 +89,7 @@ namespace JSharp
         private static Regex getReg = new Regex("\\w*\\s*=[ a-z\\.A-Z0-9]*\\[.*\\]");
         private static Regex oppReg = new Regex(@"[a-zA-Z0-9\._]+\[.*\]\s*[+\-/\*%]=");
         private static Regex setReg = new Regex("\\[.*\\]\\s*=\\s*.*");
-        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*\{(\s*\w*,?\s*)*\}|enum\s+\w+\s*=\s*\{(\s*\w*,?\s*)*\})");
+        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9 ,_=]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9 ,_=]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=]*\))?,?\s*)*\})");
         private static Regex blocktagsDesugarReg = new Regex(@"(?s)(blocktags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|blocktags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex ifsDesugarReg = new Regex(@"(?s)^(if\s*\(.*\)\{.*\}\s*else)|(if\s*\(.*\).*\s*else)");
         private static Regex funArgTypeReg = new Regex(@"^([@\w]*\s*(<\(?\w*\)?,?\(?\w*\)?>)?(\[\d+\])?)*\(");
@@ -108,16 +109,19 @@ namespace JSharp
         private static Regex forgenerateReg = new Regex(@"^forgenerate\s*\(");
         private static Regex forReg = new Regex(@"^for\s*\(");
         private static Regex enumReg = new Regex(@"^(\w+\s+)*enum\s+\w+\s*(\([a-zA-Z0-9 ,_=]*\))?\s*=");
+        private static Regex enumFileReg = new Regex(@"^(\w+\s+)*enum\s*(\([a-zA-Z0-9\. ,_=" + "\"" + @"]*\))\s*");
         private static Regex blocktagReg = new Regex(@"^blocktags\s+\w+\s*=");
         private static Regex varInstReg = new Regex(@"^\w+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+[\w$]+\s*");
         private static Regex elseReg = new Regex(@"^else\s*");
+        private static Regex regEval = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.]*\)");
+        private static Regex regEval2 = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.\(\)\s]*\)eval\$");
         #endregion
 
         private static int isInLazyCompile;
 
         private Compiler() { }
 
-        public static List<File> compile(CompilerCore core,string project, List<File> codes, Debug debug, bool offuscated, ProjectVersion version, string pctFolder)
+        public static List<File> compile(CompilerCore core,string project, List<File> codes, List<File> resources, Debug debug, bool offuscated, ProjectVersion version, string pctFolder)
         {
             Core = core;
             projectVersion = version;
@@ -158,6 +162,12 @@ namespace JSharp
                 adjPackage = new Stack<string>();
                 structStack = new Stack<Structure>();
                 blockTags = new Dictionary<string, TagsList>();
+                resourceFiles = new Dictionary<string, string>();
+                foreach(var f in resources)
+                {
+                    resourceFiles.Add(f.name, f.content);
+                    GobalDebug("Added resource: "+f.name, Color.Green);
+                }
 
                 isInStructMethod = false;
                 isInStaticMethod = false;
@@ -300,6 +310,8 @@ namespace JSharp
         public static void preparseLine(string line2, File limit = null, bool lazyEval = false)
         {
             string line = line2;
+
+
             while (line.StartsWith(" ") || line.StartsWith("\t"))
                 line = line.Substring(1, line.Length - 1);
             if (line != "")
@@ -356,6 +368,20 @@ namespace JSharp
         }
         public static string parseLine(string text)
         {
+            Match match2 = regEval.Match(text);
+            while (match2 != null && match2.Value != "" && match2.Value != null)
+            {
+                text = regReplace(text, match2, Calculator.Calculate(getArg(match2.Value)).ToString());
+                match2 = regEval.Match(text);
+            }
+
+            match2 = regEval2.Match(text);
+            while (match2 != null && match2.Value != "" && match2.Value != null)
+            {
+                text = regReplace(text, match2, Calculator.Calculate(getArg(match2.Value)).ToString());
+                match2 = regEval2.Match(text);
+            }
+
             try
             {
                 while (text.StartsWith(" ") || text.StartsWith("\t"))
@@ -525,6 +551,11 @@ namespace JSharp
                 else if (enumReg.Match(text).Success)
                 {
                     return instEnum(text);
+                }
+                //enum file
+                else if (enumFileReg.Match(text).Success)
+                {
+                    return instEnumFile(text);
                 }
                 //function def
                 else if (funcReg.Matches(text).Count > 0)
@@ -719,8 +750,16 @@ namespace JSharp
                 ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
                 
                 context.GoRoot();
+                if (project.resources != null)
+                {
+                    foreach (var f in project.resources)
+                    {
+                        if (!resourceFiles.ContainsKey(f.name))
+                            resourceFiles.Add(f.name, f.content);
+                    }
+                }
 
-                foreach(var file in project.files)
+                foreach (var file in project.files)
                 {
                     compileFile(new File(text+"."+file.name, file.content), fu, true);
                 }
@@ -736,6 +775,15 @@ namespace JSharp
                 ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
 
                 context.GoRoot();
+
+                if (project.resources != null)
+                {
+                    foreach (var f in project.resources)
+                    {
+                        if (!resourceFiles.ContainsKey(f.name))
+                            resourceFiles.Add(f.name, f.content);
+                    }
+                }
 
                 foreach (var file in project.files)
                 {
@@ -3076,6 +3124,58 @@ namespace JSharp
 
             return "";
         }
+        public static string instEnumFile(string text)
+        {
+            string[] field = smartSplit(text, '=');
+            string[] subField1 = smartSplit(field[0], ' ');
+            bool final = false;
+            bool overriding = false;
+
+            for (int i = 0; i < subField1.Length; i++)
+            {
+                if (subField1[i] == "final")
+                {
+                    final = true;
+                }
+                else if (subField1[i] == "override")
+                {
+                    overriding = true;
+                }
+                else if (subField1[i].StartsWith("enum") || subField1[i] == "")
+                {
+
+                }
+                else
+                {
+                    throw new Exception("Unknown keyword: " + subField1[i]);
+                }
+            }
+            string[] args = getArgs(text);
+            string name = extractString(args[0]);
+            string file = extractString(args[1]);
+            string type = "???";
+
+            if (args.Length > 2)
+            {
+                type = extractString(args[2]);
+            }
+            else
+            {
+                if (name.EndsWith(".init"))
+                    type = "init";
+                if (name.EndsWith(".csv"))
+                    type = "csv";
+            }
+
+            if (overriding && enums.ContainsKey(name))
+                enums.Remove(name);
+
+            if (!resourceFiles.ContainsKey(file))
+                throw new Exception("Unknown resource " + file);
+            enums.Add(name, EnumConverter.GetEnum(name, resourceFiles[file], type, final));
+
+            return "";
+        }
         public static string instBlockTag(string text)
         {
             string[] field = smartSplit(smartEmpty(text), '=');
@@ -3904,7 +4004,7 @@ namespace JSharp
                         string modLine = line;
                         foreach(string[] key in compVal)
                         {
-                            Regex reg = new Regex(@"\\b" + key[0] + "\\b");
+                            Regex reg = new Regex(@"\b" + key[0] + "\b");
                             if (key[0].Contains("$"))
                                 reg = new Regex("\\"+key[0]);
 
@@ -3915,6 +4015,7 @@ namespace JSharp
                                 match = reg.Match(modLine);
                             }
                         }
+                        
                         preparseLine(modLine, tFile, true);
                         
                         i++;
@@ -5492,7 +5593,11 @@ namespace JSharp
                     this.type = type.ToLower();
                     this.name = name.ToLower();
                     this.defaultVal = defaultVal;
-                    
+
+                    if (type == "json" && defaultVal.StartsWith("(("))
+                    {
+                        defaultVal = getArg(defaultVal);
+                    }
                     funcName = "__getEnumField_"+ parent.name + "_" + name + "__";
 
                     preparseLine("def __getEnumField_"+ parent.name+"_" + name + "__(int value):"+type+"{");
@@ -5605,14 +5710,26 @@ namespace JSharp
                     {
                         string[] subField = smartSplit(field,'=');
                         string fieldName = smartEmpty(subField[0]).ToLower();
+                        string val = smartExtract(subField[1]);
+                        string type = this.fields[fieldsName.IndexOf(fieldName)].type;
+                        if (type == "json" && val.StartsWith("(("))
+                        {
+                            value = getArg(val);
+                        }
                         if (fieldsName.Contains(fieldName))
-                            enumvalue.fields.Add(fieldName, smartExtract(subField[1]));
+                            enumvalue.fields.Add(fieldName, val);
                         else
                             throw new Exception("Unknown field " + fieldName);
                     }
                     else
                     {
-                        enumvalue.fields.Add(fieldsName[i], smartExtract(field));
+                        string val = smartExtract(field);
+                        string type = this.fields[i].type;
+                        if (type == "json" && val.StartsWith("(("))
+                        {
+                            value = getArg(val);
+                        }
+                        enumvalue.fields.Add(fieldsName[i], val);
                     }
                     i++;
                 }
@@ -5644,6 +5761,7 @@ namespace JSharp
                     return fields[fieldsName.IndexOf(field)].defaultVal;
                 }
             }
+            
             public void GenerateVariable(string name)
             {
                 context.Sub(name, new File("",""));

@@ -13,6 +13,7 @@ namespace JSharp
         public bool offuscate;
         public bool isLibrary;
         public FileSave[] files;
+        public FileSave[] resources;
         public Dictionary<string, Dictionary<string, TagsList>> TagsList;
         public Dictionary<string, Dictionary<string, TagsList>> mcTagsList;
         public List<string> compileOrder;

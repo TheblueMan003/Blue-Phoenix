@@ -1,0 +1,19 @@
+package leaderboard
+
+def lazy submit(int $h, int $m, int $s, int $t,int $url,int $key,int $maxH){
+	switch($h){
+		forgenerate($sh,0,$maxH){
+			case($sh){
+				forgenerate($sm,0,59){
+					forgenerate($ss,0,59){
+						forgenerate($st,0,19){
+							if ($m == $sm && $s == $ss && $t == $st){
+								tellraw(@a,("-> Click Here To Submit your time to the leaderboard <-","http://$url?score=$eval((($key+1) - ((((($sh*60)+$sm)*60)+$ss*20)+$st*100)%key) + (((($sh*60)+$sm)*60)+$ss*20)+$st*100)eval$",yellow))
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
