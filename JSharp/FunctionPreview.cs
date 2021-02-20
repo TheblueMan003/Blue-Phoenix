@@ -120,12 +120,17 @@ namespace JSharp
                 if (dic != null)
                 {
                     listBox2.Items.Clear();
-                    Compiler.Function f = dic[listBox1.SelectedItem.ToString()][0];
-                    foreach (var arg in f.args)
+                    richTextBox1.Text = "";
+                    foreach (Compiler.Function f in dic[listBox1.SelectedItem.ToString()])
                     {
-                        listBox2.Items.Add(arg.name + " : " + arg.GetTypeString());
+                        foreach (var arg in f.args)
+                        {
+                            listBox2.Items.Add(arg.name + " : " + arg.GetTypeString());
+                        }
+                        if (dic[listBox1.SelectedItem.ToString()].Count > 1)
+                            listBox2.Items.Add("==========================");
+                        richTextBox1.Text += f.desc+"\n==========================\n";
                     }
-                    richTextBox1.Text = f.desc;
                 }
                 if (structs != null)
                 {

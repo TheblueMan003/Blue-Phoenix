@@ -754,7 +754,7 @@ namespace JSharp
                 }
                 else if (subargs[j].StartsWith("action="))
                 {
-                    output += ",\"clickEvent\":{ \"action\":\"run_command\",\"value\":\"function" +
+                    output += ",\"clickEvent\":{ \"action\":\"run_command\",\"value\":\"/function " +
                         Compiler.GetFunction(context.GetFunctionName(subargs[j].Split('=')[1]), new string[] { }).gameName + "\"}";
                 }
                 else if (subargs[j].StartsWith("link"))

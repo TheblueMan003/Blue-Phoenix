@@ -172,7 +172,7 @@ namespace JSharp
         {
             try
             {
-                List<Word> words = smartReplace(CodeBox.Text, startIndex, endIndex-startIndex);
+                List<Word> words = smartReplace(CodeBox.Text+"\n", startIndex, endIndex-startIndex);
 
                 int selectStart = CodeBox.SelectionStart;
 
