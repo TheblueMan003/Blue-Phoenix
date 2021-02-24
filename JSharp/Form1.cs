@@ -24,6 +24,7 @@ namespace JSharp
         public Dictionary<string, Dictionary<string, TagsList>> MCTagsList = new Dictionary<string, Dictionary<string, TagsList>>();
         public Dictionary<string, string> structures = new Dictionary<string, string>();
         public ProjectVersion projectVersion = new ProjectVersion();
+        public string projectDescription;
 
         private string previous = "load";
         private string projectName = "default";
@@ -90,7 +91,7 @@ namespace JSharp
                 resourceSelected = false;
 
                 PreviousText.Clear();
-                PreviousText.Add(CodeBox.Text);
+                
                 index = 0;
                 if (code.ContainsKey(CodeListBox.SelectedItem.ToString()))
                     CodeBox.Text = code[CodeListBox.SelectedItem.ToString()];
@@ -98,7 +99,9 @@ namespace JSharp
                 {
                     CodeBox.Text = "";
                 }
-                
+
+                PreviousText.Add(CodeBox.Text);
+
                 previous = CodeListBox.SelectedItem.ToString();
                 noReformat = false;
                 UpdateCodeBox();
@@ -284,6 +287,7 @@ namespace JSharp
             }
             save.files = lst.ToArray();
             save.resources = lstRes.ToArray();
+            save.description = projectDescription;
 
             File.WriteAllText(projectPath,JsonConvert.SerializeObject(save));
         }
@@ -342,21 +346,24 @@ namespace JSharp
                 }
                 i++;
             }
-            foreach (var file in project.resources)
+            if (project.resources != null)
             {
-                ignorNextListboxUpdate = true;
-                try
+                foreach (var file in project.resources)
                 {
-                    resources.Add(file.name, file.content);
-                }
-                catch
-                {
-                    Debug("Duplicated " + file.name + "-" + file.content + "////" + resources[file.name], Color.Red);
-                }
+                    ignorNextListboxUpdate = true;
+                    try
+                    {
+                        resources.Add(file.name, file.content);
+                    }
+                    catch
+                    {
+                        Debug("Duplicated " + file.name + "-" + file.content + "////" + resources[file.name], Color.Red);
+                    }
 
-                ResourceListBox.Items.Add(file.name);
+                    ResourceListBox.Items.Add(file.name);
 
-                i++;
+                    i++;
+                }
             }
 
             if (project.compileOrder != null)
@@ -435,6 +442,7 @@ namespace JSharp
             CompileJava();
             UpdateCodeBox();
             ignorNextListboxUpdate = false;
+            projectDescription = project.description;
         }
         public void UpdateProjectList()
         {
@@ -618,7 +626,7 @@ namespace JSharp
                 ExportReadMe(path);
 
                 SafeWriteFile(path + "/pack.mcmeta",
-                            JsonConvert.SerializeObject(new DataPackMeta(projectName)));
+                            JsonConvert.SerializeObject(new DataPackMeta(projectName +" - "+ projectDescription)));
 
                 DebugThread("Datapack successfully exported!", Color.Aqua);
             }
@@ -1221,7 +1229,7 @@ namespace JSharp
                 resourceSelected = true;
 
                 PreviousText.Clear();
-                PreviousText.Add(ResourceListBox.Text);
+                
                 index = 0;
                 if (resources.ContainsKey(ResourceListBox.SelectedItem.ToString()))
                     CodeBox.Text = resources[ResourceListBox.SelectedItem.ToString()];
@@ -1229,7 +1237,7 @@ namespace JSharp
                 {
                     CodeBox.Text = "";
                 }
-
+                PreviousText.Add(CodeBox.Text);
                 previous = ResourceListBox.SelectedItem.ToString();
                 noReformat = false;
                 UpdateCodeBox();
@@ -1237,6 +1245,16 @@ namespace JSharp
                 //ignorNextListboxUpdate = true;
                 CodeListBox.SelectedIndex = -1;
             }
+        }
+
+        private void settingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ProjectSetting settingForm = new ProjectSetting(projectName, projectVersion, projectDescription);
+            settingForm.ShowDialog();
+
+            projectName = settingForm.ProjectName;
+            projectVersion = settingForm.version;
+            projectDescription = settingForm.description;
         }
     }
 

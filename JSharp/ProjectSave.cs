@@ -12,6 +12,8 @@ namespace JSharp
         public string datapackDirectory;
         public bool offuscate;
         public bool isLibrary;
+        public string description = "Made With BluePhoenix";
+        
         public FileSave[] files;
         public FileSave[] resources;
         public Dictionary<string, Dictionary<string, TagsList>> TagsList;

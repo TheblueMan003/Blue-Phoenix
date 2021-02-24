@@ -718,6 +718,23 @@ namespace JSharp
                         }
                     }
                 }
+                else if (context.GetVarType(subargs[0]) == Compiler.Type.STRUCT)
+                {
+                    Compiler.Structure s = Compiler.structs[Compiler.GetVariableByName(subargs[0]).enums];
+                    output += ",{\"text\":\"" + s.name+"(" + "\"";
+                    output += jsonSubArg(subargs, context);
+                    output += "}";
+                    foreach (var v in s.fields)
+                    {
+                        output += ",{\"text\":\"" + v.name + "=" + "\"";
+                        output += jsonSubArg(subargs, context);
+                        output += "}";
+
+                        string tmp = jsonFormat(new string[] { v.gameName }, context, 0)[0];
+                        output += "," + tmp.Substring(1, tmp.Length - 2);
+                    }
+                    output += ",{\"text\":\"" + ")" + "\"";
+                }
                 else
                 {
                     string[] v = context.GetVariableName(subargs[0]).Split(' ');

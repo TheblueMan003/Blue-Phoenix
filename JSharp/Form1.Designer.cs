@@ -76,6 +76,7 @@
             this.ResourceListBox = new System.Windows.Forms.ListBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
+            this.settingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -279,7 +280,8 @@
             this.newFileToolStripMenuItem,
             this.compileOrderToolStripMenuItem,
             this.tagsToolStripMenuItem,
-            this.structuresToolStripMenuItem});
+            this.structuresToolStripMenuItem,
+            this.settingToolStripMenuItem});
             this.projectToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
             this.projectToolStripMenuItem.Name = "projectToolStripMenuItem";
             this.projectToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
@@ -565,9 +567,16 @@
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(13, 64);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(35, 13);
+            this.label2.Size = new System.Drawing.Size(72, 13);
             this.label2.TabIndex = 21;
-            this.label2.Text = "Code:";
+            this.label2.Text = "Source Code:";
+            // 
+            // settingToolStripMenuItem
+            // 
+            this.settingToolStripMenuItem.Name = "settingToolStripMenuItem";
+            this.settingToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.settingToolStripMenuItem.Text = "Setting";
+            this.settingToolStripMenuItem.Click += new System.EventHandler(this.settingToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -656,6 +665,7 @@
         private System.Windows.Forms.ListBox ResourceListBox;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.ToolStripMenuItem settingToolStripMenuItem;
     }
 }
 

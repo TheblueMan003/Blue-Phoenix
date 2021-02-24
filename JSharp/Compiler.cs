@@ -111,10 +111,11 @@ namespace JSharp
         private static Regex enumReg = new Regex(@"^(\w+\s+)*enum\s+\w+\s*(\([a-zA-Z0-9 ,_=]*\))?\s*=");
         private static Regex enumFileReg = new Regex(@"^(\w+\s+)*enum\s*(\([a-zA-Z0-9\. ,_=" + "\"" + @"]*\))\s*");
         private static Regex blocktagReg = new Regex(@"^blocktags\s+\w+\s*=");
-        private static Regex varInstReg = new Regex(@"^\w+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+[\w$]+\s*");
+        private static Regex varInstReg = new Regex(@"^[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+[\w$]+\s*");
         private static Regex elseReg = new Regex(@"^else\s*");
         private static Regex regEval = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.]*\)");
         private static Regex regEval2 = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.\(\)\s]*\)eval\$");
+        private static Regex forgenInLineReg = new Regex(@"forgenerate\([^\(\)]*\)\{[^\{\}]*\}");
         #endregion
 
         private static int isInLazyCompile;
@@ -310,7 +311,7 @@ namespace JSharp
         public static void preparseLine(string line2, File limit = null, bool lazyEval = false)
         {
             string line = line2;
-
+            
 
             while (line.StartsWith(" ") || line.StartsWith("\t"))
                 line = line.Substring(1, line.Length - 1);
@@ -368,19 +369,7 @@ namespace JSharp
         }
         public static string parseLine(string text)
         {
-            Match match2 = regEval.Match(text);
-            while (match2 != null && match2.Value != "" && match2.Value != null)
-            {
-                text = regReplace(text, match2, Calculator.Calculate(getArg(match2.Value)).ToString());
-                match2 = regEval.Match(text);
-            }
-
-            match2 = regEval2.Match(text);
-            while (match2 != null && match2.Value != "" && match2.Value != null)
-            {
-                text = regReplace(text, match2, Calculator.Calculate(getArg(match2.Value)).ToString());
-                match2 = regEval2.Match(text);
-            }
+            text = evalDesugar(text);
 
             try
             {
@@ -666,6 +655,30 @@ namespace JSharp
                 match = blocktagsDesugarReg.Match(text);
             }
             
+            return text;
+        }
+        public static string evalDesugar(string text)
+        {
+            Match match2 = regEval.Match(text);
+            while (match2 != null && match2.Value != "" && match2.Value != null)
+            {
+                text = regReplace(text, match2, Calculator.Calculate(getArg(match2.Value)).ToString());
+                match2 = regEval.Match(text);
+            }
+
+            match2 = regEval2.Match(text);
+            while (match2 != null && match2.Value != "" && match2.Value != null)
+            {
+                text = regReplace(text, match2, Calculator.Calculate(getArg(match2.Value)).ToString());
+                match2 = regEval2.Match(text);
+            }
+
+            match2 = forgenInLineReg.Match(text);
+            while (match2 != null && match2.Value != "" && match2.Value != null)
+            {
+                text = regReplace(text, match2, instInLineForgenerate(match2.Value));
+                match2 = forgenInLineReg.Match(text);
+            }
             return text;
         }
         public static string ifelseDetect(string text)
@@ -3474,6 +3487,62 @@ namespace JSharp
             }
             return "";
         }
+        public static string instInLineForgenerate(string text)
+        {
+            string block = getCodeBlock(text);
+            
+            string[] arg = getArgs(text.Substring(0, text.IndexOf('{')));
+            string output = "";
+            string var = arg[0];
+            if (float.TryParse(arg[1],out float _))
+            {
+                if (arg.Length > 3)
+                {
+                    int j = 0;
+                    int max = (int)Math.Ceiling((float.Parse(arg[1]) - float.Parse(arg[2])) / float.Parse(arg[3]));
+
+                    for (float i = float.Parse(arg[1]); i <= float.Parse(arg[2]); i += float.Parse(arg[3]))
+                    {
+                        string line = block.Replace(var + ".index", j.ToString())
+                        .Replace(var + ".length", max.ToString())
+                        .Replace(var, i.ToString());
+
+                        output += line;
+                    }
+                }
+                else
+                {
+                    int j = 0;
+                    int max = (int)Math.Ceiling((float.Parse(arg[1]) - float.Parse(arg[2])));
+
+                    for (float i = float.Parse(arg[1]); i <= float.Parse(arg[2]); i ++)
+                    {
+                        string line = block.Replace(var + ".index", j.ToString())
+                        .Replace(var + ".length", max.ToString())
+                        .Replace(var, i.ToString());
+
+                        output += line;
+                    }
+                }
+            }
+            else
+            {
+                if (enums != null)
+                {
+                    var en = enums[getEnum(arg[1])];
+                    foreach (var value in en.Values())
+                    {
+                        string line = block;
+                        foreach (string field in en.fieldsName)
+                        {
+                            line = line.Replace(var + "." + field, en.GetFieldOf(value, field));
+                        }
+                        output += line;
+                    }
+                }
+            }
+            return output;
+        }
         #endregion
 
         private static bool containType(string text)
@@ -5832,6 +5901,7 @@ namespace JSharp
             public string enumGen;
             private int genIndex;
             private int genAmount;
+            public bool UnparsedFunctionFile;
 
             public Function function;
 
