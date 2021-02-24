@@ -186,6 +186,15 @@ namespace JSharp
                 {
                     compileFile(f);
                 }
+                int fi = 0;
+                while(fi < files.Count)
+                {
+                    if (files[fi].UnparsedFunctionFile)
+                    {
+                        files[fi].Compile();
+                    }
+                    fi++;
+                }
                 generateStringPool();
                 loadFile.Close();
                 mainFile.Close();
@@ -209,7 +218,7 @@ namespace JSharp
                         }
                     }
                 }
-
+                
                 GobalDebug("Datapack contains: " + returnFiles.Count.ToString() + " files & "+lineCount.ToString()+" lines.", Color.LimeGreen);
                 
                 return returnFiles;
@@ -236,7 +245,7 @@ namespace JSharp
             isInFunctionDesc = false;
             isInStaticMethod = false;
             isInLazyCompile = 0;
-            ParenthiseError parenthiseError = checkParenthisation(f);
+            ParenthiseError parenthiseError = checkParenthisation(f.content.Split('\n'));
             if (parenthiseError != null)
                 parenthiseError.throwException();
 
@@ -2551,7 +2560,7 @@ namespace JSharp
             funcDef.Add(subName.Replace("/","."));
             function.desc = functionDesc;
             fFile.function = function;
-            
+
             function.isLoading = isLoading;
             function.isTicking = isTicking;
             function.isHelper = isHelper;
@@ -2607,16 +2616,17 @@ namespace JSharp
             }
             function.lazy = lazy;
             function.isAbstract = isAbstract;
-            if (lazy)
-            {
-                structMethodFile = fFile;
-                fFile.isLazy = true;
-            }
+
+            structMethodFile = fFile;
+            fFile.isLazy = true;
+            
             if (!isAbstract)
             {
                 files.Add(fFile);
             }
             context.Sub(func, fFile);
+            fFile.UnparsedFunctionFile = !lazy && structStack.Count == 0 && !isAbstract;
+            fFile.UnparsedFunctionFileContext = context.GetVar();
 
             if (structStack.Count > 0 && !isStatic)
             {
@@ -2718,16 +2728,19 @@ namespace JSharp
             {
                 structStack.Peek().addMethod(function);
             }
-            if (!isAbstract)
-                autoIndent(text);
+
             if (isAbstract)
             {
                 context.Parent();
             }
-            if (lazy && isInLazyCompile == 0)
+            if (!(structStack.Count > 0 && !lazy) && !isAbstract)
             {
-                isInLazyCompile += 1;
+                isInLazyCompile = 1;
             }
+
+            if (!isAbstract)
+                autoIndent(text);
+
             if (function.args.Count > 0 && ((tags.Count > 0 && !tags[0].StartsWith("__")) || isTicking || isLoading))
             {
                 throw new Exception("Tagged Function cannot have arguments.");
@@ -2781,8 +2794,7 @@ namespace JSharp
                     }
                 }
             }
-            if (isAbstract)
-                return "";
+
             return "";// GenerateInfo(function);
         }
         public static string instWhile(string text, string fText)
@@ -4713,8 +4725,9 @@ namespace JSharp
             }
             if (text.Contains("{") && smartEndWith(text, "}"))
             {
-                context.currentFile().AddLine(parseLine(getCodeBlock(text)));
-                autoIndented = 1;
+                preparseLine(getCodeBlock(text));
+                preparseLine("}");
+                autoIndented = 0;
             }
         }
         public static int getOpenCharIndex(string text, char d)
@@ -5006,11 +5019,11 @@ namespace JSharp
                         + "" + alphabet[(int)(c & 63)];
         }
 
-        public static ParenthiseError checkParenthisation(File file)
+        public static ParenthiseError checkParenthisation(string[] file)
         {
             Stack<char> chars = new Stack<char>();
             int lineIndex = 0;
-            foreach(string line in file.content.Split('\n'))
+            foreach(string line in file)
             {
                 lineIndex++;
                 bool inComment = false;
@@ -5095,6 +5108,10 @@ namespace JSharp
                 this.gameName = gameName;
                 this.file = file;
                 this.package = currentPackage;
+                if (adjPackage.Count > 0)
+                {
+                    package = adjPackage.Peek();
+                }
             }
 
             public override string ToString()
@@ -5902,6 +5919,7 @@ namespace JSharp
             private int genIndex;
             private int genAmount;
             public bool UnparsedFunctionFile;
+            public string UnparsedFunctionFileContext;
 
             public Function function;
 
@@ -6167,6 +6185,41 @@ namespace JSharp
             {
                 return name;
             }
+
+            public void Compile()
+            {
+                addChild(context.GoTo(UnparsedFunctionFileContext));
+
+                structStack = new Stack<Structure>();
+                packageMap = new Dictionary<string, string>();
+                condIDStack = new Stack<int>();
+                LastConds = new Stack<int>();
+                lazyOutput = new Stack<List<Variable>>();
+                lazyCall = new Stack<Function>();
+                lazyEvalVar = new List<Dictionary<string, string>>();
+                LastCond = -1;
+                currentFile = name;
+                currentLine = 1;
+                inGenericStruct = false;
+                isInFunctionDesc = false;
+                isInStaticMethod = false;
+                isInLazyCompile = 0;
+                
+                ParenthiseError parenthiseError = checkParenthisation(parsed.ToArray());
+               
+                if (parenthiseError != null)
+                {
+                    parenthiseError.throwException();
+                }
+                adjPackage.Push(function.package);
+                foreach (string line in parsed)
+                {
+                    preparseLine(line);
+                }
+                adjPackage.Pop();
+
+                //GobalDebug("Function: "+name+" Compiled ("+ parsed.Count.ToString()+" lines)", Color.LimeGreen);
+            }
         }
         public class ParenthiseError
         {
@@ -6258,6 +6311,28 @@ namespace JSharp
                     directories.RemoveAt(directories.Count - 1);
                     files.RemoveAt(files.Count - 1);
                 }
+                if (files.Count == 0)
+                {
+                    files.Add(new File(".", "", ""));
+                }
+            }
+            public File GoTo(string path)
+            {
+                GoRoot();
+                File fOut=null;
+                foreach(string p in path.Substring(path.IndexOf('.'), path.LastIndexOf('.')-path.IndexOf('.')).Split('.'))
+                {
+                    if (p != "")
+                    {
+                        string fullName = context.GetFun() + p;
+                        string subName = fullName.Substring(fullName.IndexOf(":") + 1, fullName.Length - fullName.IndexOf(":") - 1);
+                        File f = new File(subName, "", "");
+                        Compiler.files.Add(f);
+                        Sub(p, f);
+                        fOut = f;
+                    }
+                }
+                return fOut;
             }
             public File Package(string package)
             {
@@ -6371,11 +6446,11 @@ namespace JSharp
                 }
                 if (output != null)
                     return output;
-                if (adjPackage.Count >0 && !func.StartsWith(adjPackage.Peek()+"."))
+                if (adjPackage.Count > 0 && !func.StartsWith(adjPackage.Peek()+"."))
                 {
                     return GetFunctionName(adjPackage.Peek() + "." + func);
                 }
-                throw new Exception("UNKNOW FUNCTION (" + dir+func+")");
+                throw new Exception("UNKNOW FUNCTION (" + dir+func+ ")");
             }
 
             public bool IsFunction(string func)
