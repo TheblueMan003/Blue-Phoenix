@@ -14,12 +14,13 @@ namespace JSharp
     {
         public string filename;
         public Type type;
-        public Type[] typeList = new Type[] { Type.EMPTY, Type.STRUCTURE, Type.RESOURCE }; 
+        public Type[] typeList = new Type[] { Type.EMPTY, Type.STRUCTURE, Type.RESOURCE, Type.EXTERNAL }; 
         public enum Type
         {
             EMPTY,
             STRUCTURE,
-            RESOURCE
+            RESOURCE,
+            EXTERNAL
         }
 
         public NewFile()

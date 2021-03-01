@@ -265,8 +265,15 @@ namespace JSharp
             {
                 if (isLibraryCheckbox.Checked)
                 {
-                    SafeWriteFile(dir + file + ".bps", code[file]);
-                    save.compileOrder.Add(file);
+                    if (!file.Contains('.')) {
+                        SafeWriteFile(dir + file + ".bps", code[file]);
+                        save.compileOrder.Add(file);
+                    }
+                    else
+                    {
+                        SafeWriteFile(dir + file, code[file]);
+                        save.compileOrder.Add(file);
+                    }
                 }
                 else
                 {
@@ -373,7 +380,10 @@ namespace JSharp
                     ignorNextListboxUpdate = true;
                     try
                     {
-                        code.Add(file, File.ReadAllText(dir + file + ".bps"));
+                        if (!file.Contains('.'))
+                            code.Add(file, File.ReadAllText(dir + file + ".bps"));
+                        else
+                            code.Add(file, File.ReadAllText(dir + file));
                     }
                     catch (Exception e)
                     {
@@ -398,9 +408,13 @@ namespace JSharp
             {
                 foreach (var file in Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories))
                 {
-                    string fname = file.Substring(dir.Length,file.Length - dir.Length - Path.GetExtension(file).Length);
-
-                    if (!code.ContainsKey(fname.ToLower()))
+                    string fname;
+                    if (file.EndsWith(".bps"))
+                        fname = file.Substring(dir.Length,file.Length - dir.Length - Path.GetExtension(file).Length);
+                    else
+                        fname = file.Substring(dir.Length, file.Length - dir.Length);
+                    
+                    if (!code.ContainsKey(fname.ToLower()) && fname != "desktop.ini")
                     {
                         try
                         {
@@ -464,12 +478,43 @@ namespace JSharp
 
             File.WriteAllLines("project.old", lst.ToArray());
         }
+        public string GenerateDatapackLink(string path)
+        {
+            path = Path.GetDirectoryName(path);
+            Debug("added external datapack: " + path, Color.Lime);
+            string output = "";
+            foreach (string n in Directory.GetDirectories(path + "/data/", "*", SearchOption.TopDirectoryOnly))
+            {
+                string names = n.Replace(path + "/data/", "");
+                if (Directory.Exists(path + "/data/" + names + "/functions"))
+                {
+                    foreach (string file in Directory.GetFiles(path + "/data/" + names + "/functions", "*.mcfunction", SearchOption.AllDirectories))
+                    {
+                        output += "def external " + names + 
+                            file.Replace("\\", "/")
+                            .Replace(path.Replace("\\", "/") + "/data/" + names + "/functions", "")
+                            .Replace("/", ".")
+                            .Replace(".mcfunction", "") + "()\n";
+                        Debug("added external function: " + file, Color.Lime);
+                    }
+                }
+            }
+            return output;
+        }
         public void NewFile()
         {
             NewFile form = new NewFile();
             if (form.ShowDialog() == DialogResult.OK && !CodeListBox.Items.Contains(form.filename))
             {
-                if (form.type == JSharp.NewFile.Type.RESOURCE)
+                if (form.type == JSharp.NewFile.Type.EXTERNAL)
+                {
+                    if (DatapackOpen.ShowDialog() == DialogResult.OK)
+                    {
+                        CodeListBox.Items.Add(form.filename);
+                        code.Add(form.filename, GenerateDatapackLink(DatapackOpen.FileName));
+                    }
+                }
+                else if (form.type == JSharp.NewFile.Type.RESOURCE)
                 {
                     ResourceListBox.Items.Add(form.filename);
                     resources.Add(form.filename, "");

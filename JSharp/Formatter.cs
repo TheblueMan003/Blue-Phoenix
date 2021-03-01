@@ -21,7 +21,7 @@ namespace JSharp
             "while", "for", "with", "forgenerate", "interface", "foreach" , "return", "&&", "||", "at",
             "switch", "case", "const","final","override",
             "struct", "extends", "static", "positioned", "lazy", "abstract", "this", "align", "alias",
-            "ticking", "loading", "helper", "void", "null", "enum", "blocktags", "public","private", "new"};
+            "ticking", "loading", "helper", "void", "null", "enum", "blocktags", "public","private", "new","external"};
 
         private static List<string> enums = new List<string>();
         private static List<string> structs = new List<string>();
@@ -63,8 +63,8 @@ namespace JSharp
             colorCodings.Add(ColorCoding.Get(enums.ToArray(), Color.LimeGreen));
             colorCodings.Add(ColorCoding.Get(enumsValue.ToArray(), Color.LightGreen));
             colorCodings.Add(ColorCoding.Get(structs.ToArray(), Color.LimeGreen));
+            colorCodings.Add(ColorCoding.Get(defWordMore2.ToArray(), Color.LightSteelBlue));
             colorCodings.Add(ColorCoding.GetPackage(package.ToArray(), Color.LightSteelBlue));
-            colorCodings.Add(ColorCoding.GetPackage(defWordMore2.ToArray(), Color.LightSteelBlue));
 
             colorCodings.Add(ColorCoding.GetSelector(selector, Color.LightBlue));
             colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex));
@@ -103,7 +103,7 @@ namespace JSharp
             foreach (string tag in keys)
             {
                 if (tag.Contains("."))
-                    defWordMore2.Add(tag.Replace(".","\\."));
+                    defWordMore2.Add(tag);
                 else
                     defWordMore1.Add(tag);
             }
