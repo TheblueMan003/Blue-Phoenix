@@ -886,11 +886,19 @@ namespace JSharp
             }
             return constants[value];
         }
-        public static Function GetFunction(string funcName, string[] args)
+        public static Function GetFunction(string funcName, string[] input_args, bool lambda = false)
         {
             Function funObj = null;
             bool numericalOnly = true;
             
+            string[] args = new string[input_args.Length + (lambda?1:0)];
+            for (int i = 0; i < input_args.Length; i++)
+            {
+                args[i] = input_args[i];
+            }
+            if (lambda)
+                args[args.Length - 1] = "__lambda__";
+
             if (args.Length == 1 && isString(args[0]))
             {
                 foreach (string arg in smartSplit(extractString(args[0]),' '))
@@ -925,7 +933,8 @@ namespace JSharp
                         {
                             try
                             {
-                                if (getExprType(args[i]) != f.args[i].type || (f.lazy && f.args[i].name.StartsWith("$") && !f.tags.Contains("__numerical_only__")))
+                                if (getExprType(args[i]) != f.args[i].type ||
+                                    (f.lazy && f.args[i].name.StartsWith("$") && !f.tags.Contains("__numerical_only__")))
                                 {
                                     isGood = false;
                                 }
@@ -1032,7 +1041,10 @@ namespace JSharp
                 }
                 if (funObj == null)
                 {
-                    throw new Exception("No function Found");
+                    string a = "";
+                    foreach (string ar in args)
+                        a += getExprType(ar)+" "+ ar + ", ";
+                    throw new Exception("No function Found for "+funcName+" with args:"+a);
                 }
             }
             return funObj;
@@ -3671,6 +3683,10 @@ namespace JSharp
         }
         public static Type getExprType(string t)
         {
+            if (t.StartsWith("__lambda__"))
+            {
+                return Type.FUNCTION;
+            }
             if (t.StartsWith("~"))
             {
                 return Type.FLOAT;
@@ -3725,9 +3741,24 @@ namespace JSharp
                     return GetFunction(funcName,args).outputs[0].type;
                 }
             }
-            if (context.IsFunction(t))
+            if (context.IsFunction(t) && variables.ContainsKey(context.GetFunctionName(t)))
             {
                 return variables[context.GetFunctionName(t)].outputs[0].type;
+            }
+            if (context.IsFunction(t) && functions.ContainsKey(context.GetFunctionName(t)))
+            {
+                return Type.FUNCTION;
+            }
+            string ext = smartExtract(t).ToLower();
+            foreach (var enu in enums.Values)
+            {
+                foreach (string val in enu.Values())
+                {
+                    if (val == ext)
+                    {
+                        return Type.ENUM;
+                    }
+                }
             }
             if (smartEmpty(t).StartsWith("-"))
             {
@@ -3885,7 +3916,7 @@ namespace JSharp
             catch (Exception e)
             {
                 string arg = getArg(text);
-                string[] args = smartSplit(arg, ',');
+                string[] args = smartSplitJson(arg, ',');
                 string func;
                 bool anonymusFunc = false;
                 string anonymusFuncName = "";
@@ -3924,7 +3955,7 @@ namespace JSharp
                 string funcName = context.GetFunctionName(func);
 
 
-                Function funObj = GetFunction(funcName, args);
+                Function funObj = GetFunction(funcName, args, text.EndsWith("{") || text.EndsWith("}"));
                 if (lazyCall.Contains(funObj))
                     throw new Exception("Cannot have recursive Lazy Recursive Function.");
                 if (funObj.isPrivate && !context.GetVar().StartsWith(funObj.privateContext))
@@ -4542,7 +4573,7 @@ namespace JSharp
                     ind -= 1;
                     current += text[i];
                 }
-                if (text[i] == '{' && !inString)
+                else if (text[i] == '{' && !inString)
                 {
                     ind += 1;
                     current += text[i];

@@ -60,14 +60,15 @@ namespace JSharp
                 colorCodings.Add(ColorCoding.Get(CommandParser.gamerules.ToArray(), Color.OrangeRed));
                 colorCodings.Add(ColorCoding.Get(CommandParser.sounds, Color.OrangeRed));
             }
-            colorCodings.Add(ColorCoding.Get(enums.ToArray(), Color.LimeGreen));
-            colorCodings.Add(ColorCoding.Get(enumsValue.ToArray(), Color.LightGreen));
+
+            colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex));
             colorCodings.Add(ColorCoding.Get(structs.ToArray(), Color.LimeGreen));
             colorCodings.Add(ColorCoding.Get(defWordMore2.ToArray(), Color.LightSteelBlue));
             colorCodings.Add(ColorCoding.GetPackage(package.ToArray(), Color.LightSteelBlue));
+            colorCodings.Add(ColorCoding.Get(enums.ToArray(), Color.LimeGreen));
+            colorCodings.Add(ColorCoding.Get(enumsValue.ToArray(), Color.LightGreen));
 
             colorCodings.Add(ColorCoding.GetSelector(selector, Color.LightBlue));
-            colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex));
             colorCodings.Add(new ColorCoding(Color.Gray, commentRegex));
             colorCodings.Add(new ColorCoding(Color.FromArgb(0, 128, 14), wordRegex));
             colorCodings.Add(new ColorCoding(Color.LightYellow, funcDocRegex));
