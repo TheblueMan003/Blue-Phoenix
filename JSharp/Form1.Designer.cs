@@ -390,7 +390,7 @@
             this.ErrorBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.ErrorBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ErrorBox.ForeColor = System.Drawing.Color.White;
-            this.ErrorBox.Location = new System.Drawing.Point(205, 458);
+            this.ErrorBox.Location = new System.Drawing.Point(205, 461);
             this.ErrorBox.Name = "ErrorBox";
             this.ErrorBox.ReadOnly = true;
             this.ErrorBox.Size = new System.Drawing.Size(975, 164);

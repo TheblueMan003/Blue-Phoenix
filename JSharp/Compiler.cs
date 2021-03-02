@@ -987,6 +987,7 @@ namespace JSharp
                     if (funObj == null && f.lazy && args.Length == f.args.Count)
                     {
                         bool isGood = true;
+
                         for (int i = 0; i < args.Length; i++)
                         {
                             try
@@ -1022,6 +1023,7 @@ namespace JSharp
                             functionCount++;
                         }
                     }
+
                     if (funObj == null && f.lazy && args.Length >= f.args.Count - functionCount && args.Length <= f.args.Count)
                     {
                         funObj = f;
@@ -2318,46 +2320,55 @@ namespace JSharp
                     variable.privateContext = context.GetVar();
                     addVariable(context.GetVar() + v, variable);
 
-                    string typeArray = arrayTypeReg.Match(text).Value.Replace("[","");
-                    for (int i = 0; i < arraySize; i++)
+                    string typeArray = arrayTypeReg.Match(text).Value.Replace("[", "");
+                    variable.typeArray = typeArray;
+
+                    if (structStack.Count > 0 && !isInStructMethod)
                     {
-                        if (isPrivate)
-                            parseLine("private "+typeArray+" " + v + "."+i.ToString());
-                        else
-                            parseLine(typeArray + " " + v + "." + i.ToString());
+                        structStack.Peek().addField(variable);
                     }
+                    else
+                    {
+                        for (int i = 0; i < arraySize; i++)
+                        {
+                            if (isPrivate)
+                                parseLine("private " + typeArray + " " + v + "." + i.ToString());
+                            else
+                                parseLine(typeArray + " " + v + "." + i.ToString());
+                        }
 
-                    context.Sub(v, new File("","",""));
-                    
-                    parseLine("def lazy @__numerical_only__ set(int $a,"+ typeArray+" $b){");
-                    context.currentFile().addParsedLine("\\compiler\\"+v +".$a = $b");
-                    context.currentFile().Close();
-                    isInLazyCompile -= 1;
+                        context.Sub(v, new File("", "", ""));
 
-                    parseLine("def lazy @__numerical_only__ get(int $a):" + typeArray+"{");
-                    context.currentFile().addParsedLine("\\compiler\\return(" +v + ".$a)");
-                    context.currentFile().Close();
-                    isInLazyCompile -= 1;
-                    
-                    preparseLine("def get(int index):" + typeArray + "{");
-                    preparseLine("forgenerate($_i,0," + (arraySize-1).ToString()  + "){");
-                    preparseLine("if(index==$_i){");
-                    preparseLine("return("+v+".$_i)");
-                    preparseLine("}");
-                    preparseLine("}");
-                    preparseLine("}");
+                        parseLine("def lazy @__numerical_only__ set(int $a," + typeArray + " $b){");
+                        context.currentFile().addParsedLine("\\compiler\\" + v + ".$a = $b");
+                        context.currentFile().Close();
+                        isInLazyCompile -= 1;
 
+                        parseLine("def lazy @__numerical_only__ get(int $a):" + typeArray + "{");
+                        context.currentFile().addParsedLine("\\compiler\\return(" + v + ".$a)");
+                        context.currentFile().Close();
+                        isInLazyCompile -= 1;
 
-                    preparseLine("def set(int index, "+ typeArray +" value){");
-                    preparseLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
-                    preparseLine("if(index==$_i){");
-                    preparseLine(v + ".$_i = value");
-                    preparseLine("}");
-                    preparseLine("}");
-                    preparseLine("}");
+                        preparseLine("def get(int index):" + typeArray + "{");
+                        preparseLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
+                        preparseLine("if(index==$_i){");
+                        preparseLine("return(" + v + ".$_i)");
+                        preparseLine("}");
+                        preparseLine("}");
+                        preparseLine("}");
 
 
-                    context.Parent();
+                        preparseLine("def set(int index, " + typeArray + " value){");
+                        preparseLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
+                        preparseLine("if(index==$_i){");
+                        preparseLine(v + ".$_i = value");
+                        preparseLine("}");
+                        preparseLine("}");
+                        preparseLine("}");
+
+
+                        context.Parent();
+                    }
                 }
                 else if (ca != Type.STRUCT)
                 {
@@ -5629,6 +5640,7 @@ namespace JSharp
             public bool isStructureVar;
             public int arraySize;
             private string score = null;
+            public string typeArray;
 
             public List<Argument> args = new List<Argument>();
             public List<Variable> outputs = new List<Variable>();
@@ -5704,6 +5716,50 @@ namespace JSharp
                 
                 if (this.type == Type.ENUM)
                     variable.SetEnum(this.enums);
+
+                if (this.type == Type.ARRAY)
+                {
+                    variable.arraySize = arraySize;
+
+
+                    for (int i = 0; i < arraySize; i++)
+                    {
+                        if (isPrivate)
+                            parseLine("private " + typeArray + " " + name + "." + i.ToString());
+                        else
+                            parseLine(typeArray + " " + name + "." + i.ToString());
+                    }
+
+                    context.Sub(name, new File("", "", ""));
+                    parseLine("def lazy @__numerical_only__ set(int $a," + typeArray + " $b){");
+                    context.currentFile().addParsedLine("\\compiler\\" + name + ".$a = $b");
+                    context.currentFile().Close();
+                    isInLazyCompile -= 1;
+
+                    parseLine("def lazy @__numerical_only__ get(int $a):" + typeArray + "{");
+                    context.currentFile().addParsedLine("\\compiler\\return(" + name + ".$a)");
+                    context.currentFile().Close();
+                    isInLazyCompile -= 1;
+
+                    preparseLine("def get(int index):" + typeArray + "{");
+                    preparseLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
+                    preparseLine("if(index==$_i){");
+                    preparseLine("return(" + name + ".$_i)");
+                    preparseLine("}");
+                    preparseLine("}");
+                    preparseLine("}");
+
+
+                    preparseLine("def set(int index, " + typeArray + " value){");
+                    preparseLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
+                    preparseLine("if(index==$_i){");
+                    preparseLine(name + ".$_i = value");
+                    preparseLine("}");
+                    preparseLine("}");
+                    preparseLine("}");
+
+                    context.Parent();
+                }
 
                 /*
                 if (structStack.Count > 0 && !isInStructMethod)
