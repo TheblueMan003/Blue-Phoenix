@@ -52,14 +52,13 @@ namespace JSharp
             colorCodings.Add(ColorCoding.Get(compKeyword, Color.Magenta));
             colorCodings.Add(ColorCoding.GetSelector(tags.ToArray(), Color.Magenta));
 
-            if (showName)
-            {
-                colorCodings.Add(ColorCoding.Get(CommandParser.names, Color.OrangeRed));
-                colorCodings.Add(ColorCoding.Get(CommandParser.scoreboards, Color.OrangeRed));
-                colorCodings.Add(ColorCoding.Get(CommandParser.effects, Color.OrangeRed));
-                colorCodings.Add(ColorCoding.Get(CommandParser.gamerules.ToArray(), Color.OrangeRed));
-                colorCodings.Add(ColorCoding.Get(CommandParser.sounds, Color.OrangeRed));
-            }
+            
+            colorCodings.Add(ColorCoding.Get(CommandParser.names, Color.Orange));
+            colorCodings.Add(ColorCoding.Get(CommandParser.scoreboards, Color.Orange));
+            colorCodings.Add(ColorCoding.Get(CommandParser.effects, Color.Orange));
+            colorCodings.Add(ColorCoding.Get(CommandParser.gamerules.ToArray(), Color.Orange));
+            colorCodings.Add(ColorCoding.Get(CommandParser.sounds, Color.Orange));
+            
 
             colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex));
             colorCodings.Add(ColorCoding.Get(structs.ToArray(), Color.LimeGreen));

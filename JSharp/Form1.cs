@@ -815,6 +815,31 @@ namespace JSharp
                 t.Start();
             }
         }
+        public void GetCallStackTrace()
+        {
+            if (isCompiling == 0)
+            {
+                this.showForm = true;
+                projectVersion.Build();
+                compileFile = new List<Compiler.File>();
+
+                recallFile();
+
+                foreach (string f in CodeListBox.Items)
+                {
+                    compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
+                }
+
+                compileResource = new List<Compiler.File>();
+                foreach (string f in ResourceListBox.Items)
+                {
+                    compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
+                }
+
+                Thread t = new Thread(new ThreadStart(GetCallStackTraceThreaded));
+                t.Start();
+            }
+        }
         public void CompileBedrock(bool showForm = false)
         {
             if (isCompiling == 0)
@@ -888,7 +913,40 @@ namespace JSharp
             }
 
         }
+        public void GetCallStackTraceThreaded()
+        {
+            try
+            {
+                isCompiling = 1;
+                string file = Compiler.getStackCall(new CompilerCoreJava(), projectName, compileFile, compileResource, DebugThread, exporting, projectVersion,
+                    Path.GetDirectoryName(projectPath));
+                compileFiled = new List<Compiler.File>();
+                compileFiled.Add(new Compiler.File("Call Stacks", file));
+                
+                try
+                {
+                    System.Diagnostics.Process.Start("https://dreampuf.github.io/GraphvizOnline/");
+                }
+                catch(Exception e)
+                {
+                    DebugThread(e.StackTrace, Color.Red);
+                }
+                if (showForm)
+                {
+                    isCompiling = 2;
+                }
+                else
+                {
+                    isCompiling = 0;
+                }
+            }
+            catch (Exception er)
+            {
+                isCompiling = 0;
+                DebugThread(er, Color.Red);
+            }
 
+        }
         public void ReIndent()
         {
             try
@@ -1300,6 +1358,11 @@ namespace JSharp
             projectName = settingForm.ProjectName;
             projectVersion = settingForm.version;
             projectDescription = settingForm.description;
+        }
+
+        private void getCallStackTraceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            GetCallStackTrace();
         }
     }
 

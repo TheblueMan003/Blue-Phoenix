@@ -87,7 +87,7 @@ namespace JSharp
         }
         public override string VariableSetNull(Compiler.Variable var, string selector = "")
         {
-            return "scoreboard players reset " + GetSelector(var, selector);
+            return "scoreboard players reset " + GetSelector(var, selector)+"\n";
         }
 
         public override string[] CompareVariable(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
