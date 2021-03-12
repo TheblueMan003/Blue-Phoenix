@@ -2401,6 +2401,28 @@ namespace JSharp
             }
             return output;
         }
+
+        public static File CreateFunctionTag(string tag)
+        {
+            if (!functions.ContainsKey(Project + ".__tags__." + tag.ToLower()))
+            {
+                functionTags.Add(tag.ToLower());
+
+                File tagFile = new File("__tags__/" + tag.Replace(".", "/").ToLower());
+                Function tagFunc = new Function(tag.ToLower(), Project + ":__tags__/" + tag.Replace(".", "/").ToLower(), tagFile);
+                files.Add(tagFile);
+                List<Function> f = new List<Function>();
+                f.Add(tagFunc);
+                tagFile.use();
+                functions.Add(Project + ".__tags__." + tag.ToLower(), f);
+
+                return tagFile;
+            }
+            else
+            {
+                return GetFunction(context.GetFunctionName("__tags__." + tag.ToLower()), new string[] { }).file;
+            }
+        }
         #endregion
 
         #region instantiation
@@ -3081,37 +3103,15 @@ namespace JSharp
                 {
                     if (!tag.StartsWith("__"))
                     {
-                        if (functionTags.Contains(tag.ToLower()))
-                        {
-                            Function f = GetFunction(context.GetFunctionName("__tags__." + tag.ToLower()), new string[] { });
-                            f.file.AddLine(parseLine(func + "()"));
-                            fFile.use();
+                        CreateFunctionTag(tag).AddLine(parseLine(func + "()"));
+                        fFile.use();
 
-                            callTrace += "\"" + tag.ToLower() + "\"->\"" + function.gameName + "\"\n";
-                        }
-                        else
-                        {
-                            functionTags.Add(tag.ToLower());
-
-                            File tagFile = new File("__tags__/" + tag.Replace(".", "/").ToLower());
-                            Function tagFunc = new Function(tag, Project + ":__tags__/" + tag.Replace(".","/").ToLower(), tagFile);
-                            tagFile.AddLine(parseLine(func + "()"));
-                            files.Add(tagFile);
-                            List<Function> f = new List<Function>();
-                            f.Add(tagFunc);
-                            functions.Add(Project + ".__tags__." + tag.ToLower(), f);
-                            functionTags.Add(tag.ToLower());
-
-                            tagFile.use();
-                            fFile.use();
-
-                            callTrace += "\"" + tag.ToLower() + "\"->\"" + function.gameName + "\"\n";
-                        }
+                        callTrace += "\"@" + tag.ToLower() + "\"->\"" + function.gameName + "\"\n";
                     }
                 }
             }
 
-            return "";// GenerateInfo(function);
+            return "";
         }
         public static string instWhile(string text, string fText)
         {
@@ -4223,18 +4223,7 @@ namespace JSharp
                 if (func.StartsWith("@"))
                 {
                     string tag = func.Substring(1, func.Length - 1);
-                    if (!functionTags.Contains(tag.ToLower()))
-                    {
-                        functionTags.Add(tag.ToLower());
-
-                        File tagFile = new File("__tags__/" + tag.Replace(".", "/").ToLower());
-                        Function tagFunc = new Function(tag.ToLower(), Project + ":__tags__/" + tag.Replace(".", "/").ToLower(), tagFile);
-                        files.Add(tagFile);
-                        List<Function> f = new List<Function>();
-                        f.Add(tagFunc);
-                        tagFile.use();
-                        functions.Add(Project + ".__tags__." + tag.ToLower(), f);
-                    }
+                    CreateFunctionTag(tag);
 
                     func = "__tags__." + tag.ToLower();
                 }
@@ -5625,25 +5614,7 @@ namespace JSharp
                 foreach (string tag in fun.tags)
                 {
                     function.tags.Add(tag);
-
-                    if (functionTags.Contains(tag))
-                    {
-                        Function f = GetFunction(context.GetFunctionName("__tags__." + tag), new string[] { });
-                        f.file.AddLine(parseLine(fun.name + "()"));
-                    }
-                    else
-                    {
-                        functionTags.Add(tag);
-                        File tagFile = new File("__tags__/" + tag);
-                        tagFile.use();
-                        Function tagFunc = new Function(tag, Project + ":__tags__/" + tag, tagFile);
-                        tagFile.AddLine(parseLine(fun.name + "()"));
-                        files.Add(tagFile);
-
-                        List<Function> f = new List<Function>();
-                        f.Add(tagFunc);
-                        functions.Add(Project + ".__tags__." + tag, f);
-                    }
+                    CreateFunctionTag(tag).AddLine(parseLine(fun.name + "()"));
                 }
 
                 fFile.notUsed = !fun.isLoading && !fun.isHelper && !fun.isTicking && fun.tags.Count == 0;
