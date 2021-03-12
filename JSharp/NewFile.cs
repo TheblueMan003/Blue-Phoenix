@@ -14,11 +14,12 @@ namespace JSharp
     {
         public string filename;
         public Type type;
-        public Type[] typeList = new Type[] { Type.EMPTY, Type.STRUCTURE, Type.RESOURCE, Type.EXTERNAL }; 
+        public Type[] typeList = new Type[] { Type.EMPTY, Type.STRUCTURE, Type.SUBPROGRAMME, Type.RESOURCE, Type.EXTERNAL }; 
         public enum Type
         {
             EMPTY,
             STRUCTURE,
+            SUBPROGRAMME,
             RESOURCE,
             EXTERNAL
         }
@@ -33,7 +34,7 @@ namespace JSharp
 
         private void button1_Click(object sender, EventArgs e)
         {
-            filename = textBox1.Text;
+            filename = textBox1.Text.ToLower();
             
             DialogResult = DialogResult.OK;
             if (listBox1.SelectedIndex > -1)

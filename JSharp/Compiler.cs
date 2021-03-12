@@ -28,7 +28,7 @@ namespace JSharp
         private static List<Dictionary<string, string>> lazyEvalVar;
         private static List<Dictionary<string,string>> compVal;
         private static Dictionary<string, List<Function>> functDelegated;
-        private static Dictionary<string, File> functDelegatedFile;
+        private static Dictionary<string, List<File>> functDelegatedFile;
         private static Dictionary<string, string> selector;
         private static Dictionary<string, string> resourceFiles;
         public static List<string> packages;
@@ -95,7 +95,7 @@ namespace JSharp
         private static Regex getReg = new Regex("\\w*\\s*=[ a-z\\.A-Z0-9]*\\[.*\\]");
         private static Regex oppReg = new Regex(@"[a-zA-Z0-9\._]+\[.*\]\s*[+\-/\*%]=");
         private static Regex setReg = new Regex("\\[.*\\]\\s*=\\s*.*");
-        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9 ,_=]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9 ,_=]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=]*\))?,?\s*)*\})");
+        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9 ,_=:\.]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9 ,_=]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.]*\))?,?\s*)*\})");
         private static Regex blocktagsDesugarReg = new Regex(@"(?s)(blocktags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|blocktags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex ifsDesugarReg = new Regex(@"(?s)^(if\s*\(.*\)\{.*\}\s*else)|(if\s*\(.*\).*\s*else)");
         private static Regex funArgTypeReg = new Regex(@"^([@\w\.]*\s*(<\(?\w*\)?,?\(?\w*\)?>)?(\[\d+\])?)*\(");
@@ -127,12 +127,14 @@ namespace JSharp
         #endregion
 
         private static int isInLazyCompile;
+        private static CompilerSetting compilerSetting = new CompilerSetting();
 
         private Compiler() { }
 
-        public static List<File> compile(CompilerCore core,string project, List<File> codes, List<File> resources, Debug debug, bool offuscated, ProjectVersion version, string pctFolder)
+        public static List<File> compile(CompilerCore core,string project, List<File> codes, List<File> resources, Debug debug,
+                                            bool offuscated, ProjectVersion version, string pctFolder)
         {
-            callTrace = "digraph G {\nmain\nload\nhelper\n";
+            callTrace = "digraph "+project+" {\nmain\nload\nhelper\n";
             Core = core;
             projectVersion = version;
             for (int i = 0; i < 11; i++)
@@ -163,7 +165,7 @@ namespace JSharp
                 constants = new Dictionary<int, Variable>();
                 structMap = new Dictionary<string, string>();
                 functDelegated = new Dictionary<string, List<Function>>();
-                functDelegatedFile = new Dictionary<string, File>();
+                functDelegatedFile = new Dictionary<string, List<File>>();
                 offuscationSet = new HashSet<string>();
                 imported = new HashSet<string>();
                 thisDef = new Stack<string>();
@@ -1374,85 +1376,7 @@ namespace JSharp
                             throw new Exception("Can not put a lazy function inside a variable");
                         }
 
-                        func.file.use();
-
-                        string grp = "m";
-
-                        foreach (Argument arg2 in func.args)
-                        {
-                            if (arg2.enums == null)
-                                grp += arg2.type.ToString().ToLower();
-                            else
-                                grp += arg2.enums.ToLower();
-                        }
-                        grp += ".m";
-                        foreach (Variable arg2 in func.outputs)
-                        {
-                            if (arg2.enums == null)
-                                grp += arg2.type.ToString().ToLower();
-                            else
-                                grp += arg2.enums.ToLower();
-                        }
-                        if (!functDelegated.ContainsKey(grp))
-                        {
-                            File newfFile = new File("__multiplex__/" + grp, "");
-                            functDelegated.Add(grp, new List<Function>());
-                            functDelegatedFile.Add(grp, newfFile);
-                            files.Add(newfFile);
-
-                            int k = 0;
-                            foreach (Argument arg in variable.args)
-                            {
-                                arg.CopyTo("__mux__." + grp + "." + k.ToString(), "", false);
-                                k++;
-                            }
-                            k = 0;
-                            foreach (Variable arg in variable.outputs)
-                            {
-                                arg.CopyTo("__mux__." + grp + ".ret_" + k.ToString(), "", false);
-                                k++;
-                            }
-                        }
-                        File fFile = functDelegatedFile[grp];
-                        if (!functDelegated[grp].Contains(func))
-                        {
-                            functDelegated[grp].Add(func);
-                            string args = "";
-                            int k = 0;
-                            foreach (Argument arg in variable.args)
-                            {
-                                args += "__mux__." + grp + "." + k.ToString() + ",";
-                            }
-                            if (args.Length > 0)
-                                args = args.Substring(0, args.Length - 1);
-
-                            if (!variables.ContainsKey("__mux__" + grp))
-                            {
-                                addVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
-                            }
-                            Variable mux = GetVariable("__mux__" + grp);
-                            int id = functDelegated[grp].IndexOf(func);
-                            string cond = getCondition(mux.gameName + "== " + id.ToString());
-                            foreach (string line in parseLine(val + "(" + args + ")").Split('\n'))
-                            {
-                                if (line != "" && !line.StartsWith("#"))
-                                {
-                                    fFile.AddLine(cond + line);
-                                }
-                            }
-                            func.file.AddLine(cond + Core.VariableOperation(mux, -1,"="));
-                            int i = 0;
-                            foreach (Variable outputVar in variable.outputs)
-                            {
-                                string line = parseLine("__mux__." + grp + ".ret_" + i.ToString() + "=" + func.outputs[i].gameName);
-                                if (line != "" && !line.StartsWith("#"))
-                                {
-                                    fFile.AddLine(cond + line);
-                                }
-                                i++;
-                            }
-                        }
-                        return Core.VariableOperation(variable, functDelegated[grp].IndexOf(func), "=");
+                        return Core.VariableOperation(variable, GetFunctionIndex(variable, func), "=");
                     }
                 }
                 else
@@ -1470,17 +1394,23 @@ namespace JSharp
                 }
                 else
                 {
-                    Structure stru2 = structs[GetVariableByName(val).enums];
-                    if (!stru2.canBeAssignIn(stru1))
-                    {
-                        throw new Exception("Cannot use " + op + " between " + stru2.name + " inside " + stru1.name);
-                    }
-
                     if (op == "=")
                     {
-                        foreach (Variable struV in structs[variable.enums].fields)
+                        if (stru1.methodsName.Contains("__set__"))
                         {
-                            output += parseLine(variable.gameName + "." + struV.name + "=" + val + "." + struV.name);
+                            output += parseLine(variable.name + ".__set__(" + val + ")");
+                        }
+                        else
+                        {
+                            Structure stru2 = structs[GetVariableByName(smartEmpty(val)).enums];
+                            if (!stru2.canBeAssignIn(stru1))
+                            {
+                                throw new Exception("Cannot use " + op + " between " + stru2.name + " inside " + stru1.name);
+                            }
+                            foreach (Variable struV in structs[variable.enums].fields)
+                            {
+                                preparseLine(variable.gameName + "." + struV.name + "=" + val + "." + struV.name);
+                            }
                         }
                     }
                     else if (op == "*=")
@@ -1613,6 +1543,17 @@ namespace JSharp
                 {
                     return Core.VariableOperation(variable, tmpI, op);
                 }
+                else if (float.TryParse(val, out tmpF))
+                {
+                    tmpI = (int)(tmpF * 1000);
+                    if (op == "#=")
+                        return Core.VariableOperation(variable, tmpI, "=");
+                    else
+                    {
+                        output += Core.VariableOperation(variable,  (int)(tmpF), op);
+                        return output;
+                    }
+                }
                 else
                 {
                     try
@@ -1675,7 +1616,9 @@ namespace JSharp
                     int iVal = ((int)(tmpF * 1000));
                     val = iVal.ToString();
 
-                    if (op == "=" || op == "+=" || op == "-=")
+                    if (op == "#=")
+                        return Core.VariableOperation(variable, iVal, "=");
+                    else if (op == "=" || op == "+=" || op == "-=")
                         return Core.VariableOperation(variable, iVal, op);
                     else if (op == "*=")
                     {
@@ -2230,6 +2173,10 @@ namespace JSharp
                 {
                     return appendPreCond(Core.CompareVariable(var, tmpI, op), pre);
                 }
+                if ((t == Type.ENUM) && enums[var.enums].valuesName.Contains(smartEmpty(arg[1]).ToLower()))
+                {
+                    return appendPreCond(Core.CompareVariable(var, enums[var.enums].valuesName.IndexOf(smartEmpty(arg[1]).ToLower()), op), pre);
+                }
                 else if (t == Type.FLOAT && float.TryParse(arg[1], out tmpF))
                 {
                     int tmpL = ((int)(tmpF * 1000));
@@ -2264,6 +2211,197 @@ namespace JSharp
                 stringSet.Add(text);
             return stringSet.IndexOf(text);
         }
+
+
+        #region function GRP
+        public static string GetFunctionGRP(Function func)
+        {
+            string grp = "m";
+
+            foreach (Argument arg2 in func.args)
+            {
+                if (arg2.enums == null)
+                    grp += arg2.type.ToString().ToLower();
+                else
+                    grp += arg2.enums.ToLower();
+            }
+            grp += ".m";
+            foreach (Variable arg2 in func.outputs)
+            {
+                if (arg2.enums == null)
+                    grp += arg2.type.ToString().ToLower();
+                else
+                    grp += arg2.enums.ToLower();
+            }
+            return grp;
+        }
+        public static string GetFunctionGRP(Variable func)
+        {
+            string grp = "m";
+
+            foreach (Argument arg2 in func.args)
+            {
+                if (arg2.enums == null)
+                    grp += arg2.type.ToString().ToLower();
+                else
+                    grp += arg2.enums.ToLower();
+            }
+            grp += ".m";
+            foreach (Variable arg2 in func.outputs)
+            {
+                if (arg2.enums == null)
+                    grp += arg2.type.ToString().ToLower();
+                else
+                    grp += arg2.enums.ToLower();
+            }
+            return grp;
+        }
+        public static void CreateFunctionGRP(Variable variable,string grp)
+        {
+            File newfFile = new File("__multiplex__/" + grp, "");
+            functDelegated.Add(grp, new List<Function>());
+            functDelegatedFile.Add(grp, new List<File>() { newfFile });
+            files.Add(newfFile);
+
+            if (!variables.ContainsKey("__mux__" + grp))
+            {
+                addVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
+            }
+
+            int k = 0;
+            foreach (Argument arg in variable.args)
+            {
+                arg.CopyTo("__mux__." + grp + "." + k.ToString(), "", false);
+                k++;
+            }
+            k = 0;
+            foreach (Variable arg in variable.outputs)
+            {
+                arg.CopyTo("__mux__." + grp + ".ret_" + k.ToString(), "", false);
+                k++;
+            }
+        }
+        public static void AddFunctionToGRPFile(Variable variable, Function func, string grp, File fFile)
+        {
+            string args = "";
+            int k = 0;
+            foreach (Argument arg in variable.args)
+            {
+                args += "__mux__." + grp + "." + k.ToString() + ",";
+            }
+            if (args.Length > 0)
+                args = args.Substring(0, args.Length - 1);
+
+            if (!variables.ContainsKey("__mux__" + grp))
+            {
+                addVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
+            }
+            Variable mux = GetVariable("__mux__" + grp);
+            int id = functDelegated[grp].IndexOf(func);
+            string cond = getCondition(mux.gameName + "== " + id.ToString());
+            foreach (string line in parseLine(func.gameName.Replace("/", ".").Replace(":", ".") + "(" + args + ")").Split('\n'))
+            {
+                if (line != "" && !line.StartsWith("#"))
+                {
+                    fFile.AddLine(cond + line);
+                }
+            }
+            func.file.AddLine(cond + Core.VariableOperation(mux, -1, "="));
+            int i = 0;
+            foreach (Variable outputVar in variable.outputs)
+            {
+                string line = parseLine("__mux__." + grp + ".ret_" + i.ToString() + "=" + func.outputs[i].gameName);
+                if (line != "" && !line.StartsWith("#"))
+                {
+                    fFile.AddLine(cond + line);
+                }
+                i++;
+            }
+        }
+        public static void AddFunctionToGRP(Variable variable, Function func, string grp)
+        {
+            functDelegated[grp].Add(func);
+            List<File> fFiles = functDelegatedFile[grp];
+            if ((functDelegated[grp].Count-1) % (compilerSetting.TreeMaxSize) == 0 && functDelegated[grp].Count > 1)
+            {
+                Variable mux = GetVariable("__mux__" + grp);
+                if (fFiles.Count == 1)
+                {
+                    string muxedFileNameInit = "__multiplex__/" + grp + "/splitted_" + (fFiles.Count - 1).ToString();
+                    int lowerBound1 = (compilerSetting.TreeMaxSize * (fFiles.Count - 1));
+                    int upperBound1 = (compilerSetting.TreeMaxSize * fFiles.Count) - 1;
+
+                    File newfFileInit = new File(muxedFileNameInit,"");
+                    newfFileInit.AddLine(fFiles[0].content);
+                    fFiles.Add(newfFileInit);
+                    files.Add(newfFileInit);
+
+                    fFiles[0].content = "";
+                    
+
+                    string cond1 = getCondition(mux.gameName + "== " + lowerBound1.ToString() + ".." + upperBound1.ToString());
+                    fFiles[0].AddLine(cond1 + "function " + context.getRoot() + ":" + muxedFileNameInit);
+                }
+
+                string muxedFileName = "__multiplex__/" + grp + "/splitted_" + (fFiles.Count - 1).ToString();
+                int lowerBound = (compilerSetting.TreeMaxSize * (fFiles.Count - 1));
+                int upperBound = (compilerSetting.TreeMaxSize * fFiles.Count) - 1;
+
+                File newfFile = new File(muxedFileName,"");
+                fFiles.Add(newfFile);
+                files.Add(newfFile);
+
+                string cond = getCondition(mux.gameName + "== " + lowerBound.ToString()+ ".." + upperBound.ToString());
+                fFiles[0].AddLine(cond + "function "+ context.getRoot() + ":"+ muxedFileName);
+            }
+
+            File fFile = fFiles[fFiles.Count - 1];
+            AddFunctionToGRPFile(variable, func, grp, fFile);
+        }
+        public static int GetFunctionIndex(Variable variable, Function func)
+        {
+            string grp = GetFunctionGRP(func);
+            func.file.use();
+            if (!functDelegated.ContainsKey(grp))
+            {
+                CreateFunctionGRP(variable,grp);
+            }
+            if (!functDelegated[grp].Contains(func))
+            {
+                AddFunctionToGRP(variable, func, grp);
+            }
+            return functDelegated[grp].IndexOf(func);
+        }
+        public static string CallFunctionGRP(Variable funObj, string func, string grp, string[] args, string[] outVar = null)
+        {
+            string output = parseLine(desugar("__mux__" + grp + " = " + func));
+
+            int i = 0;
+            foreach (Argument a in funObj.args)
+            {
+                if (args.Length <= i)
+                {
+                    output += eval(a.defValue, GetVariable("__mux__." + grp + "." + i.ToString()), a.type, "=");
+                }
+                else
+                {
+                    output += eval(args[i], GetVariable("__mux__." + grp + "." + i.ToString()), a.type, "=");
+                }
+                i++;
+            }
+
+            output += "function " + context.getRoot() + ":__multiplex__/" + grp + '\n';
+            if (outVar != null)
+            {
+                for (int j = 0; j < outVar.Length; j++)
+                {
+                    var v = GetVariableByName(outVar[j]);
+                    output += eval("__mux__." + grp + ".ret_" + j.ToString(), GetVariableByName(outVar[j]), v.type, "=");
+                }
+            }
+            return output;
+        }
+        #endregion
 
         #region instantiation
         public static string instCompilerVar(string text)
@@ -2563,7 +2701,10 @@ namespace JSharp
                     variable.isPrivate = isPrivate;
                     variable.privateContext = context.GetVar();
                     addVariable(context.GetVar() + v, variable);
-                    
+
+                    if (getStruct(text) == null)
+                        throw new Exception("No struct in " + text);
+
                     variable.SetEnum(getStruct(text));
 
                     if (structStack.Count > 0 && !isInStructMethod)
@@ -4517,80 +4658,18 @@ namespace JSharp
             else
                 funcName = context.GetVariable(func);
 
-            string grp = "m";
-
-            foreach (Argument arg2 in GetVariable(funcName).args)
-            {
-                if (arg2.enums == null)
-                    grp += arg2.type.ToString().ToLower();
-                else
-                    grp += arg2.enums.ToLower();
-            }
-            grp += ".m";
-            foreach (Variable arg2 in GetVariable(funcName).outputs)
-            {
-                if (arg2.enums == null)
-                    grp += arg2.type.ToString().ToLower();
-                else
-                    grp += arg2.enums.ToLower();
-            }
+            Variable funObj = GetVariable(funcName);
+            string grp = GetFunctionGRP(funObj);
 
             if (!functDelegated.ContainsKey(grp))
             {
-                File newfFile = new File("__multiplex__/" + grp, "");
-                functDelegated.Add(grp, new List<Function>());
-                functDelegatedFile.Add(grp, newfFile);
-                files.Add(newfFile);
-
-                int k = 0;
-                foreach (Argument arg3 in GetVariable(funcName).args)
-                {
-                    arg3.CopyTo("__mux__." + grp + "." + k.ToString(), "", false);
-                    k++;
-                }
-                k = 0;
-                foreach (Variable arg3 in GetVariable(funcName).outputs)
-                {
-                    arg3.CopyTo("__mux__." + grp + ".ret_" + k.ToString(), "", false);
-                    k++;
-                }
+                CreateFunctionGRP(funObj, grp);
             }
-
-            Variable funObj = GetVariable(funcName);
 
             if (args.Length > funObj.args.Count)
                 throw new Exception("To much Argument: recieve " + args.Length.ToString() + " expected: " + funObj.args.Count.ToString());
 
-            if (!variables.ContainsKey("__mux__" + grp))
-            {
-                addVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
-            }
-
-            output += parseLine(desugar("__mux__" +grp+" = " + func));
-
-            int i = 0;
-            foreach (Argument a in funObj.args)
-            {
-                if (args.Length <= i)
-                {
-                    output += eval(a.defValue, GetVariable("__mux__."+grp+"."+i.ToString()), a.type, "=");
-                }
-                else
-                {
-                    output += eval(args[i], GetVariable("__mux__." + grp + "." + i.ToString()), a.type, "=");
-                }
-                i++;
-            }
-
-            output += "function "+context.getRoot()+":__multiplex__/" + grp + '\n';
-            if (outVar != null)
-            {
-                for (int j = 0; j < outVar.Length; j++)
-                {
-                    var v = GetVariableByName(outVar[j]);
-                    output += eval("__mux__." + grp + ".ret_" + j.ToString(), GetVariableByName(outVar[j]), v.type, "=");
-                }
-            }
+            output = CallFunctionGRP(funObj, func, grp, args, outVar);
 
             return output;
         }
@@ -5404,6 +5483,7 @@ namespace JSharp
 
             public List<Variable> fields = new List<Variable>();
             public List<Function> methods = new List<Function>();
+            public List<string> methodsName = new List<string>();
             public List<string> generic = new List<string>();
             public Dictionary<string,string> compField = new Dictionary<string, string>();
 
@@ -5466,6 +5546,7 @@ namespace JSharp
             public void addMethod(Function variable)
             {
                 methods.Add(variable);
+                methodsName.Add(variable.name);
             }
             public void generateFunction(Function fun, Variable varOwner, string v, string cont)
             {
@@ -6270,6 +6351,10 @@ namespace JSharp
                 }
                 return lst;
             }
+        }
+        public class CompilerSetting
+        {
+            public int TreeMaxSize = 20;
         }
 
         public class Argument : Variable

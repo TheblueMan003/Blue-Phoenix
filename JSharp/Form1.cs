@@ -285,7 +285,6 @@ namespace JSharp
                 if (isLibraryCheckbox.Checked)
                 {
                     SafeWriteFile(dirRes + file, resources[file]);
-                    save.compileOrder.Add(file);
                 }
                 else
                 {
@@ -511,7 +510,7 @@ namespace JSharp
                     if (DatapackOpen.ShowDialog() == DialogResult.OK)
                     {
                         CodeListBox.Items.Add(form.filename);
-                        code.Add(form.filename, GenerateDatapackLink(DatapackOpen.FileName));
+                        code.Add(form.filename.ToLower(), GenerateDatapackLink(DatapackOpen.FileName));
                     }
                 }
                 else if (form.type == JSharp.NewFile.Type.RESOURCE)
@@ -528,6 +527,10 @@ namespace JSharp
                     if (form.type == JSharp.NewFile.Type.STRUCTURE)
                     {
                         code.Add(form.filename, "package " + form.filename + "\n\nstruct " + form.filename + "{\n\tdef __init__(){\n\n\t}\n}");
+                    }
+                    else if (form.type == JSharp.NewFile.Type.SUBPROGRAMME)
+                    {
+                        code.Add(form.filename, "package " + form.filename + "\n\nBOOL Enabled\ndef ticking main(){\n\twith(@a,true,Enabled){\n\t\t\n\t}\n}\n\ndef start(){\n\tEnabled = true\n}\n\ndef close(){\n\tEnabled = false\n}");
                     }
                     else
                     {
@@ -623,22 +626,7 @@ namespace JSharp
         }
         public void UpdateCodeBox()
         {
-            Formatter.reformat(CodeBox, this, false);/*
-            if (Compiler.enviroments != null)
-            {
-                autocompleteMenu1.Items = new string[] { };
-                try
-                {
-                    foreach (var m in Compiler.enviroments[previous])
-                    {
-                        autocompleteMenu1.AddItem(m);
-                    }
-                }
-                catch
-                {
-
-                }
-            }*/
+            Formatter.reformat(CodeBox, this, false);
         }
         public static void SafeWriteFile(string fileName, string content)
         {
@@ -653,7 +641,6 @@ namespace JSharp
         {
             isCompiling = 1;
             ExportDataPack(currentDataPack);
-            //Process.Start("explorer.exe", currentDataPack);
             isCompiling = 1000;
         }
         public void ExportDataPack(string path)
@@ -691,10 +678,11 @@ namespace JSharp
             List<Compiler.File> resourcesfiles = new List<Compiler.File>();
             foreach (string f in ResourceListBox.Items)
             {
-                files.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
+                resourcesfiles.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
             }
 
-            List<Compiler.File> cFiles = Compiler.compile(new CompilerCoreJava(),projectName, files, resourcesfiles, DebugThread, true, projectVersion, Path.GetDirectoryName(projectPath));
+            List<Compiler.File> cFiles = Compiler.compile(new CompilerCoreJava(), projectName, files, resourcesfiles,
+                                        DebugThread, true, projectVersion, Path.GetDirectoryName(projectPath));
             foreach (Compiler.File f in cFiles)
             {
                 string fileName = path + "/data/" + projectName.ToLower() + "/functions/" + f.name + ".mcfunction";
