@@ -1469,14 +1469,14 @@ namespace JSharp
                         }
                         else
                         {
-                            tmpI *= 1000;
-                            output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + GetConstant(tmpI).scoreboard() + '\n';
+                            tmpI *= compilerSetting.FloatPrecision;
+                            output += NBT_Data.parseSet(variable.name, variable.gameName, 1f/compilerSetting.FloatPrecision) + "scoreboard players get " + GetConstant(tmpI).scoreboard() + '\n';
                         }
                     }
                     else if (float.TryParse(val, out tmpF))
                     {
-                        tmpI = (int)(tmpF * 1000);
-                        output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + GetConstant(tmpI).scoreboard() + '\n';
+                        tmpI = (int)(tmpF * compilerSetting.FloatPrecision);
+                        output += NBT_Data.parseSet(variable.name, variable.gameName, 1f / compilerSetting.FloatPrecision) + "scoreboard players get " + GetConstant(tmpI).scoreboard() + '\n';
                     }
                     else if (context.IsFunction(val))
                     {
@@ -1487,7 +1487,7 @@ namespace JSharp
                         Variable val2Obj = GetVariableByName(val);
 
                         if (val2Obj.type == Type.FLOAT)
-                            output += NBT_Data.parseSet(variable.name, variable.gameName, 0.001f) + "scoreboard players get " + val2Obj.scoreboard() + '\n';
+                            output += NBT_Data.parseSet(variable.name, variable.gameName, 1f / compilerSetting.FloatPrecision) + "scoreboard players get " + val2Obj.scoreboard() + '\n';
                         else
                             output += NBT_Data.parseSet(variable.name, variable.gameName, 1) + "scoreboard players get " + val2Obj.scoreboard() + '\n';
                     }
@@ -1545,7 +1545,7 @@ namespace JSharp
                 }
                 else if (float.TryParse(val, out tmpF))
                 {
-                    tmpI = (int)(tmpF * 1000);
+                    tmpI = (int)(tmpF * compilerSetting.FloatPrecision);
                     if (op == "#=")
                         return Core.VariableOperation(variable, tmpI, "=");
                     else
@@ -1569,7 +1569,7 @@ namespace JSharp
                                     return Core.VariableOperation(variable, GetVariableByName(val), op);
                                 else
                                 {
-                                    output += parseLine("float tmp.0 = " + val+"/1000");
+                                    output += parseLine("float tmp.0 = " + val+"/"+ compilerSetting.FloatPrecision.ToString());
                                     output += Core.VariableOperation(variable, GetVariableByName("tmp.0"), op);
                                     return output;
                                 }
@@ -1587,7 +1587,7 @@ namespace JSharp
                 if (val.Contains("@"))
                 {
                     if (op == "=")
-                        return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(val, 1000) + '\n';
+                        return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(val, compilerSetting.FloatPrecision) + '\n';
                     else
                     {
                         output += parseLine("float tmp.0 = " + val);
@@ -1598,7 +1598,7 @@ namespace JSharp
                 else if (context.isEntity(val))
                 {
                     if (op == "=")
-                        return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(context.ConvertEntity(val), 1000) + '\n';
+                        return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(context.ConvertEntity(val), compilerSetting.FloatPrecision) + '\n';
                     else
                     {
                         output += parseLine("float tmp.0 = " + val);
@@ -1608,12 +1608,12 @@ namespace JSharp
                 }
                 else if (int.TryParse(val, out tmpI))
                 {
-                    int val2 = tmpI * ((op != "*=" && op != "/=")?1000:1);
+                    int val2 = tmpI * ((op != "*=" && op != "/=")? compilerSetting.FloatPrecision : 1);
                     return Core.VariableOperation(variable, val2, op);
                 }
                 else if (float.TryParse(val, out tmpF))
                 {
-                    int iVal = ((int)(tmpF * 1000));
+                    int iVal = ((int)(tmpF * compilerSetting.FloatPrecision));
                     val = iVal.ToString();
 
                     if (op == "#=")
@@ -1623,12 +1623,12 @@ namespace JSharp
                     else if (op == "*=")
                     {
                         output += Core.VariableOperation(variable, iVal, op);
-                        return output + Core.VariableOperation(variable, 1000, "/=");
+                        return output + Core.VariableOperation(variable, compilerSetting.FloatPrecision, "/=");
                     }
                     else if (op == "/=")
                     {
                         output += Core.VariableOperation(variable, iVal, op);
-                        return output + Core.VariableOperation(variable, 1000, "*=");
+                        return output + Core.VariableOperation(variable, compilerSetting.FloatPrecision, "*=");
                     }
                     else
                     {
@@ -1643,7 +1643,7 @@ namespace JSharp
                     {
                         if (var2.type == Type.INT && (op == "+=" || op == "-="))
                         {
-                            output += parseLine("int tmp.1 = 1000*" + val);
+                            output += parseLine("int tmp.1 = "+ compilerSetting.FloatPrecision.ToString()+ "*" + val);
                             return output + Core.VariableOperation(variable, GetVariableByName("tmp.1"), op);
                         }
                         else if (var2.type == Type.INT && op == "#=")
@@ -1653,16 +1653,16 @@ namespace JSharp
                         else if (var2.type == Type.INT && op == "=")
                         {
                             output += Core.VariableOperation(variable, GetVariableByName(val), op);
-                            return output + Core.VariableOperation(variable, 1000, "*=");
+                            return output + Core.VariableOperation(variable, compilerSetting.FloatPrecision, "*=");
                         }
                         else if (var2.type == Type.FLOAT && op == "*=")
                         {
                             output += Core.VariableOperation(variable, GetVariableByName(val), op);
-                            return output + Core.VariableOperation(variable, 1000, "/=");
+                            return output + Core.VariableOperation(variable, compilerSetting.FloatPrecision, "/=");
                         }
                         else if (var2.type == Type.FLOAT && op == "/=")
                         {
-                            output += Core.VariableOperation(variable, 1000, "*=");
+                            output += Core.VariableOperation(variable, compilerSetting.FloatPrecision, "*=");
                             return output + Core.VariableOperation(variable, GetVariableByName(val), op);
                         }
                         else
@@ -2037,15 +2037,15 @@ namespace JSharp
                     int p2 = int.MaxValue;
 
                     if (part[0] != "")
-                        p1 = ((int)(float.Parse(part[0])*1000));
+                        p1 = ((int)(float.Parse(part[0])* compilerSetting.FloatPrecision));
                     if (part[1] != "")
-                        p2 = ((int)(float.Parse(part[1])*1000));
+                        p2 = ((int)(float.Parse(part[1])* compilerSetting.FloatPrecision));
 
                     return Core.CompareVariable(var, p1, p2, "=");
                 }
                 else if (t == Type.FLOAT && float.TryParse(arg[1], out tmpF))
                 {
-                    return Core.CompareVariable(var, (int)(tmpF * 1000), "=");
+                    return Core.CompareVariable(var, (int)(tmpF * compilerSetting.FloatPrecision), "=");
                 }
                 else if (t == Type.BOOL)
                 {
@@ -2179,7 +2179,7 @@ namespace JSharp
                 }
                 else if (t == Type.FLOAT && float.TryParse(arg[1], out tmpF))
                 {
-                    int tmpL = ((int)(tmpF * 1000));
+                    int tmpL = ((int)(tmpF * compilerSetting.FloatPrecision));
                     return appendPreCond(Core.CompareVariable(var, tmpL, op), pre);
                 }
                 else if (context.GetVariable(arg[1],true)!=null)
@@ -6326,6 +6326,7 @@ namespace JSharp
         public class CompilerSetting
         {
             public int TreeMaxSize = 20;
+            public int FloatPrecision = 1000;
         }
 
         public class Argument : Variable
@@ -6717,7 +6718,7 @@ namespace JSharp
             public List<string> import = new List<string>();
             public string fakeContext;
             public List<List<ImpliciteVar>> impliciteVars = new List<List<ImpliciteVar>>();
-            int t=0;
+            
             public Context(string project, File f)
             {
                 directories.Add(project);
