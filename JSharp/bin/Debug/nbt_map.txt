@@ -46,80 +46,80 @@ slot = SelectedItemSlot = int
 flying = flying = bool
 
 [Armor_Stand]
-head.x = Pose.Head.x = float
-head.y = Pose.Head.y = float
-head.z = Pose.Head.z = float
-head_x = Pose.Head.x = float
-head_y = Pose.Head.y = float
-head_z = Pose.Head.z = float
+head.x = Pose.Head[0] = float
+head.y = Pose.Head[1] = float
+head.z = Pose.Head[2] = float
+head_x = Pose.Head[0] = float
+head_y = Pose.Head[1] = float
+head_z = Pose.Head[2] = float
 
 
-body.x = Pose.Body.x = float
-body.y = Pose.Body.y = float
-body.z = Pose.Body.z = float
-body_x = Pose.Body.x = float
-body_y = Pose.Body.y = float
-body_z = Pose.Body.z = float
+body.x = Pose.Body[0] = float
+body.y = Pose.Body[1] = float
+body.z = Pose.Body[2] = float
+body_x = Pose.Body[0] = float
+body_y = Pose.Body[1] = float
+body_z = Pose.Body[2] = float
 
 
-leftarm.x = Pose.LeftArm.x = float
-leftarm.y = Pose.LeftArm.y = float
-leftarm.z = Pose.LeftArm.z = float
-leftarm_x = Pose.LeftArm.x = float
-leftarm_y = Pose.LeftArm.y = float
-leftarm_z = Pose.LeftArm.z = float
+leftarm.x = Pose.LeftArm[0] = float
+leftarm.y = Pose.LeftArm[1] = float
+leftarm.z = Pose.LeftArm[2] = float
+leftarm_x = Pose.LeftArm[0] = float
+leftarm_y = Pose.LeftArm[1] = float
+leftarm_z = Pose.LeftArm[2] = float
 
-left_arm.x = Pose.LeftArm.x = float
-left_arm.y = Pose.LeftArm.y = float
-left_arm.z = Pose.LeftArm.z = float
-left_arm_x = Pose.LeftArm.x = float
-left_arm_y = Pose.LeftArm.y = float
-left_arm_z = Pose.LeftArm.z = float
-
-
-rightarm.x = Pose.RightArm.x = float
-rightarm.y = Pose.RightArm.y = float
-rightarm.z = Pose.RightArm.z = float
-rightarm_x = Pose.RightArm.x = float
-rightarm_y = Pose.RightArm.y = float
-rightarm_z = Pose.RightArm.z = float
-
-right_arm.x = Pose.RightArm.x = float
-right_arm.y = Pose.RightArm.y = float
-right_arm.z = Pose.RightArm.z = float
-right_arm_x = Pose.RightArm.x = float
-right_arm_y = Pose.RightArm.y = float
-right_arm_z = Pose.RightArm.z = float
+left_arm.x = Pose.LeftArm[0] = float
+left_arm.y = Pose.LeftArm[1] = float
+left_arm.z = Pose.LeftArm[2] = float
+left_arm_x = Pose.LeftArm[0] = float
+left_arm_y = Pose.LeftArm[1] = float
+left_arm_z = Pose.LeftArm[2] = float
 
 
-leftleg.x = Pose.LeftLeg.x = float
-leftleg.y = Pose.LeftLeg.y = float
-leftleg.z = Pose.LeftLeg.z = float
-leftleg_x = Pose.LeftLeg.x = float
-leftleg_y = Pose.LeftLeg.y = float
-leftleg_z = Pose.LeftLeg.z = float
+rightarm.x = Pose.RightArm[0] = float
+rightarm.y = Pose.RightArm[1] = float
+rightarm.z = Pose.RightArm[2] = float
+rightarm_x = Pose.RightArm[0] = float
+rightarm_y = Pose.RightArm[1] = float
+rightarm_z = Pose.RightArm[2] = float
 
-left_leg.x = Pose.LeftLeg.x = float
-left_leg.y = Pose.LeftLeg.y = float
-left_leg.z = Pose.LeftLeg.z = float
-left_leg_x = Pose.LeftLeg.x = float
-left_leg_y = Pose.LeftLeg.y = float
-left_leg_z = Pose.LeftLeg.z = float
+right_arm.x = Pose.RightArm[0] = float
+right_arm.y = Pose.RightArm[1] = float
+right_arm.z = Pose.RightArm[2] = float
+right_arm_x = Pose.RightArm[0] = float
+right_arm_y = Pose.RightArm[1] = float
+right_arm_z = Pose.RightArm[2] = float
 
 
-rightleg.x = Pose.RightLeg.x = float
-rightleg.y = Pose.RightLeg.y = float
-rightleg.z = Pose.RightLeg.z = float
-rightleg_x = Pose.RightLeg.x = float
-rightleg_y = Pose.RightLeg.y = float
-rightleg_z = Pose.RightLeg.z = float
+leftleg.x = Pose.LeftLeg[0] = float
+leftleg.y = Pose.LeftLeg[1] = float
+leftleg.z = Pose.LeftLeg[2] = float
+leftleg_x = Pose.LeftLeg[0] = float
+leftleg_y = Pose.LeftLeg[1] = float
+leftleg_z = Pose.LeftLeg[2] = float
 
-right_leg.x = Pose.RightLeg.x = float
-right_leg.y = Pose.RightLeg.y = float
-right_leg.z = Pose.RightLeg.z = float
-right_leg_x = Pose.RightLeg.x = float
-right_leg_y = Pose.RightLeg.y = float
-right_leg_z = Pose.RightLeg.z = float
+left_leg.x = Pose.LeftLeg[0] = float
+left_leg.y = Pose.LeftLeg[1] = float
+left_leg.z = Pose.LeftLeg[2] = float
+left_leg_x = Pose.LeftLeg[0] = float
+left_leg_y = Pose.LeftLeg[1] = float
+left_leg_z = Pose.LeftLeg[2] = float
+
+
+rightleg.x = Pose.RightLeg[0] = float
+rightleg.y = Pose.RightLeg[1] = float
+rightleg.z = Pose.RightLeg[2] = float
+rightleg_x = Pose.RightLeg[0] = float
+rightleg_y = Pose.RightLeg[1] = float
+rightleg_z = Pose.RightLeg[2] = float
+
+right_leg.x = Pose.RightLeg[0] = float
+right_leg.y = Pose.RightLeg[1] = float
+right_leg.z = Pose.RightLeg[2] = float
+right_leg_x = Pose.RightLeg[0] = float
+right_leg_y = Pose.RightLeg[1] = float
+right_leg_z = Pose.RightLeg[2] = float
 
 small = Small = bool
 invisible = Invisible = bool

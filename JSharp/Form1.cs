@@ -685,7 +685,13 @@ namespace JSharp
                                         DebugThread, true, projectVersion, Path.GetDirectoryName(projectPath));
             foreach (Compiler.File f in cFiles)
             {
-                string fileName = path + "/data/" + projectName.ToLower() + "/functions/" + f.name + ".mcfunction";
+                string fileName;
+                if (f.type == "json" && f.name.Contains("json"))
+                    fileName = path + "/data/" + projectName.ToLower() + "/" + f.name;
+                else if (f.type == "json" && !f.name.Contains("json"))
+                    fileName = path + "/data/" + projectName.ToLower() + "/" + f.name + ".json";
+                else
+                    fileName = path + "/data/" + projectName.ToLower() + "/functions/" + f.name + ".mcfunction";
                 try
                 {
                     SafeWriteFile(fileName, f.content);

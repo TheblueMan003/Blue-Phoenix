@@ -41,6 +41,7 @@ namespace JSharp
         private static Stack<int> condIDStack;
         private static Stack<Class> classDefStack;
         private static List<File> files;
+        private static List<File> jsonFiles;
         private static Dictionary<int, Variable> constants;
         public static Context context;
         private static File loadFile;
@@ -81,6 +82,7 @@ namespace JSharp
         private static bool OffuscateNeed;
         private static CompilerCore Core;
         private static ProjectVersion projectVersion;
+        private static int jsonIndent = 0;
 
         private static List<string> funcDef;
         private static string callTrace = "digraph G {\nmain\nload\nhelper\n";
@@ -104,6 +106,7 @@ namespace JSharp
         private static Regex opReg = new Regex(@"((#=)|(\+=)|(\-=)|(\*=)|(/=)|(\%=)|(\&=)|(\|=)|(\^=)|(=))");
         private static Regex elsifReg = new Regex(@"^el?s?e?\s*ifs?\s?\(");
         private static Regex ifReg = new Regex(@"^if\s*\(");
+        private static Regex jsonFileReg = new Regex(@"^jsonfile\s+[\w\\/\-]+\{?");
         private static Regex ifsReg = new Regex(@"^ifs\s*\(");
         private static Regex switchReg = new Regex(@"^switch\s*\(");
         private static Regex caseReg = new Regex(@"^case\s*\(");
@@ -170,6 +173,7 @@ namespace JSharp
                 imported = new HashSet<string>();
                 thisDef = new Stack<string>();
                 files = new List<File>();
+                jsonFiles = new List<File>();
                 stringSet = new List<string>();
                 packages = new List<string>();
                 adjPackage = new Stack<string>();
@@ -241,6 +245,7 @@ namespace JSharp
                         }
                     }
                 }
+                returnFiles.AddRange(jsonFiles);
                 callTrace += "}";
                 GobalDebug("Datapack contains: " + returnFiles.Count.ToString() + " files & "+lineCount.ToString()+" lines.", Color.LimeGreen);
                 
@@ -274,6 +279,7 @@ namespace JSharp
             isInFunctionDesc = false;
             isInStaticMethod = false;
             isInLazyCompile = 0;
+            jsonIndent = 0;
 
             compVal.Add(new Dictionary<string, string>());
 
@@ -377,48 +383,55 @@ namespace JSharp
             if (compVal.Count > 0 && !(dualCompVar.Match(line).Success && structInstCompVar)) {
                 line = compVarReplace(line);
             }
-
-            line = smartExtract(line);
-            if (line != "")
+            if (jsonIndent > 0)
             {
-                if (!lazyEval)
+                parseLine(line);
+            }
+            else
+            {
+                line = smartExtract(line);
+                if (line != "")
                 {
-                    if (isInStructMethod)
-                        structMethodFile.addParsedLine(line);
+                    if (!lazyEval)
+                    {
+                        if (isInStructMethod)
+                            structMethodFile.addParsedLine(line);
 
-                    if (inGenericStruct)
-                        structStack.Peek().genericFile.addParsedLine(line);
-                }
+                        if (inGenericStruct)
+                            structStack.Peek().genericFile.addParsedLine(line);
+                    }
 
-                if (isInLazyCompile > 0) { 
-                    if (smartContains(line, '{'))
-                        isInLazyCompile += 1;
-                    if (smartContains(line, '}'))
-                        isInLazyCompile -= 1;
-                }
+                    if (isInLazyCompile > 0)
+                    {
+                        if (smartContains(line, '{'))
+                            isInLazyCompile += 1;
+                        if (smartContains(line, '}'))
+                            isInLazyCompile -= 1;
+                    }
 
-                if (isInLazyCompile > 0 && !isInStructMethod && !inGenericStruct)
-                    context.currentFile().addParsedLine(line);
+                    if (isInLazyCompile > 0 && !isInStructMethod && !inGenericStruct)
+                        context.currentFile().addParsedLine(line);
 
-                string res;
-                if (isInLazyCompile == 0)
-                    res = parseLine(line);
-                else
-                {
-                    res = "";
-                }
+                    string res;
+                    if (isInLazyCompile == 0)
+                        res = parseLine(line);
+                    else
+                    {
+                        res = "";
+                    }
 
 
-                if (res != "")
-                    context.currentFile().AddLine(res);
-                
-                if ((line == "}" || autoIndented == 1) && !inGenericStruct && isInLazyCompile == 0 && limit != context.currentFile())
-                {
-                    context.currentFile().Close();
-                }
-                if (autoIndented > 0)
-                {
-                    autoIndented--;
+                    if (res != "")
+                        context.currentFile().AddLine(res);
+
+                    if ((line == "}" || autoIndented == 1) && !inGenericStruct && isInLazyCompile == 0 && limit != context.currentFile())
+                    {
+                        context.currentFile().Close();
+                    }
+                    if (autoIndented > 0)
+                    {
+                        autoIndented--;
+                    }
                 }
             }
         }
@@ -428,6 +441,11 @@ namespace JSharp
 
             try
             {
+                if (jsonIndent > 0)
+                {
+                    return AddToJsonFile(text);
+                }
+
                 text = smartExtract(text);
 
                 if (isInFunctionDesc)
@@ -472,7 +490,8 @@ namespace JSharp
                 else if ((text.StartsWith("return") && text.Contains("(") && text.Contains(")")) || text.StartsWith("return "))
                 {
                     string[] args;
-                    if (text.Contains("(") && text.Contains(")")) {
+                    if (text.Contains("(") && text.Contains(")"))
+                    {
                         args = getArgs(text);
                     }
                     else
@@ -481,6 +500,10 @@ namespace JSharp
                     }
 
                     return functionReturn(args);
+                }
+                else if (jsonFileReg.Match(text).Success)
+                {
+                    return instJsonFile(text);
                 }
                 //condition
                 else if (ifsReg.Match(text).Success)
@@ -3878,6 +3901,30 @@ namespace JSharp
             }
             return output;
         }
+        public static string instJsonFile(string text)
+        {
+            string name = "";
+            if (text.Contains("\"")){
+                name = text.Substring(text.IndexOf("\"") + 1, text.LastIndexOf("\"") - text.IndexOf("\"") - 1);
+            }
+            else
+            {
+                name = smartSplit(text, ' ', 1)[1].Replace("{", "");
+            }
+            jsonFiles.Add(new File(name, "", "json"));
+            if (text.Contains("{"))
+            {
+                jsonFiles[jsonFiles.Count - 1].AddLine(text.Substring(text.IndexOf("{"), text.Length - text.IndexOf("{")));
+            }
+            jsonIndent = text.Split('{').Length - text.Split('}').Length;
+            return "";
+        }
+        public static string AddToJsonFile(string text)
+        {
+            jsonFiles[jsonFiles.Count - 1].AddLine(text);
+            jsonIndent += text.Split('{').Length - text.Split('}').Length;
+            return "";
+        }
         #endregion
 
         private static bool containType(string text)
@@ -6448,6 +6495,8 @@ namespace JSharp
                         .Replace(var + ".length", genAmount.ToString())
                         .Replace(var, value);
 
+                    preparseLine(line);/*
+
                     if (isInLazyCompile > 0)
                     {
                         if (smartContains(line, '{'))
@@ -6472,7 +6521,7 @@ namespace JSharp
                     if (line == "}" && isInLazyCompile == 0)
                     {
                         context.currentFile().Close();
-                    }
+                    }*/
                 }
 
                 genIndex++;
