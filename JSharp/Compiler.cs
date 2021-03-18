@@ -97,7 +97,7 @@ namespace JSharp
         private static Regex getReg = new Regex("\\w*\\s*=[ a-z\\.A-Z0-9]*\\[.*\\]");
         private static Regex oppReg = new Regex(@"[a-zA-Z0-9\._]+\[.*\]\s*[+\-/\*%]=");
         private static Regex setReg = new Regex("\\[.*\\]\\s*=\\s*.*");
-        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9 ,_=:\.]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9 ,_=]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.]*\))?,?\s*)*\})");
+        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9 ,_=:\.""]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.""]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9 ,_=""]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.""]*\))?,?\s*)*\})");
         private static Regex blocktagsDesugarReg = new Regex(@"(?s)(blocktags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|blocktags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex ifsDesugarReg = new Regex(@"(?s)^(if\s*\(.*\)\{.*\}\s*else)|(if\s*\(.*\).*\s*else)");
         private static Regex funArgTypeReg = new Regex(@"^([@\w\.]*\s*(<\(?\w*\)?,?\(?\w*\)?>)?(\[\d+\])?)*\(");
@@ -999,7 +999,7 @@ namespace JSharp
 
             if (args.Length == 1 && isString(args[0]))
             {
-                foreach (string arg in smartSplit(extractString(args[0]),' '))
+                foreach (string arg in smartSplitJson(extractString(args[0]),' '))
                 {
                     numericalOnly = numericalOnly && (float.TryParse(arg, out float _) || arg.StartsWith("~") || arg.StartsWith("^"));
                 }
@@ -1127,14 +1127,14 @@ namespace JSharp
                         funObj = f;
                     }
                     if (wasEmpty && f.lazy && args.Length == 1 && f.args.Count > 1
-                        && smartSplit(args[0], ' ').Length >= f.args.Count - functionCount
-                        && smartSplit(args[0], ' ').Length <= f.args.Count)
+                        && smartSplitJson(args[0], ' ').Length >= f.args.Count - functionCount
+                        && smartSplitJson(args[0], ' ').Length <= f.args.Count)
                     {
                         funObj = f;
                     }
                     if (wasEmpty && f.lazy && args.Length == 1 && f.args.Count > 1 && isString(args[0])
-                        && smartSplit(extractString(args[0]), ' ').Length >= f.args.Count - functionCount
-                        && smartSplit(extractString(args[0]), ' ').Length <= f.args.Count)
+                        && smartSplitJson(extractString(args[0]), ' ').Length >= f.args.Count - functionCount
+                        && smartSplitJson(extractString(args[0]), ' ').Length <= f.args.Count)
                     {
                         funObj = f;
                     }
@@ -1143,7 +1143,16 @@ namespace JSharp
                 {
                     string a = "";
                     foreach (string ar in args)
-                        a += getExprType(ar)+" "+ ar + ", ";
+                    {
+                        try
+                        {
+                            a += getExprType(ar) + " " + ar + ", ";
+                        }
+                        catch
+                        {
+                            a += "???" + ar;
+                        }
+                    }
                     throw new Exception("No function Found for "+funcName+" with args:"+a);
                 }
             }
@@ -2129,11 +2138,11 @@ namespace JSharp
             else if (text.Contains("(") && context.IsFunction(text.Substring(0, text.IndexOf('('))) && !text.Contains("<") && !text.Contains("=") && !text.Contains(">"))
             {
                 string arg = text.Substring(text.IndexOf('(') + 1, text.LastIndexOf(')') - text.IndexOf('(') - 1);
-                string[] args = smartSplit(arg, ',');
+                string[] args = smartSplitJson(arg, ',');
                 string func;
                 if (smartContains(text, '='))
                 {
-                    func = smartEmpty(smartSplit(text, '=', 1)[1]).Substring(text.IndexOf(' ') + 1, text.IndexOf('(') - text.IndexOf('=') - 1);
+                    func = smartEmpty(smartSplitJson(text, '=', 1)[1]).Substring(text.IndexOf(' ') + 1, text.IndexOf('(') - text.IndexOf('=') - 1);
                 }
                 else
                 {
@@ -4259,6 +4268,7 @@ namespace JSharp
             {
                 string arg = getArg(text);
                 string[] args = smartSplitJson(arg, ',');
+
                 string func;
                 bool anonymusFunc = false;
                 string anonymusFuncName = "";
