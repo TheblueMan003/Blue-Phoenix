@@ -1140,6 +1140,17 @@ namespace JSharp
                     SendKeys.Send(temp2);
                     break;
 
+                case '\t':
+                    string line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)].Replace(" ", "").Replace("\t", "");
+                    if (line.StartsWith("for") && !line.Contains("("))
+                    {
+                        SendKeys.Send("{(}int i = 0;i < length;i{+}{+}{)}{{}{ENTER}{ENTER}{}}{UP}");
+                    }
+                    else if (line.StartsWith("dtm") && !line.Contains("("))
+                    {
+                        SendKeys.Send("{BACKSPACE}{BACKSPACE}{BACKSPACE}{BACKSPACE}def ticking main{(}{)}{{}{ENTER}{ENTER}{}}{UP}");
+                    }
+                    break;
                 // '}'
                 case '}':
                     SendKeys.Send("{LEFT}{BACKSPACE}{RIGHT}");

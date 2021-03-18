@@ -2432,11 +2432,11 @@ namespace JSharp
                 functionTags.Add(tag.ToLower());
 
                 File tagFile = new File("__tags__/" + tag.Replace(".", "/").ToLower());
+                tagFile.notUsed = true;
                 Function tagFunc = new Function(tag.ToLower(), Project + ":__tags__/" + tag.Replace(".", "/").ToLower(), tagFile);
                 files.Add(tagFile);
                 List<Function> f = new List<Function>();
                 f.Add(tagFunc);
-                tagFile.use();
                 functions.Add(Project + ".__tags__." + tag.ToLower(), f);
 
                 return tagFile;
@@ -2445,6 +2445,15 @@ namespace JSharp
             {
                 return GetFunction(context.GetFunctionName("__tags__." + tag.ToLower()), new string[] { }).file;
             }
+        }
+        public static void AddToFunctionTag(Function func, string tag)
+        {
+            bool wasUsed = func.file.notUsed;
+
+            File f = CreateFunctionTag(tag)
+                .AddLine(parseLine(func.gameName.Replace(":", ".").Replace("/", ".") + "()"));
+            func.file.notUsed = wasUsed;
+            f.addChild(func.file);
         }
         #endregion
 
@@ -3126,8 +3135,7 @@ namespace JSharp
                 {
                     if (!tag.StartsWith("__"))
                     {
-                        CreateFunctionTag(tag).AddLine(parseLine(func + "()"));
-                        fFile.use();
+                        AddToFunctionTag(function, tag);
 
                         callTrace += "\"@" + tag.ToLower() + "\"->\"" + function.gameName + "\"\n";
                     }
@@ -3661,7 +3669,7 @@ namespace JSharp
             }
 
             context.Sub(name, new File("struct/"+name,"", "struct"));
-            context.currentFile().notUsed = true;
+            //context.currentFile().notUsed = true;
             Structure stru = new Structure(name, parent);
             try
             {
@@ -4468,6 +4476,8 @@ namespace JSharp
                     autoIndented = 0;
                     if (funObj.variableStruct != null)
                         adjPackage.Push(funObj.variableStruct);
+                    string prevFunction = callingFunctName;
+                    callingFunctName = funObj.gameName;
                     foreach (string line in funObj.file.parsed)
                     {
                         string modLine = line;                        
@@ -4476,6 +4486,7 @@ namespace JSharp
                         
                         i++;
                     }
+                    callingFunctName = prevFunction;
                     if (funObj.variableStruct != null)
                         adjPackage.Pop();
 
@@ -5661,7 +5672,7 @@ namespace JSharp
                 foreach (string tag in fun.tags)
                 {
                     function.tags.Add(tag);
-                    CreateFunctionTag(tag).AddLine(parseLine(fun.name + "()"));
+                    AddToFunctionTag(function, tag);
                 }
 
                 fFile.notUsed = !fun.isLoading && !fun.isHelper && !fun.isTicking && fun.tags.Count == 0;
@@ -6441,7 +6452,7 @@ namespace JSharp
                 this.type = type;
             }
 
-            public void AddLine(string cont)
+            public File AddLine(string cont)
             {
                 if (cont != "")
                 {
@@ -6452,6 +6463,7 @@ namespace JSharp
                     else
                         lineCount++;
                 }
+                return this;
             }
             public void AddScoreboardDefLine(string cont)
             {
@@ -6495,8 +6507,9 @@ namespace JSharp
                         .Replace(var + ".length", genAmount.ToString())
                         .Replace(var, value);
 
-                    preparseLine(line);/*
-
+                    preparseLine(line);
+                    
+                    /*
                     if (isInLazyCompile > 0)
                     {
                         if (smartContains(line, '{'))
@@ -6688,6 +6701,7 @@ namespace JSharp
             {
                 addChild(context.GoTo(UnparsedFunctionFileContext));
 
+                context.currentFile().notUsed = notUsed;
                 structStack = new Stack<Structure>();
                 packageMap = new Dictionary<string, string>();
                 condIDStack = new Stack<int>();
