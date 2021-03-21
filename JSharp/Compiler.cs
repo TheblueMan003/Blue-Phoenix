@@ -97,7 +97,7 @@ namespace JSharp
         private static Regex getReg = new Regex("\\w*\\s*=[ a-z\\.A-Z0-9]*\\[.*\\]");
         private static Regex oppReg = new Regex(@"[a-zA-Z0-9\._]+\[.*\]\s*[+\-/\*%]=");
         private static Regex setReg = new Regex("\\[.*\\]\\s*=\\s*.*");
-        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9 ,_=:\.""]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.""]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9 ,_=""]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.""]*\))?,?\s*)*\})");
+        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9 ,_=:\.""]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.""\(\)]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9 ,_=""\(\)]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.""\(\)]*\))?,?\s*)*\})");
         private static Regex blocktagsDesugarReg = new Regex(@"(?s)(blocktags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|blocktags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex ifsDesugarReg = new Regex(@"(?s)^(if\s*\(.*\)\{.*\}\s*else)|(if\s*\(.*\).*\s*else)");
         private static Regex funArgTypeReg = new Regex(@"^([@\w\.]*\s*(<\(?\w*\)?,?\(?\w*\)?>)?(\[\d+\])?)*\(");
@@ -1978,7 +1978,7 @@ namespace JSharp
             float tmpF;
             int idVal = condID++;
             
-            if (context.isEntity(text))
+            if (context.isEntity(text) && !smartContains(text,'.'))
             {
                 return Core.ConditionEntity(context.GetEntitySelector(text));
             }
@@ -2001,6 +2001,21 @@ namespace JSharp
             else if (text.Contains("=="))
             {
                 string[] arg = text.Replace("==", "=").Split('=');
+                string selector1 = "";
+                string selector2 = "";
+                if (arg[0].StartsWith("@") && smartContains(arg[0], '.')){
+                    string[] sarg0 = smartSplit(arg[0], '.', 1);
+                    selector1 = sarg0[0];
+                    arg[0] = sarg0[1];
+                }
+                if (arg.Length > 1 && arg[1].StartsWith("@") && smartContains(arg[1], '.'))
+                {
+                    string[] sarg0 = smartSplit(arg[1], '.', 1);
+                    selector2 = sarg0[0];
+                    arg[1] = sarg0[1];
+                }
+
+
                 for (int i = 0; i < arg.Length; i++)
                 {
                     if (containLazyVal(smartEmpty(arg[i])))
@@ -2029,7 +2044,7 @@ namespace JSharp
 
                 if (arg[1] == "null")
                 {
-                    return Core.ConditionInverse(Core.CompareVariable(GetVariableByName(arg[0]), GetVariableByName(arg[0]), "="));
+                    return Core.ConditionInverse(Core.CompareVariable(GetVariableByName(arg[0]), GetVariableByName(arg[0]), "=", selector1, selector1));
                 }
 
                 if (t == Type.STRUCT)
@@ -2049,18 +2064,18 @@ namespace JSharp
                         if (part[1] != "")
                             p2 = ((int)(int.Parse(part[1])));
 
-                        return Core.CompareVariable(var, p1,p2, "=");
+                        return Core.CompareVariable(var, p1,p2, selector1);
                     }
                     else if(int.TryParse(arg[1], out tmpI))
                     {
-                        return Core.CompareVariable(var, tmpI, "=");
+                        return Core.CompareVariable(var, tmpI, "=", selector1);
                     }
                     
                     if (var.enums != null && enums[var.enums].Contains(smartEmpty(arg[1].ToLower())))
                     {
-                        return Core.CompareVariable(var, enums[var.enums].IndexOf(smartEmpty(arg[1].ToLower())), "=");
+                        return Core.CompareVariable(var, enums[var.enums].IndexOf(smartEmpty(arg[1].ToLower())), "=", selector1);
                     }
-                    return Core.CompareVariable(var, GetVariableByName(arg[1]), "=");
+                    return Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2);
                 }
                 else if (t == Type.FLOAT && arg[1].Contains(".."))
                 {
@@ -2073,11 +2088,11 @@ namespace JSharp
                     if (part[1] != "")
                         p2 = ((int)(float.Parse(part[1])* compilerSetting.FloatPrecision));
 
-                    return Core.CompareVariable(var, p1, p2, "=");
+                    return Core.CompareVariable(var, p1, p2, selector1);
                 }
                 else if (t == Type.FLOAT && float.TryParse(arg[1], out tmpF))
                 {
-                    return Core.CompareVariable(var, (int)(tmpF * compilerSetting.FloatPrecision), "=");
+                    return Core.CompareVariable(var, (int)(tmpF * compilerSetting.FloatPrecision), "=", selector1);
                 }
                 else if (t == Type.BOOL)
                 {
@@ -2086,27 +2101,34 @@ namespace JSharp
                     else if (arg[1] == "false")
                         return Core.CompareVariable(var, 0, "=");
                     else
-                        return Core.CompareVariable(var, GetVariableByName(arg[1]), "=");
+                        return Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2);
                 }
                 else if (t == Type.STRING && arg[1].Contains("\""))
                 {
-                    return Core.CompareVariable(var, getStringID(arg[1]), "=");
+                    return Core.CompareVariable(var, getStringID(arg[1]), "=", selector1);
                 }
                 else if (context.GetVariable(arg[1], true) != null)
                 {
-                    return Core.CompareVariable(var, GetVariableByName(arg[1]), "=");
+                    return Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2);
                 }
                 else
                 {
                     int idVal2 = condID++;
                     pre += parseLine(getExprType(arg[1]).ToString().ToLower() + " cond_" + idVal2.ToString() + " = " + arg[1]);
-                    return appendPreCond(Core.CompareVariable(var, GetVariableByName("cond_" + idVal2), "="), pre);
+                    return appendPreCond(Core.CompareVariable(var, GetVariableByName("cond_" + idVal2), "=", selector1), pre);
                 }
 
             }
             else if (text.Contains("!="))
             {
                 string[] arg = text.Replace("!=", "=").Split('=');
+                string selector1 = "";
+                if (arg[0].StartsWith("@") && smartContains(arg[0], '.'))
+                {
+                    string[] sarg0 = smartSplit(arg[0], '.', 1);
+                    selector1 = sarg0[0];
+                    arg[0] = sarg0[1];
+                }
 
                 if (arg[1].Replace(" ","") == "null")
                 {
@@ -2124,14 +2146,14 @@ namespace JSharp
                         var = GetVariableByName("cond_" + idVal3);
                     }
 
-                    return Core.CompareVariable(var, var, "==");
+                    return Core.CompareVariable(var, var, "==", selector1);
                 }
                 else
                 {
                     return Core.ConditionInverse(getCond(text.Replace("!=", "==")));
                 }
             }
-            else if (context.isEntity(text) || text.StartsWith("@"))
+            else if ((context.isEntity(text) || text.StartsWith("@")) && !smartContains(text,'.'))
             {
                 return Core.ConditionEntity(context.GetEntitySelector(text));
             }
@@ -2172,12 +2194,26 @@ namespace JSharp
                 if (op == "")
                 {
                     if (text.StartsWith("!"))
-                        return Core.CompareVariable(GetVariableByName(text.Replace("!", "")), 0, "=");
+                        return Core.CompareVariable(GetVariableByName(text.Replace("!", "")), 0, "<=");
                     else
-                        return Core.CompareVariable(GetVariableByName(text.Replace("!", "")), 1, "=");
+                        return Core.CompareVariable(GetVariableByName(text.Replace("!", "")), 1, ">=");
                 }
 
-                string[] arg = text.Replace(op, "=").Split('=');
+                string[] arg = smartEmpty(text).Replace(op, "=").Split('=');
+                string selector1 = "";
+                string selector2 = "";
+                if (arg[0].StartsWith("@") && smartContains(arg[0], '.'))
+                {
+                    string[] sarg0 = smartSplit(arg[0], '.', 1);
+                    selector1 = sarg0[0];
+                    arg[0] = sarg0[1];
+                }
+                if (arg.Length > 1 && arg[1].StartsWith("@") && smartContains(arg[1], '.'))
+                {
+                    string[] sarg0 = smartSplit(arg[1], '.', 1);
+                    selector2 = sarg0[0];
+                    arg[1] = sarg0[1];
+                }
 
                 for (int i = 0; i < arg.Length; i++)
                 {
@@ -2203,26 +2239,26 @@ namespace JSharp
 
                 if ((t == Type.INT || t == Type.ENUM) && int.TryParse(arg[1], out tmpI))
                 {
-                    return appendPreCond(Core.CompareVariable(var, tmpI, op), pre);
+                    return appendPreCond(Core.CompareVariable(var, tmpI, op, selector1), pre);
                 }
                 if ((t == Type.ENUM) && enums[var.enums].valuesName.Contains(smartEmpty(arg[1]).ToLower()))
                 {
-                    return appendPreCond(Core.CompareVariable(var, enums[var.enums].valuesName.IndexOf(smartEmpty(arg[1]).ToLower()), op), pre);
+                    return appendPreCond(Core.CompareVariable(var, enums[var.enums].valuesName.IndexOf(smartEmpty(arg[1]).ToLower()), op, selector1), pre);
                 }
                 else if (t == Type.FLOAT && float.TryParse(arg[1], out tmpF))
                 {
                     int tmpL = ((int)(tmpF * compilerSetting.FloatPrecision));
-                    return appendPreCond(Core.CompareVariable(var, tmpL, op), pre);
+                    return appendPreCond(Core.CompareVariable(var, tmpL, op, selector1), pre);
                 }
                 else if (context.GetVariable(arg[1],true)!=null)
                 {
-                    return appendPreCond(Core.CompareVariable(var, GetVariableByName(arg[1]), op), pre);
+                    return appendPreCond(Core.CompareVariable(var, GetVariableByName(arg[1]), op, selector1, selector2), pre);
                 }
                 else
                 {
                     int idVal2 = condID++;
                     pre += parseLine(getExprType(arg[1]).ToString().ToLower() + " cond_" + idVal2.ToString() + " = " + arg[1]);
-                    return appendPreCond(Core.CompareVariable(var, GetVariableByName("cond_" + idVal2), op), pre);
+                    return appendPreCond(Core.CompareVariable(var, GetVariableByName("cond_" + idVal2), op, selector1), pre);
                 }
             }
         }
@@ -3499,9 +3535,9 @@ namespace JSharp
             if (overriding && enums.ContainsKey(name))
                 enums.Remove(name);
             if (fields != null) 
-                enums.Add(name,new Enum(name,fields,smartSplit(field[1].ToLower(), ','),final));
+                enums.Add(name,new Enum(name,fields,smartSplit(field[1], ','),final));
             else
-                enums.Add(name, new Enum(name,smartSplit(field[1].ToLower(), ','), final));
+                enums.Add(name, new Enum(name,smartSplit(field[1], ','), final));
 
             return "";
         }
@@ -6258,7 +6294,6 @@ namespace JSharp
                 {
                     string type = smartSplit(field, ' ')[0];
                     string fname = smartSplit(field, ' ')[1];
-                    string enums = "";
                     
                     string defaultVal = "";
                     if (field.Contains("="))
@@ -6307,7 +6342,7 @@ namespace JSharp
                 if (value.Contains("("))
                 {
                     fields = getArgs(value);
-                    name = value.Substring(0, value.IndexOf('('));
+                    name = value.Substring(0, value.IndexOf('(')).ToLower();
                 }
                 int index = values.Count;
 
@@ -6507,8 +6542,11 @@ namespace JSharp
                 foreach (string l in parsed)
                 {
                     string line = l;
-                    if (enums != null) { 
-                        foreach (string field in enums.fieldsName)
+                    if (enums != null) {
+                        List<string> sortedField = new List<string>();
+                        sortedField.AddRange(enums.fieldsName);
+                        sortedField.Sort((a, b) => b.Length.CompareTo(a.Length));
+                        foreach (string field in sortedField)
                         {
                             line = line.Replace(var + "." + field, enums.GetFieldOf(value, field));
                         }

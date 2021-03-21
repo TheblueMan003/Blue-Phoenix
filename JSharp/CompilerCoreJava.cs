@@ -44,7 +44,7 @@ namespace JSharp
             }
             else
             {
-                if (selector.Length>1)
+                if (selector.Length > 1)
                 {
                     throw new Exception("Can not asign " + var1.gameName + " to " + selector);
                 }
