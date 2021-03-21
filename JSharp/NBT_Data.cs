@@ -90,7 +90,7 @@ namespace JSharp
             loadDict();
             if (entity.Contains("@"))
             {
-                entity = limitedEntity(entity);
+                //entity = limitedEntity(entity);
 
                 if (nbt_map.ContainsKey(value))
                     return "execute store result entity " + entity + " " + nbt_map[value] + " " + nbt_map_type[value] + " " + scale.ToString() + " run ";

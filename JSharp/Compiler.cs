@@ -1277,7 +1277,6 @@ namespace JSharp
                 throw new Exception("Cannot moddify Constant!");
             variable.wasSet = true;
 
-            
             if (containLazyVal(val))
             {
                 return eval(getLazyVal(val), variable, ca, op);
@@ -4547,6 +4546,7 @@ namespace JSharp
                     lazyOutput.Pop();
                     lazyCall.Pop();
                     popLazyVal();
+                    
                     if (anonymusFunc)
                     {
                         parseLine("def " + anonymusFuncName + "(){");
@@ -6992,7 +6992,7 @@ namespace JSharp
                 return output;
             }
 
-            public string GetFunctionName(string func)
+            public string GetFunctionName(string func, bool safe = false, bool bottleneck = false)
             {
                 func = toInternal(smartEmpty(func).ToLower(), 256);
                 if (functions.ContainsKey(func))
@@ -7012,14 +7012,24 @@ namespace JSharp
                 }
                 if (output != null)
                     return output;
-                if (adjPackage.Count > 0 && !func.StartsWith(adjPackage.Peek()+"."))
+
+                if (adjPackage.Count > 0 && !bottleneck)
                 {
-                    return GetFunctionName(adjPackage.Peek() + "." + func);
+                    foreach (string pack in adjPackage)
+                    {
+                        string var = GetFunctionName(pack + "." + func, true, true);
+                        if (var != null)
+                        {
+                            return var;
+                        }
+                    }
                 }
+                if (safe)
+                    return null;
                 throw new Exception("UNKNOW FUNCTION (" + dir+func+ ")");
             }
 
-            public bool IsFunction(string func, bool rec= false)
+            public bool IsFunction(string func, bool bottleneck = false)
             {
                 func = toInternal(smartEmpty(func).ToLower());
                 
@@ -7046,14 +7056,23 @@ namespace JSharp
                         return true;
                     }
                 }
-                if (adjPackage.Count > 0 && !func.StartsWith(adjPackage.Peek() + ".") && !rec)
+
+                if (adjPackage.Count > 0 && !bottleneck)
                 {
-                    return IsFunction(adjPackage.Peek() + "." + func,true);
+                    foreach (string pack in adjPackage)
+                    {
+                        bool val = IsFunction(pack + "." + func, true);
+                        if (val)
+                        {
+                            return val;
+                        }
+                    }
                 }
+
                 return false;
             }
 
-            public string GetVariableName(string func, bool safe = false)
+            public string GetVariableName(string func, bool safe = false, bool bottleneck = false)
             {
                 func = toInternal(smartEmpty(func));
                 if (containLazyVal(func))
@@ -7087,13 +7106,25 @@ namespace JSharp
                     return GetVariableName(adjPackage.Peek() + "." + func, safe);
                 }
 
+                if (adjPackage.Count > 0 && !bottleneck)
+                {
+                    foreach (string pack in adjPackage)
+                    {
+                        string var = GetVariableName(pack + "." + func, true, true);
+                        if (var != null)
+                        {
+                            return var;
+                        }
+                    }
+                }
+
                 if (!safe)
                     throw new Exception("UNKNOW Variable (" + dir + func + ")");
                 else
                     return null;
             }
 
-            public string GetVariable(string func, bool safe = false)
+            public string GetVariable(string func, bool safe = false, bool bottleneck = false)
             {
                 func = toInternal(func.Replace(" ", ""));
 
@@ -7124,13 +7155,22 @@ namespace JSharp
                 if (output != null)
                     return output;
 
-                if (adjPackage.Count > 0 && !func.StartsWith(adjPackage.Peek() + "."))
+                string adj = "";
+                if (adjPackage.Count > 0 && !bottleneck)
                 {
-                    return GetVariable(adjPackage.Peek() + "." + func, safe);
+                    foreach(string pack in adjPackage)
+                    {
+                        string var = GetVariable(pack + "." + func, true, true);
+                        if (var != null)
+                        {
+                            return var;
+                        }
+                        adj += pack + ", ";
+                    }
                 }
 
                 if (!safe)
-                    throw new Exception("UNKNOW Variable (" + dir +"/"+ func + ")");
+                    throw new Exception("UNKNOW Variable (" + dir +"/"+ func + ") with package: "+adj);
                 else
                     return null;
             }
