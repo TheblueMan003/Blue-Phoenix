@@ -3823,7 +3823,7 @@ namespace JSharp
 
             return "";
         }
-        private static string instLamba(string text, Variable variable)
+        public static string instLamba(string text, Variable variable)
         {
             string[] para = text.Replace("=>", "\\").Split('\\');
             string lambda = "lamba_" + lambdaID.ToString();
@@ -7100,11 +7100,6 @@ namespace JSharp
                 }
                 if (output != null)
                     return output;
-
-                if (adjPackage.Count > 0 && !func.StartsWith(adjPackage.Peek() + "."))
-                {
-                    return GetVariableName(adjPackage.Peek() + "." + func, safe);
-                }
 
                 if (adjPackage.Count > 0 && !bottleneck)
                 {
