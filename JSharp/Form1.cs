@@ -864,7 +864,7 @@ namespace JSharp
             try
             {
                 isCompiling = 1;
-                compileFiled = Compiler.compile(new CompilerCoreJava(),projectName, compileFile, compileResource, DebugThread, exporting, projectVersion,
+                compileFiled = Compiler.compile(new CompilerCoreJava(), projectName, compileFile, compileResource, DebugThread, exporting, projectVersion,
                     Path.GetDirectoryName(projectPath));
 
                 if (showForm)

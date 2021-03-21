@@ -2631,7 +2631,7 @@ namespace JSharp
 
             if (text.Contains("="))
             {
-                if (ca == Type.FUNCTION && text.Contains(">"))
+                if (ca == Type.FUNCTION && text.Contains("<"))
                 {
                     int f = text.IndexOf(" ", text.IndexOf(">"))+1;
                     vari = smartEmpty(text.Substring(f, text.IndexOf("=") - f));
@@ -2645,7 +2645,7 @@ namespace JSharp
             }
             else
             {
-                if (ca == Type.FUNCTION && text.Contains(">"))
+                if (ca == Type.FUNCTION && text.Contains("<"))
                 {
                     int f = text.IndexOf(" ", text.IndexOf(">"))+1;
                     vari = smartEmpty(text.Substring(f, text.Length-f));
@@ -2830,21 +2830,15 @@ namespace JSharp
                 {
                     index = (index + 1) % defValue.Length;
                 }
-                else if (!entity && text.Contains("=") && context.currentFile().type != "struct")
-                {
-                    output += eval(defValue[index], variable, ca);
-                    index = (index + 1) % defValue.Length;
-                }
-                else if (entity && part == 3 && context.currentFile().type != "struct")
-                {
-                    output += eval(defValue[index], variable, ca);
-                    index = (index + 1) % defValue.Length;
-                }
-                else if (entity && part == 2 && entityFormatVar && context.currentFile().type != "struct")
-                {
-                    output += eval(defValue[index], variable, ca);
-                    index = (index + 1) % defValue.Length;
-                }
+            }
+            if (context.currentFile().type != "struct" && ((!entity && text.Contains("=")) ||
+                     (entity && part == 2 && entityFormatVar)))
+            {
+                output += modVar(vari +"="+ splited[1]);
+            }
+            if (context.currentFile().type != "struct" && ((entity && part == 3)))
+            {
+                output += modVar(vari + "=" + splited[2]);
             }
 
             return output;
@@ -3874,10 +3868,10 @@ namespace JSharp
             {
                 content += para[1] + ")";
             }
-            string t = parseLine(func);
-            context.currentFile().AddLine(t);
-            context.currentFile().AddLine(parseLine(content));
-            context.currentFile().Close();
+            
+            preparseLine(func);
+            preparseLine(content);
+            preparseLine("}");
 
             return eval(lambda, variable, variable.type, "=");
         }
@@ -4240,15 +4234,15 @@ namespace JSharp
 
             if (op == "=")
             {
-                left = smartSplit(smartEmpty(smartSplit(text, '=',1)[0]), ',');
-                right = smartSplit(smartEmpty(smartSplit(text, '=',1)[1]), ',');
+                left = smartSplit(smartExtract(smartSplit(text, '=',1)[0]), ',');
+                right = smartSplit(smartExtract(smartSplit(text, '=',1)[1]), ',');
             }
             else
             {
-                left = smartSplit(smartEmpty(smartSplit(text.Replace(op, "§"),'§',1)[0]),',');
-                right = smartSplit(smartEmpty(smartSplit(text.Replace(op, "§"), '§', 1)[1]),',');
+                left = smartSplit(smartExtract(smartSplit(text.Replace(op, "§"),'§',1)[0]),',');
+                right = smartSplit(smartExtract(smartSplit(text.Replace(op, "§"), '§', 1)[1]),',');
             }
-
+            
             if (right[0].Contains("(") && context.IsFunction(right[0].Substring(0, right[0].IndexOf('(')))
                 && !smartContains(right[0], '+') && !smartContains(right[0], '-') && !smartContains(right[0], '*') 
                 && !smartContains(right[0], '%')&& !smartContains(right[0], '/')) {
@@ -4257,6 +4251,25 @@ namespace JSharp
             else
             {
                 string output = "";
+                if (left.Length == 1 && right.Length > 1)
+                {
+                    string rights = smartExtract(smartSplit(text, '=', 1)[1]);
+                    Variable var;
+                    if (context.isEntity(left[0]))
+                    {
+                        var = new Variable(context.GetEntityName(left[0]), left[0].Split('.')[1], Type.ENTITY_COMPONENT);
+                    }
+                    else
+                    {
+                        var = GetVariableByName(left[0]);
+                    }
+
+                    if (right.Length > 1)
+                        output += eval(rights, var, var.type, op);
+                    else
+                        output += eval(rights, var, var.type, op);
+                    return output;
+                }
                 for (int i = 0; i < left.Length; i++)
                 {
                     Variable var;
@@ -4268,6 +4281,7 @@ namespace JSharp
                     {
                         var = GetVariableByName(left[i]);
                     }
+
                     if (right.Length > 1)
                         output += eval(right[i], var, var.type, op);
                     else
@@ -4571,7 +4585,7 @@ namespace JSharp
 
                     for (int i = 0; i < args.Length; i++)
                     {
-                        if (args[i].Contains("="))
+                        if ((args[i].Contains("=") && !args[i].Contains("=>")) || args[i].Split('=').Length == 3)
                         {
                             string[] part = smartSplit(args[i], '=', 1);
                             bool found = false;
