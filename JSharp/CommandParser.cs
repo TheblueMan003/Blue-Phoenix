@@ -726,12 +726,16 @@ namespace JSharp
                     output += "}";
                     foreach (var v in s.fields)
                     {
-                        output += ",{\"text\":\"" + v.name + "=" + "\"";
+                        output += ",{\"text\":\"" + v.name + " = " + "\"";
                         output += jsonSubArg(subargs, context);
                         output += "}";
 
-                        string tmp = jsonFormat(new string[] { v.gameName }, context, 0)[0];
+                        string tmp = jsonFormat(new string[] { subargs[0]+"."+v.name }, context, 0)[0];
                         output += "," + tmp.Substring(1, tmp.Length - 2);
+
+                        output += ",{\"text\":\"" + ", " + "\"";
+                        output += jsonSubArg(subargs, context);
+                        output += "}";
                     }
                     output += ",{\"text\":\"" + ")" + "\"";
                 }

@@ -93,7 +93,7 @@ namespace JSharp
                 //entity = limitedEntity(entity);
 
                 if (nbt_map.ContainsKey(value))
-                    return "execute store result entity " + entity + " " + nbt_map[value] + " " + nbt_map_type[value] + " " + scale.ToString() + " run ";
+                    return "execute store result entity " + limitedEntity(entity) + " " + nbt_map[value] + " " + nbt_map_type[value] + " " + scale.ToString() + " run ";
                 else
                     return setEntityVar(entity, value);
             }

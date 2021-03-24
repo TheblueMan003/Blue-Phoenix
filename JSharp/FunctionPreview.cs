@@ -130,6 +130,10 @@ namespace JSharp
                         if (dic[listBox1.SelectedItem.ToString()].Count > 1)
                             listBox2.Items.Add("==========================");
                         richTextBox1.Text += f.desc+"\n==========================\n";
+                        foreach (string line in f.file.parsed) {
+                            richTextBox1.Text += line+"\n";
+                        }
+                        richTextBox1.Text += "\n==========================\n";
                     }
                 }
                 if (structs != null)
