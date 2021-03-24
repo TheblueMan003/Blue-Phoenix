@@ -233,6 +233,7 @@ namespace JSharp
                 
                 foreach(File f in files)
                 {
+                    //returnFiles.Add(f);
                     if (!f.notUsed && !f.isLazy && f.lineCount > 0)
                     {
                         returnFiles.Add(f);
@@ -3051,6 +3052,7 @@ namespace JSharp
             isAbstract = isExternal || isAbstract;
 
             string fullName = (isExternal?"":context.GetFun().Replace(":", "/")) + func.Replace(".","/");
+
             if (fullName.Contains("/"))
                 fullName = fullName.Substring(0, fullName.IndexOf("/")) + ":" +
                             fullName.Substring(fullName.IndexOf("/") + 1, fullName.Length - fullName.IndexOf("/") - 1);
@@ -6297,32 +6299,41 @@ namespace JSharp
                     {
                         defaultVal = getArg(defaultVal);
                     }
-                    funcName = "__getEnumField_"+ parent.name + "_" + name + "__";
+                    if (type != "json")
+                    {
+                        funcName = "__getEnumField__." + parent.name + "." + name + "";
 
-                    preparseLine("def __getEnumField_"+ parent.name+"_" + name + "__(int value):"+type+"{");
-                    multiplexer = GetVariableByName(funcName.ToLower() + ".value");
-                    output = GetVariableByName(funcName.ToLower() + ".ret_0");
-                    preparseLine("}");
-                    functionGet = GetFunction(context.GetFunctionName(funcName),new string[] { "0" });
-                    functionGet.file.notUsed = true;
+                        preparseLine("def __getEnumField__." + parent.name+"." + name + "(int value):"+type+"{");
+                        multiplexer = GetVariableByName(funcName.ToLower() + ".value");
+                        output = GetVariableByName(funcName.ToLower() + ".ret_0");
+                        preparseLine("}");
+
+                        functionGet = GetFunction(context.GetFunctionName(funcName),new string[] { "0" });
+                        functionGet.file.isLazy = false;
+                        functionGet.file.notUsed = true;
+                        functionGet.file.UnparsedFunctionFile = false;                       
+                    }
                 }
 
                 public void AddValue(int index, EnumValue value)
                 {
-                    if (value.fields.ContainsKey(name))
+                    if (type != "json")
                     {
-                        string cond = getCondition(multiplexer.gameName + "==" + index.ToString());
-                        string line =  output.gameName + "=" + value.fields[name];
-                        functionGet.file.AddLine(cond+parseLine(line));
+                        if (value.fields.ContainsKey(name))
+                        {
+                            string cond = getCondition(multiplexer.gameName + "==" + index.ToString());
+                            string line = output.gameName + "=" + value.fields[name];
+                            functionGet.file.AddLine(cond + parseLine(line));
+                        }
+                        else if (defaultVal != "")
+                        {
+                            string cond = getCondition(multiplexer.gameName + "==" + index.ToString());
+                            string line = output.gameName + "=" + defaultVal;
+                            functionGet.file.AddLine(cond + parseLine(line));
+                        }
+                        else
+                            throw new Exception("No value for field \"" + name + "\" in enum value " + value.value);
                     }
-                    else if (defaultVal != "")
-                    {
-                        string cond = getCondition(multiplexer.gameName + "==" + index.ToString());
-                        string line = output.gameName + "=" + defaultVal;
-                        functionGet.file.AddLine(cond + parseLine(line));
-                    }
-                    else
-                        throw new Exception("No value for field \"" + name + "\" in enum value " + value.value);
                 }
             }
 
@@ -6465,9 +6476,12 @@ namespace JSharp
                 context.Sub(name, new File("",""));
                 foreach(EnumField field in fields)
                 {
-                    preparseLine("def lazy " + field.name + "():" + field.type + "{");
-                    preparseLine("return(" + field.functionGet.gameName.Replace("/", ".").Replace(":", ".") + "(" + name + "))");
-                    preparseLine("}");
+                    if (field.type != "json")
+                    {
+                        preparseLine("def lazy " + field.name + "():" + field.type + "{");
+                        preparseLine("return(" + field.functionGet.gameName.Replace("/", ".").Replace(":", ".") + "(" + name + "))");
+                        preparseLine("}");
+                    }
                 }
                 context.Parent();
             }
@@ -6642,6 +6656,50 @@ namespace JSharp
 
                 genIndex++;
             }
+            public void forgenerate()
+            {
+                string tmp = content;
+                content = "";
+                genIndex = 0;
+                if (enumGen != null && enumGen.StartsWith("("))
+                {
+                    string[] values = enumGen.Replace("(", "").Replace(")", "").Split(',');
+                    genAmount = values.Length;
+                    foreach (string value in values)
+                    {
+                        if (value != "")
+                            generate(value);
+                    }
+                }
+                else if (enumGen != null && enums.ContainsKey(enumGen))
+                {
+                    genAmount = enums[enumGen].values.Count;
+                    foreach (string value in enums[enumGen].Values())
+                    {
+                        generate(value, enums[enumGen]);
+                    }
+                }
+                else if (enumGen != null && structs.ContainsKey(enumGen))
+                {
+                    genAmount = structs[enumGen].fields.Count;
+                    foreach (Variable value in structs[enumGen].fields)
+                    {
+                        generate(value.name);
+                    }
+                }
+                else if (enumGen != null)
+                {
+                    throw new Exception("Unknown generator:" + enumGen);
+                }
+                else
+                {
+                    genAmount = (int)(Math.Ceiling((max - min) / step));
+                    for (float i = min; i != max + step; i += step)
+                    {
+                        generate(i.ToString());
+                    }
+                }
+            }
             public virtual void Close(bool debug = false)
             {
                 content = content.Replace("run  execute", "run execute");
@@ -6659,35 +6717,7 @@ namespace JSharp
 
                 if (type == "forgenerate")
                 {
-                    string tmp = content;
-                    content = "";
-                    genIndex = 0;
-                    if (enumGen != null && enumGen.StartsWith("("))
-                    {
-                        string[] values = enumGen.Replace("(", "").Replace(")", "").Split(',');
-                        genAmount = values.Length;
-                        foreach (string value in values)
-                        {
-                            if (value != "")
-                                generate(value);
-                        }
-                    }
-                    else if (enumGen != null )
-                    {
-                        genAmount = enums[enumGen].values.Count;
-                        foreach (string value in enums[enumGen].Values())
-                        {
-                            generate(value, enums[enumGen]);
-                        }
-                    }
-                    else
-                    {
-                        genAmount = (int)(Math.Ceiling((max - min) / step));
-                        for (float i = min; i != max + step; i += step)
-                        {
-                            generate(i.ToString());
-                        }
-                    }
+                    forgenerate();
                 }
 
                 if (type == "if")
