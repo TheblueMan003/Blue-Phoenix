@@ -35,7 +35,7 @@ namespace JSharp
         private static HashSet<string> offuscationSet;
         private static HashSet<string> imported;
 
-        private static Stack<Variable> switches;
+        private static Stack<Switch> switches;
         private static List<string> stringSet;
         private static Stack<Structure> structStack;
         private static Stack<int> condIDStack;
@@ -97,7 +97,7 @@ namespace JSharp
         private static Regex getReg = new Regex("\\w*\\s*=[ a-z\\.A-Z0-9]*\\[.*\\]");
         private static Regex oppReg = new Regex(@"[a-zA-Z0-9\._]+\[.*\]\s*[+\-/\*%]=");
         private static Regex setReg = new Regex("\\[.*\\]\\s*=\\s*.*");
-        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9 ,_=:\.""'!\[\]]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.""'!:\[\]\(\)]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9 ,_=""'\[\]!:\(\)]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9 ,_=:\.""'\[\]!\(\)]*\))?,?\s*)*\})");
+        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9\- ,_=:\.""'!\[\]]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9\- ,_=:\.""'!:\[\]\(\)]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9\- ,_=""'\[\]!:\(\)]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9\- ,_=:\.""'\[\]!\(\)]*\))?,?\s*)*\})");
         private static Regex blocktagsDesugarReg = new Regex(@"(?s)(blocktags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|blocktags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex ifsDesugarReg = new Regex(@"(?s)^(if\s*\(.*\)\{.*\}\s*else)|(if\s*\(.*\).*\s*else)");
         private static Regex funArgTypeReg = new Regex(@"^([@\w\.]*\s*(<\(?\w*\)?,?\(?\w*\)?>)?(\[\d+\])?)*\(");
@@ -164,7 +164,7 @@ namespace JSharp
                 enums = new Dictionary<string, Enum>();
                 structs = new Dictionary<string, Structure>();
                 classes = new Dictionary<string, Class>();
-                switches = new Stack<Variable>();
+                switches = new Stack<Switch>();
                 constants = new Dictionary<int, Variable>();
                 structMap = new Dictionary<string, string>();
                 functDelegated = new Dictionary<string, List<Function>>();
@@ -552,9 +552,9 @@ namespace JSharp
                 //switch
                 else if (switchReg.Match(text).Success)
                 {
-                    string arg = getArg(text);
+                    string[] arg = getArgs(text);
 
-                    return instSwitch(arg);
+                    return instSwitch(arg, text);
                 }
                 //case
                 else if (caseReg.Match(text).Success)
@@ -2771,7 +2771,7 @@ namespace JSharp
             if (text.Contains("="))
                 def = splited[1].Replace(" ", "");
             bool entityFormatVar = false;
-            if (float.TryParse(def, out float tmp))
+            if (float.TryParse(def, out float tmp) || ca == Type.STRUCT)
             {
                 def = "dummy";
                 entityFormatVar = true;
@@ -3162,8 +3162,11 @@ namespace JSharp
                 foreach (string r in ret)
                 {
                     Type ca = getType(r + " ");
-                    parseLine(smartEmpty(r.Replace("{","")) + " ret_" + i.ToString());
-                    function.outputs.Add(GetVariableByName("ret_" + i.ToString()));
+                    if (ca != Type.VOID)
+                    {
+                        parseLine(smartEmpty(r.Replace("{", "")) + " ret_" + i.ToString());
+                        function.outputs.Add(GetVariableByName("ret_" + i.ToString()));
+                    }
                     i++;
                 }
             }
@@ -3173,8 +3176,11 @@ namespace JSharp
                 foreach (string r in outputType)
                 {
                     Type ca = getType(r + " ");
-                    parseLine(smartEmpty(r.Replace("{", "")) + " ret_" + i.ToString());
-                    function.outputs.Add(GetVariableByName("ret_" + i.ToString()));
+                    if (ca != Type.VOID)
+                    {
+                        parseLine(smartEmpty(r.Replace("{", "")) + " ret_" + i.ToString());
+                        function.outputs.Add(GetVariableByName("ret_" + i.ToString()));
+                    }
                     i++;
                 }
             }
@@ -3739,51 +3745,48 @@ namespace JSharp
             }
             return "";
         }
-        public static string instSwitch(string text)
+        public static string instSwitch(string[] text, string fText)
         {
-            switchID++;
-            Type t = getExprType(text);
+            if (text.Length >= 1)
+            {
+                if (text.Length == 2)
+                {
+                    switches.Push(new Switch(text[0], text));
+                }
+                else
+                {
+                    switches.Push(new Switch(text[0]));
+                }
 
-            string name = "_s." + switchID.ToString();
-            if (t == Type.STRUCT)
-                parseLine(GetVariableByName(text).enums.ToLower()+" "+name);
-            else if (t==Type.ENUM)
-                parseLine(getExprEnum(text).ToLower() + " " + name);
+                int wID = switches.Count - 1;
+                string funcName = context.GetFun() + "s_" + wID.ToString();
+
+                string cmd = "function " + funcName + '\n';
+
+                File fFile = new File(context.GetFile() + "s_" + wID, "", "switch");
+                context.Sub("s_" + wID, fFile);
+                files.Add(fFile);
+                return "";
+            }
             else
-                parseLine(t.ToString().ToLower() + " " + name);
-
-            Variable variable = GetVariableByName(name);
-            
-            switches.Push(variable);
-            string init = eval(text, variable, t, "=");
-
-            int wID = whileID++;
-            string funcName = context.GetFun() + "s_" + wID.ToString();
-
-            string cmd = "function " + funcName + '\n';
-
-            context.currentFile().AddLine(init);
-            File fFile = new File(context.GetFile() + "s_" + wID, "", "switch");
-            context.Sub("s_" + wID, fFile);
-            files.Add(fFile);
-            return "";
+            {
+                return functionEval(fText);
+            }
         }
         public static string instCase(string text)
         {
-            if (switchID == -1)
+            if (switches.Count == 0)
             {
                 throw new Exception("Invalide use of case statement.");
             }
-            string loop = getCondition(switches.Peek().gameName + "==" + text);
-
-            int wID = whileID++;
+            int wID = switches.Peek().Count();
             string funcName = context.GetFun() + "i_" + wID.ToString();
 
             string cmd = "function " + funcName + '\n';
 
-            context.currentFile().AddLine(loop + cmd);
             context.currentFile().cantMergeWith = true;
             File fFile = new File(context.GetFile() + "i_" + wID, "", "case");
+            fFile.switchcase = switches.Peek().Add(text, cmd);
             context.Sub("i_" + wID, fFile);
             files.Add(fFile);
             
@@ -3793,20 +3796,20 @@ namespace JSharp
         {
             text = text.Replace("->", "§");
             string[] part = smartSplit(text, '§', 1);
-            if (switchID == -1)
+
+            if (switches.Count == 0)
             {
                 throw new Exception("Invalide use of case statement.");
             }
-            string loop = getCondition(switches.Peek().gameName + "==" + part[0]);
 
-            int wID = whileID++;
+            int wID = switches.Peek().Count();
             string funcName = context.GetFun() + "i_" + wID.ToString();
 
-            string cmd = "function " + funcName + '\n';
+            string cmd = "function " + funcName + '\n';            
 
-            context.currentFile().AddLine(loop + cmd);
             context.currentFile().cantMergeWith = true;
             File fFile = new File(context.GetFile() + "i_" + wID, "", "case");
+            fFile.switchcase = switches.Peek().Add(part[0], cmd);
             context.Sub("i_" + wID, fFile);
             files.Add(fFile);
 
@@ -3832,7 +3835,7 @@ namespace JSharp
                 name = smartEmpty(name.Substring(0, name.IndexOf("<")));
             }
 
-            context.Sub(name, new File("struct/"+name,"", "struct"));
+            context.Sub("__struct__"+name, new File("struct/"+name,"", "struct"));
             //context.currentFile().notUsed = true;
             Structure stru = new Structure(name, parent);
             try
@@ -4184,8 +4187,12 @@ namespace JSharp
             }
             return type;
         }
-        public static Type getExprType(string t)
+        public static Type getExprType(string t, int depth = 0)
         {
+            if (depth > 100)
+            {
+                throw new Exception("Stack Overflow!");
+            }
             if (t.StartsWith("__lambda__"))
             {
                 return Type.FUNCTION;
@@ -4196,7 +4203,7 @@ namespace JSharp
             }
             if (t.StartsWith("(") && t.EndsWith(")"))
             {
-                return getExprType(getParenthis(t));
+                return getExprType(getParenthis(t), depth+1);
             }
             if (t.ToLower() == "true" || t.ToLower() == "false")
             {
@@ -5132,8 +5139,12 @@ namespace JSharp
         {
                return text.Substring(text.IndexOf('(') + 1, getCloseCharIndex(text,')') - text.IndexOf('(') - 1);
         }
-        public static string getParenthis(string text, int max = -1)
+        public static string getParenthis(string text, int max = -1, int depth = 0)
         {
+            if (depth > 200)
+            {
+                throw new Exception("Stackoverflow");
+            }
             while (text.StartsWith(" "))
             {
                 text = text.Substring(1, text.Length - 1);
@@ -5144,7 +5155,7 @@ namespace JSharp
             }
             
             while (text.StartsWith("(") && text.EndsWith(")") && getCloseCharIndex(text, ')') == text.Length-1) {
-                return getParenthis(text.Substring(text.IndexOf('(') + 1, getCloseCharIndex(text,')') - text.IndexOf('(') - 1), max-1);
+                return getParenthis(text.Substring(text.IndexOf('(') + 1, getCloseCharIndex(text,')') - text.IndexOf('(') - 1), max-1, depth+1);
             }
             
             return text;
@@ -5808,6 +5819,8 @@ namespace JSharp
                 }
 
                 fFile.notUsed = !fun.isLoading && !fun.isHelper && !fun.isTicking && fun.tags.Count == 0;
+                fFile.use();
+
                 int i = 0;
                 foreach (Variable output in fun.outputs)
                 {
@@ -6421,9 +6434,9 @@ namespace JSharp
                         string fieldName = smartEmpty(subField[0]).ToLower();
                         string val = smartExtract(subField[1]);
                         string type = this.fields[fieldsName.IndexOf(fieldName)].type;
-                        if (type == "json" && val.StartsWith("(("))
+                        if (type == "json" && smartExtract(val).StartsWith("("))
                         {
-                            value = getArg(val);
+                            val = getArg(val);
                         }
                         if (fieldsName.Contains(fieldName))
                             enumvalue.fields.Add(fieldName, val);
@@ -6434,9 +6447,9 @@ namespace JSharp
                     {
                         string val = smartExtract(field);
                         string type = this.fields[i].type;
-                        if (type == "json" && val.StartsWith("(("))
+                        if (type == "json" && smartExtract(val).StartsWith("("))
                         {
-                            value = getArg(val);
+                            val = getArg(val);
                         }
                         enumvalue.fields.Add(fieldsName[i], val);
                     }
@@ -6493,6 +6506,211 @@ namespace JSharp
                     lst.Add(v.value);
                 }
                 return lst;
+            }
+        }
+        public interface Component
+        {
+            string Compile();
+        }
+        public class Switch: Component
+        {
+            List<Case> casesUnit = new List<Case>();
+            List<Case> casesRange = new List<Case>();
+            Type type;
+            Variable variable;
+            string text;
+            int treeBottom;
+            string[] sizes = new string[0];
+
+            public Switch(string text)
+            {
+                this.text = text;
+                CreateVariable(text);
+                treeBottom = compilerSetting.TreeMaxSize;
+            }
+            public Switch(string text,string[] sizes)
+            {
+                this.text = text;
+                CreateVariable(text);
+                this.treeBottom = int.Parse(sizes[1]);
+                sizes = new string[sizes.Length - 1];
+                for (int i = 1; i < sizes.Length; i++)
+                {
+                    this.sizes[i - 1] = sizes[i];
+                }
+            }
+            public Switch(Variable variable, List<Case> cases, string[] sizes)
+            {
+                this.casesUnit.AddRange(cases);
+                this.variable = variable;
+                if (sizes.Length == 0)
+                {
+                    treeBottom = compilerSetting.TreeMaxSize;
+                }
+                else
+                {
+                    this.treeBottom = int.Parse(sizes[0]);
+                    this.sizes = sizes;
+                }
+                type = variable.type;
+            }
+
+            public void CreateVariable(string text)
+            {
+                type = getExprType(text);
+
+                switchID++;
+
+                string name = "_s." + switchID.ToString();
+                if (type == Type.STRUCT)
+                    parseLine(GetVariableByName(text).enums.ToLower() + " " + name);
+                else if (type == Type.ENUM)
+                    parseLine(getExprEnum(text).ToLower() + " " + name);
+                else
+                    parseLine(type.ToString().ToLower() + " " + name);
+
+                variable = GetVariableByName(name);
+            }
+            public string Compile() { return Compile(true); }
+            public string Compile(bool createVariable)
+            {
+                if (treeBottom < 1)
+                {
+                    treeBottom = (int)Math.Max(Math.Sqrt(casesUnit.Count), compilerSetting.TreeMaxSize);
+                }
+                List<Case> subList(List<Case> cases, int min, int max)
+                {
+                    List<Case> outp = new List<Case>();
+                    for (int i = min; i <= max; i++)
+                    {
+                        outp.Add(cases[i]);
+                    }
+                    return outp;
+                }
+                string[] tail = new string[Math.Max(sizes.Length-1,0)];
+                for (int i = 1; i < sizes.Length; i++)
+                {
+                    tail[i - 1] = sizes[i];
+                }
+                
+                casesUnit.Sort((a, b) => a.value.CompareTo(b.value));
+                if (casesUnit.Count > treeBottom)
+                {
+                    string text = "";
+                    if (createVariable)
+                        text += eval(this.text, variable, type, "=");
+                    for (int i = 0; i < Math.Ceiling((casesUnit.Count*1.0)/ treeBottom); i++)
+                    {
+                        string contName = "splitted_" + i.ToString();
+                        string funcName = context.GetFun() + contName;
+                        File f = new File(funcName);
+                        files.Add(f);
+                        context.currentFile().addChild(f);
+
+                        int iMin = i * treeBottom;
+                        int iMax = Math.Min((i + 1) * treeBottom-1, casesUnit.Count-1);
+
+                        Switch s = new Switch(variable, subList(casesUnit,iMin, iMax), tail);
+                        context.Sub(contName, f);
+                        f.AddLine(s.Compile(false));
+                        context.Parent();
+                        string cmd = "function " + funcName + '\n';
+                        text += getCondition(variable.gameName + "==" + 
+                            casesUnit[iMin].value.ToString()+".."+
+                            casesUnit[iMax].value.ToString())
+                            + cmd + "\n";
+                    }
+                    foreach (Case c in casesRange)
+                    {
+                        text += getCondition(variable.gameName + "==" + c.valueStr) + c.cmd + "\n";
+                    }
+                    return text.Replace("\n\n", "\n");
+                }
+                else
+                {
+                    string text = "";
+                    if (createVariable)
+                        text = eval(this.text, variable, type, "=");
+                    foreach (Case c in casesUnit)
+                    {
+                        text += getCondition(variable.gameName + "==" + c.value.ToString()) + c.cmd + "\n";
+                    }
+                    foreach (Case c in casesRange)
+                    {
+                        text += getCondition(variable.gameName + "==" + c.valueStr) + c.cmd + "\n";
+                    }
+                    return text.Replace("\n\n", "\n");
+                }
+            }
+            public Case Add(string cond, string cmd)
+            {
+                if (type == Type.ENUM)
+                {
+                    if (getEnum(text) != null && enums[getEnum(text)].valuesName.Contains(smartEmpty(cond).ToLower()))
+                    {
+                        casesUnit.Add(new Case(enums[getEnum(text)].valuesName.IndexOf(smartEmpty(cond).ToLower()), cmd));
+                        return casesUnit[casesUnit.Count - 1];
+                    }
+                    else
+                    {
+                        casesRange.Add(new Case(cond, cmd));
+                        return casesRange[casesRange.Count - 1];
+                    }
+                }
+                else if (type == Type.INT)
+                {
+                    if (int.TryParse(cond, out int _))
+                    {
+                        casesUnit.Add(new Case(int.Parse(cond), cmd));
+                        return casesUnit[casesUnit.Count - 1];
+                    }
+                    else
+                    {
+                        casesRange.Add(new Case(cond, cmd));
+                        return casesRange[casesRange.Count - 1];
+                    }
+                }
+                else if (type == Type.FLOAT)
+                {
+                    if (float.TryParse(cond, out float _))
+                    {
+                        casesUnit.Add(new Case(int.Parse(cond), cmd));
+                        return casesUnit[casesUnit.Count - 1];
+                    }
+                    else
+                    {
+                        casesRange.Add(new Case(cond, cmd));
+                        return casesRange[casesRange.Count - 1];
+                    }
+                }
+                else
+                {
+                    casesRange.Add(new Case(cond, cmd));
+                    return casesRange[casesRange.Count - 1];
+                }
+            }
+            public int Count()
+            {
+                return casesUnit.Count + casesRange.Count;
+            }
+
+            public class Case
+            {
+                public int value;
+                public string valueStr;
+                public string cmd;
+
+                public Case(int value, string cmd)
+                {
+                    this.value = value;
+                    this.cmd = cmd;
+                }
+
+                public Case(string valueStr, string cmd)
+                {
+                    this.valueStr = valueStr;
+                    this.cmd = cmd;
+                }
             }
         }
         public class CompilerSetting
@@ -6554,6 +6772,7 @@ namespace JSharp
             public string UnparsedFunctionFileContext;
 
             public Function function;
+            public Switch.Case switchcase;
 
             public bool notUsed = false;
             public List<File> childs = new List<File>();
@@ -6733,7 +6952,7 @@ namespace JSharp
                     f.content = tmp;
                     files.Remove(this);
                 }
-                if ((type == "if" || (type == "with" && !cantMergeWith) || type == "at" || type == "case") && lineCount == 1 && !content.StartsWith("#"))
+                if ((type == "if" || (type == "with" && !cantMergeWith) || type == "at") && lineCount == 1 && !content.StartsWith("#"))
                 {
                     File f = context.currentFile();
                     string tmp = f.content.Substring(0, f.content.LastIndexOf(' '));
@@ -6742,7 +6961,18 @@ namespace JSharp
                     f.content = tmp;
                     files.Remove(this);
                 }
-                if (type == "switch" || type == "forgenerate")
+                if (type == "case" && lineCount == 1 && !content.StartsWith("#"))
+                {
+                    switchcase.cmd = content;
+                    files.Remove(this);
+                }
+                if (type == "switch")
+                {
+                    File f = context.currentFile();
+                    f.AddLine(switches.Pop().Compile());
+                    files.Remove(this);
+                }
+                if (type == "forgenerate")
                 {
                     File f = context.currentFile();
                     f.AddLine(content);
