@@ -5940,7 +5940,8 @@ namespace JSharp
                 Regex reg = new Regex("\\bthis\\.");
                 foreach(string line in fun.file.parsed)
                 {
-                    fFile.parsed.Add(reg.Replace(line, context.GetVar()));
+
+                    fFile.parsed.Add(compVarReplace(reg.Replace(line, context.GetVar())));
                 }
             }
             public string generate(string v, bool entity, Variable varOwner, string instArg = null)

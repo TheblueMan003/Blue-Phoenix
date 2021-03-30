@@ -31,6 +31,7 @@ namespace JSharp
         private string currentDataPack;
         public string projectPath;
         public bool ignorNextListboxUpdate = false;
+        public bool ignorNextKey = false;
         public int isCompiling = 0;
         public List<Compiler.File> compileFile;
         public List<Compiler.File> compileResource;
@@ -45,7 +46,6 @@ namespace JSharp
         private bool exporting;
         private bool resourceSelected = false;
         private int index = 0;
-        private int changedTime;
         private bool selfShift;
 
 
@@ -127,7 +127,6 @@ namespace JSharp
                     PreviousText.Add(CodeBox.Text);
                     index++;
                 }
-                changedTime = 1;
                 AddLineNumbers();
                 Formatter.reformat(CodeBox, this, true);
             }
@@ -543,12 +542,10 @@ namespace JSharp
         {
             NewProjectForm form = new NewProjectForm();
             var res = form.ShowDialog();
-            bool newP = false;
             if (res == DialogResult.OK)
             {
                 projectName = form.ProjectName;
                 Text = projectName + " - TBMScript";
-                newP = true;
 
                 code.Clear();
                 code.Add("import", "import standard.java\nimport standard.entity_id\n");
@@ -574,7 +571,6 @@ namespace JSharp
                 projectPath = form.ProjectName;
                 Open(form.ProjectName, File.ReadAllText(form.ProjectName));
                 Text = projectName + " - TBMScript";
-                newP = true;
 
                 if (TagsList == null)
                 {
@@ -1116,115 +1112,137 @@ namespace JSharp
         
         private void CodeBox_KeyDown(object sender, KeyEventArgs e)
         {
-            switch (e.KeyValue)
+            if (!ignorNextKey)
             {
-                // Enter
-                case '\r':
-                    // On compte le nombre de 'tab' de la ligne précédente
-                    string temp = Convert.ToString(CodeBox.Lines.GetValue(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart - 1)));
-                    Regex tab = new Regex("\t");
+                switch (e.KeyValue)
+                {
+                    // Enter
+                    case '\r':
+                        // On compte le nombre de 'tab' de la ligne précédente
+                        string temp = Convert.ToString(CodeBox.Lines.GetValue(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart - 1)));
+                        Regex tab = new Regex("\t");
 
-                    int indent = tab.Matches(temp).Count;
-                    if (temp.EndsWith("{"))
-                        // si la ligne finit par "{" (début de struct / class / etc...) on ajoute une indentation
-                        indent++;
+                        int indent = tab.Matches(temp).Count;
+                        if (temp.EndsWith("{"))
+                            // si la ligne finit par "{" (début de struct / class / etc...) on ajoute une indentation
+                            indent++;
 
-                    temp = Convert.ToString(CodeBox.Lines.GetValue(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)));
-                    if (temp.Contains("}") && !temp.Contains("{"))
-                        // si la ligne contient "}" (fin de struct / class / etc...) on enlève une indentation
-                        indent = Math.Max(0, indent - 1);
+                        temp = Convert.ToString(CodeBox.Lines.GetValue(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)));
+                        if (temp.Contains("}") && !temp.Contains("{"))
+                            // si la ligne contient "}" (fin de struct / class / etc...) on enlève une indentation
+                            indent = Math.Max(0, indent - 1);
 
-                    // et on la place dans le texte
-                    string temp2 = "{TAB " + indent + "}";
+                        // et on la place dans le texte
+                        string temp2 = "{TAB " + indent + "}";
+                        ignorNextKey = true;
+                        SendKeys.Send(temp2);
+                        ignorNextKey = false;
+                        break;
 
-                    SendKeys.Send(temp2);
-                    break;
-
-                case '\t':
-                    string line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)].Replace(" ", "").Replace("\t", "");
-                    if (line.StartsWith("for") && !line.Contains("("))
-                    {
-                        SendKeys.Send("{(}int i = 0;i < length;i{+}{+}{)}{{}{ENTER}{ENTER}{}}{UP}");
-                    }
-                    else if (line.StartsWith("dtm") && !line.Contains("("))
-                    {
-                        SendKeys.Send("{BACKSPACE}{BACKSPACE}{BACKSPACE}{BACKSPACE}def ticking main{(}{)}{{}{ENTER}{ENTER}{}}{UP}");
-                    }
-                    break;
-                // '}'
-                case '}':
-                    SendKeys.Send("{LEFT}{BACKSPACE}{RIGHT}");
-                    break;
-
-                default:
-                    break;
-            }
-            switch (e.KeyCode)
-            {
-                case Keys.End:
-                    string line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)];
-                    int start = CodeBox.GetFirstCharIndexFromLine(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart));
-                    int length = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)].Length;
-                    
-                    if (start+length != CodeBox.SelectionStart && e.Shift)
-                        SendKeys.Send("{LEFT}");
-                    break;
-
-                case Keys.Home:
-                    line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)];
-                    start = CodeBox.GetFirstCharIndexFromLine(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart));
-                    int shift = 0;
-                    string tmp2 = "";
-                    while (line.StartsWith("\t"))
-                    {
-                        tmp2 += "{RIGHT}";
-                        shift++;
-                        line = line.Substring(1, line.Length - 1);
-                    }
-                    if (start+shift != CodeBox.SelectionStart)
-                        SendKeys.Send(tmp2);
-                    break;
-
-                case Keys.Left:
-                    if (e.Control && !selfShift)
-                    {
-                        int i = CodeBox.SelectionStart-1;
-                        tmp2 = "";
-                        Regex reg = new Regex("[a-zA-Z0-9_\\$]");
-                        while (i > 0 && reg.Match(CodeBox.Text[i].ToString()).Success)
+                    case '\t':
+                        string line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)].Replace(" ", "").Replace("\t", "");
+                        if (line.StartsWith("for") && !line.Contains("("))
                         {
-                            i--;
-                            if (CodeBox.Text[i] == '_')
-                            {
-                                tmp2 += "{Left}{Left}";
-                            }
+                            ignorNextKey = true;
+                            SendKeys.Send("{(}int i = 0;i < length;i{+}{+}{)}{{}{ENTER}{ENTER}{}}{UP}");
+                            ignorNextKey = false;
                         }
-                        SendKeys.Send(tmp2);
-                        selfShift = true;
-                    }
-                    break;
-                case Keys.Right:
-                    if (e.Control && !selfShift)
-                    {
-                        int i = CodeBox.SelectionStart;
-                        tmp2 = "";
-                        Regex reg = new Regex("[a-zA-Z0-9_\\$]");
-                        while (i < CodeBox.Text.Length && reg.Match(CodeBox.Text[i].ToString()).Success)
+                        else if (line.StartsWith("dtm") && !line.Contains("("))
                         {
-                            i++;
-                            if (CodeBox.Text[i] == '_')
-                            {
-                                tmp2 += "{RIGHT}{RIGHT}";
-                            }
+                            ignorNextKey = true;
+                            SendKeys.Send("{BACKSPACE}{BACKSPACE}{BACKSPACE}{BACKSPACE}def ticking main{(}{)}{{}{ENTER}{ENTER}{}}{UP}");
+                            ignorNextKey = false;
                         }
-                        selfShift = true;
-                        SendKeys.Send(tmp2);
-                    }
-                    break;
+                        break;
+                    // '}'
+                    case '}':
+                        ignorNextKey = true;
+                        SendKeys.Send("{LEFT}{BACKSPACE}{RIGHT}");
+                        ignorNextKey = false;
+                        break;
 
-                default:
-                    selfShift = false;
-                    break;
+                    default:
+                        break;
+                }
+                switch (e.KeyCode)
+                {
+                    case Keys.End:
+                        string line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)];
+                        int start = CodeBox.GetFirstCharIndexFromLine(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart));
+                        int length = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)].Length;
+
+                        if (start + length != CodeBox.SelectionStart && e.Shift)
+                        {
+                            ignorNextKey = true;
+                            SendKeys.Send("{LEFT}");
+                            ignorNextKey = false;
+                        }
+                        break;
+
+                    case Keys.Home:
+                        line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)];
+                        start = CodeBox.GetFirstCharIndexFromLine(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart));
+                        int shift = 0;
+                        string tmp2 = "";
+                        while (line.StartsWith("\t"))
+                        {
+                            tmp2 += "{RIGHT}";
+                            shift++;
+                            line = line.Substring(1, line.Length - 1);
+                        }
+                        if (start + shift != CodeBox.SelectionStart)
+                        {
+                            ignorNextKey = true;
+                            SendKeys.Send(tmp2);
+                            ignorNextKey = false;
+                        }
+                        break;
+
+                    case Keys.Left:
+                        if (e.Control && !selfShift)
+                        {
+                            int i = CodeBox.SelectionStart - 1;
+                            tmp2 = "";
+                            Regex reg = new Regex("[a-zA-Z0-9_\\$]");
+                            while (i > 0 && reg.Match(CodeBox.Text[i].ToString()).Success)
+                            {
+                                i--;
+                                if (CodeBox.Text[i] == '_')
+                                {
+                                    tmp2 += "{Left}{Left}";
+                                }
+                            }
+                            ignorNextKey = true;
+                            SendKeys.Send(tmp2);
+                            ignorNextKey = false;
+                            selfShift = true;
+                        }
+                        break;
+                    case Keys.Right:
+                        if (e.Control && !selfShift)
+                        {
+                            int i = CodeBox.SelectionStart;
+                            tmp2 = "";
+                            Regex reg = new Regex("[a-zA-Z0-9_\\$]");
+                            while (i < CodeBox.Text.Length && reg.Match(CodeBox.Text[i].ToString()).Success)
+                            {
+                                i++;
+                                if (CodeBox.Text[i] == '_')
+                                {
+                                    tmp2 += "{RIGHT}{RIGHT}";
+                                }
+                            }
+                            selfShift = true;
+                            ignorNextKey = true;
+                            SendKeys.Send(tmp2);
+                            ignorNextKey = false;
+                        }
+                        break;
+
+                    default:
+                        selfShift = false;
+                        break;
+                }
             }
         }
 
