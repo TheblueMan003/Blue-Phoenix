@@ -33,6 +33,7 @@ namespace JSharp
         public bool ignorNextListboxUpdate = false;
         public bool ignorNextKey = false;
         public int isCompiling = 0;
+        private Thread CompileThread;
         public List<Compiler.File> compileFile;
         public List<Compiler.File> compileResource;
         public List<Compiler.File> compileFiled;
@@ -782,6 +783,11 @@ namespace JSharp
         }
         public void CompileJava(bool showForm = false)
         {
+            if (isCompiling > 0)
+            {
+                CompileThread.Abort();
+                isCompiling = 0;
+            }
             if (isCompiling == 0)
             {
                 this.showForm = showForm;
@@ -801,8 +807,8 @@ namespace JSharp
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
 
-                Thread t = new Thread(new ThreadStart(CompileJavaThreaded));
-                t.Start();
+                CompileThread = new Thread(new ThreadStart(CompileJavaThreaded));
+                CompileThread.Start();
             }
         }
         public void GetCallStackTrace()
@@ -1386,6 +1392,11 @@ namespace JSharp
         private void getCallStackTraceToolStripMenuItem_Click(object sender, EventArgs e)
         {
             GetCallStackTrace();
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            CompileThread.Abort();
         }
     }
 

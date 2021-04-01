@@ -37,7 +37,7 @@ namespace JSharp
                 }
             }
 
-            throw new Exception("Calculation Error");
+            throw new Exception("Calculation Error: "+val);
         }
     }
 }

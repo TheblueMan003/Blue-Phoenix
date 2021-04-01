@@ -38,7 +38,10 @@ namespace JSharp
 
         private void richTextBox1_TextChanged(object sender, EventArgs e)
         {
-            FormatterCommand.reformat(richTextBox1, this, false);
+            if (richTextBox1.Text.Length < 10000)
+            {
+                FormatterCommand.reformat(richTextBox1, this, false);
+            }
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)

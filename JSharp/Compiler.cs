@@ -47,10 +47,7 @@ namespace JSharp
         private static File loadFile;
         private static File mainFile;
         private static int condID;
-        private static int whileID;
-        private static int switchID;
         private static int tmpID;
-        private static int lambdaID;
         public static string alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._";
         private static bool isInStructMethod;
         private static bool isInStaticMethod;
@@ -151,14 +148,20 @@ namespace JSharp
             projectFolder = pctFolder;
             GobalDebug = debug;
             Project = project;
-            whileID = 0;
             condID = 0;
-            switchID = -1;
-            lambdaID = 0;
             funcDef = new List<string>();
 
             try
             {
+                Switch.SwitchNumber = new Dictionary<string, int>();
+                If.SwitchNumber = new Dictionary<string, int>();
+                While.SwitchNumber = new Dictionary<string, int>();
+                For.SwitchNumber = new Dictionary<string, int>();
+                Forgenerate.SwitchNumber = new Dictionary<string, int>();
+                With.SwitchNumber = new Dictionary<string, int>();
+                At.SwitchNumber = new Dictionary<string, int>();
+                Lambda.SwitchNumber = new Dictionary<string, int>();
+
                 functions = new Dictionary<string, List<Function>>();
                 variables = new Dictionary<string, Variable>();
                 enums = new Dictionary<string, Enum>();
@@ -564,7 +567,7 @@ namespace JSharp
                     return instCase(arg);
                 }
                 //smart case
-                else if (text.Contains("->") && switchID > -1)
+                else if (text.Contains("->") && switches.Count > 0)
                 {
                     return instSmartCase(text);
                 }
@@ -3306,7 +3309,7 @@ namespace JSharp
         {
             string loop = getCondition(text);
 
-            int wID = whileID++;
+            int wID = While.GetID(context.GetFun());
             string funcName = context.GetFun() + "w_" + wID.ToString();
 
             string cmd = "function " + funcName + '\n';
@@ -3326,7 +3329,7 @@ namespace JSharp
         {
             string loop = getCondition(text);
 
-            int wID = whileID++;
+            int wID = If.GetID(context.GetFun());
             int wID2 = -1;
             
             string funcName = context.GetFun() + "i_" + wID.ToString();
@@ -3334,7 +3337,7 @@ namespace JSharp
             string cmd = "function " + funcName + '\n';
             if (mult == 1)
             {
-                wID2 = whileID++;
+                wID2 = If.GetID(context.GetFun());
                 context.currentFile().AddLine(parseLine("int __elseif_" + wID2.ToString() + " = 0"));
                 LastConds.Push(wID2);
             }
@@ -3384,7 +3387,7 @@ namespace JSharp
 
             File f = context.currentFile();
 
-            int wID = whileID++;
+            int wID = For.GetID(context.GetFun());
             string funcName = context.GetFun() + "f_" + wID.ToString();
 
             string cmd = "function " + funcName + '\n';
@@ -3410,7 +3413,7 @@ namespace JSharp
 
                 File f = context.currentFile();
 
-                int wID = whileID++;
+                int wID = Forgenerate.GetID(context.GetFun());
 
                 File fFile = new File(context.GetFile() + "g_" + wID, "", "forgenerate");
                 fFile.var = smartEmpty(args[0]);
@@ -3460,7 +3463,7 @@ namespace JSharp
                         pre = Core.As(context.GetEntitySelector(text[0]));
                 }
 
-                int wID = whileID++;
+                int wID = With.GetID(context.GetFun());
                 string funcName = context.GetFun() + "w_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
@@ -3477,7 +3480,7 @@ namespace JSharp
             }
             else
             {
-                int wID = whileID++;
+                int wID = With.GetID(context.GetFun());
                 File fFile = new File(context.GetFile() + "w_" + wID, "", "withContext");
                 context.Sub("w_" + wID, fFile);
                 files.Add(fFile);
@@ -3509,15 +3512,15 @@ namespace JSharp
                 }
 
 
-                int wID = whileID++;
-                string funcName = context.GetFun() + "w_" + wID.ToString();
+                int wID = At.GetID(context.GetFun());
+                string funcName = context.GetFun() + "a_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
 
                 context.currentFile().AddLine(pre + cmd);
 
-                File fFile = new File(context.GetFile() + "w_" + wID, "", "at");
-                context.Sub("w_" + wID, fFile);
+                File fFile = new File(context.GetFile() + "a_" + wID, "", "at");
+                context.Sub("a_" + wID, fFile);
                 files.Add(fFile);
 
                 autoIndent(fText);
@@ -3531,15 +3534,15 @@ namespace JSharp
             {
                 string pre = Core.Positioned(text[0]);
 
-                int wID = whileID++;
-                string funcName = context.GetFun() + "w_" + wID.ToString();
+                int wID = At.GetID(context.GetFun());
+                string funcName = context.GetFun() + "a_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
 
                 context.currentFile().AddLine(pre + cmd);
 
-                File fFile = new File(context.GetFile() + "w_" + wID, "", "at");
-                context.Sub("w_" + wID, fFile);
+                File fFile = new File(context.GetFile() + "a_" + wID, "", "at");
+                context.Sub("a_" + wID, fFile);
                 files.Add(fFile);
 
                 autoIndent(fText);
@@ -3564,15 +3567,15 @@ namespace JSharp
 
                 string pre = Core.Positioned(text);
 
-                int wID = whileID++;
-                string funcName = context.GetFun() + "w_" + wID.ToString();
+                int wID = At.GetID(context.GetFun());
+                string funcName = context.GetFun() + "a_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
 
                 context.currentFile().AddLine(pre + cmd);
 
-                File fFile = new File(context.GetFile() + "w_" + wID, "", "at");
-                context.Sub("w_" + wID, fFile);
+                File fFile = new File(context.GetFile() + "a_" + wID, "", "at");
+                context.Sub("a_" + wID, fFile);
                 files.Add(fFile);
 
                 autoIndent(fText);
@@ -3590,15 +3593,15 @@ namespace JSharp
             {
                 string pre = Core.Align(smartEmpty(text));
 
-                int wID = whileID++;
-                string funcName = context.GetFun() + "w_" + wID.ToString();
+                int wID = At.GetID(context.GetFun());
+                string funcName = context.GetFun() + "a_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
 
                 context.currentFile().AddLine(pre + cmd);
 
-                File fFile = new File(context.GetFile() + "w_" + wID, "", "at");
-                context.Sub("w_" + wID, fFile);
+                File fFile = new File(context.GetFile() + "a_" + wID, "", "at");
+                context.Sub("a_" + wID, fFile);
                 files.Add(fFile);
 
                 autoIndent(fText);
@@ -3709,7 +3712,11 @@ namespace JSharp
             if (!resourceFiles.ContainsKey(file))
                 throw new Exception("Unknown resource " + file);
             enums.Add(name, EnumConverter.GetEnum(name, resourceFiles[file], type, final));
-
+            try
+            {
+                instCompilerVar("int $" + name + ".length=" + enums[name].values.Count.ToString());
+            }
+            catch { }
             return "";
         }
         public static string instBlockTag(string text)
@@ -3749,16 +3756,17 @@ namespace JSharp
         {
             if (text.Length >= 1)
             {
+                int wID = Switch.GetID(context.GetFun());
+
                 if (text.Length == 2)
                 {
-                    switches.Push(new Switch(text[0], text));
+                    switches.Push(new Switch(text[0], text, wID));
                 }
                 else
                 {
-                    switches.Push(new Switch(text[0]));
+                    switches.Push(new Switch(text[0], wID));
                 }
 
-                int wID = switches.Count - 1;
                 string funcName = context.GetFun() + "s_" + wID.ToString();
 
                 string cmd = "function " + funcName + '\n';
@@ -3949,10 +3957,9 @@ namespace JSharp
         public static string instLamba(string text, Variable variable)
         {
             string[] para = text.Replace("=>", "\\").Split('\\');
-            string lambda = "lamba_" + lambdaID.ToString();
+            string lambda = "lamba_" + Lambda.GetID(context.GetFun()).ToString();
             string func = "def "+lambda + "(";
             string content = "return(";
-            lambdaID++;
 
             if (para[0].Contains("("))
             {
@@ -4510,7 +4517,7 @@ namespace JSharp
                                 output += parseLine(desugar(a.gameName + "=" + a.defValue));
                             else if ((smartEmpty(text).EndsWith("}") || smartEmpty(text).EndsWith("{")) && a.type == Type.FUNCTION)
                             {
-                                anonymusFuncName = "lamba_" + lambdaID.ToString();
+                                anonymusFuncName = "lamba_" + Lambda.GetID(context.GetFun()).ToString();
 
                                 parseLine("def abstract __lambda__ " + anonymusFuncName + "()");
 
@@ -4521,7 +4528,6 @@ namespace JSharp
                                     addLazyVal(a.name, anonymusFuncName);
 
                                 anonymusFunc = true;
-                                lambdaID++;
                             }
                         }
                         else
@@ -4706,11 +4712,10 @@ namespace JSharp
                                     output += parseLine(desugar(a.gameName + "=" + a.defValue));
                                 else if ((smartEmpty(text).EndsWith("}") || smartEmpty(text).EndsWith("{")) && a.type == Type.FUNCTION)
                                 {
-                                    anonymusFuncName = "lamba_" + lambdaID.ToString();
+                                    anonymusFuncName = "lamba_" + Lambda.GetID(context.GetFun()).ToString();
                                     parseLine("def abstract " + anonymusFuncName + "()");
                                     output += parseLine(desugar(a.gameName + "=" + anonymusFuncName)) + "\n";
                                     anonymusFunc = true;
-                                    lambdaID++;
                                 }
                             }
                         }
@@ -6513,6 +6518,7 @@ namespace JSharp
         {
             string Compile();
         }
+
         public class Switch: Component
         {
             List<Case> casesUnit = new List<Case>();
@@ -6522,16 +6528,34 @@ namespace JSharp
             string text;
             int treeBottom;
             string[] sizes = new string[0];
+            int id;
+            public static Dictionary<string, int> SwitchNumber;
+            public static int GetID(string context)
+            {
+                if (SwitchNumber.ContainsKey(context))
+                {
+                    int val = SwitchNumber[context];
+                    SwitchNumber[context]++;
+                    return val;
+                }
+                else
+                {
+                    SwitchNumber.Add(context, 1);
+                    return 0;
+                }
+            }
 
-            public Switch(string text)
+            public Switch(string text,int id)
             {
                 this.text = text;
+                this.id = id;
                 CreateVariable(text);
                 treeBottom = compilerSetting.TreeMaxSize;
             }
-            public Switch(string text,string[] sizes)
+            public Switch(string text,string[] sizes,int id)
             {
                 this.text = text;
+                this.id = id;
                 CreateVariable(text);
                 this.treeBottom = int.Parse(sizes[1]);
                 sizes = new string[sizes.Length - 1];
@@ -6560,9 +6584,7 @@ namespace JSharp
             {
                 type = getExprType(text);
 
-                switchID++;
-
-                string name = "_s." + switchID.ToString();
+                string name = "_s." + id.ToString();
                 if (type == Type.STRUCT)
                     parseLine(GetVariableByName(text).enums.ToLower() + " " + name);
                 else if (type == Type.ENUM)
@@ -6603,8 +6625,9 @@ namespace JSharp
                     for (int i = 0; i < Math.Ceiling((casesUnit.Count*1.0)/ treeBottom); i++)
                     {
                         string contName = "splitted_" + i.ToString();
-                        string funcName = context.GetFun() + contName;
-                        File f = new File(funcName);
+                        string funcName = (context.GetFun() + contName);
+                        string subName = funcName.Substring(funcName.IndexOf(":") + 1, funcName.Length - funcName.IndexOf(":") - 1);
+                        File f = new File(subName);
                         files.Add(f);
                         context.currentFile().addChild(f);
 
@@ -6714,6 +6737,133 @@ namespace JSharp
                 }
             }
         }
+        public class If
+        {
+            public static Dictionary<string, int> SwitchNumber;
+            public static int GetID(string context)
+            {
+                if (SwitchNumber.ContainsKey(context))
+                {
+                    int val = SwitchNumber[context];
+                    SwitchNumber[context]++;
+                    return val;
+                }
+                else
+                {
+                    SwitchNumber.Add(context, 1);
+                    return 0;
+                }
+            }
+        }
+        public class While
+        {
+            public static Dictionary<string, int> SwitchNumber;
+            public static int GetID(string context)
+            {
+                if (SwitchNumber.ContainsKey(context))
+                {
+                    int val = SwitchNumber[context];
+                    SwitchNumber[context]++;
+                    return val;
+                }
+                else
+                {
+                    SwitchNumber.Add(context, 1);
+                    return 0;
+                }
+            }
+        }
+        public class For
+        {
+            public static Dictionary<string, int> SwitchNumber;
+            public static int GetID(string context)
+            {
+                if (SwitchNumber.ContainsKey(context))
+                {
+                    int val = SwitchNumber[context];
+                    SwitchNumber[context]++;
+                    return val;
+                }
+                else
+                {
+                    SwitchNumber.Add(context, 1);
+                    return 0;
+                }
+            }
+        }
+        public class Forgenerate
+        {
+            public static Dictionary<string, int> SwitchNumber;
+            public static int GetID(string context)
+            {
+                if (SwitchNumber.ContainsKey(context))
+                {
+                    int val = SwitchNumber[context];
+                    SwitchNumber[context]++;
+                    return val;
+                }
+                else
+                {
+                    SwitchNumber.Add(context, 1);
+                    return 0;
+                }
+            }
+        }
+        public class With
+        {
+            public static Dictionary<string, int> SwitchNumber;
+            public static int GetID(string context)
+            {
+                if (SwitchNumber.ContainsKey(context))
+                {
+                    int val = SwitchNumber[context];
+                    SwitchNumber[context]++;
+                    return val;
+                }
+                else
+                {
+                    SwitchNumber.Add(context, 1);
+                    return 0;
+                }
+            }
+        }
+        public class At
+        {
+            public static Dictionary<string, int> SwitchNumber;
+            public static int GetID(string context)
+            {
+                if (SwitchNumber.ContainsKey(context))
+                {
+                    int val = SwitchNumber[context];
+                    SwitchNumber[context]++;
+                    return val;
+                }
+                else
+                {
+                    SwitchNumber.Add(context, 1);
+                    return 0;
+                }
+            }
+        }
+        public class Lambda
+        {
+            public static Dictionary<string, int> SwitchNumber;
+            public static int GetID(string context)
+            {
+                if (SwitchNumber.ContainsKey(context))
+                {
+                    int val = SwitchNumber[context];
+                    SwitchNumber[context]++;
+                    return val;
+                }
+                else
+                {
+                    SwitchNumber.Add(context, 1);
+                    return 0;
+                }
+            }
+        }
+
         public class CompilerSetting
         {
             public int TreeMaxSize = 20;
