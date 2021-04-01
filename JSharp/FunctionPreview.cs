@@ -16,6 +16,7 @@ namespace JSharp
         private Dictionary<string, Compiler.Structure> structs;
         private Dictionary<string, Compiler.Variable> vars;
         private Dictionary<string, Compiler.Enum> enums;
+        private Dictionary<string, Compiler.Predicate> predicate;
         private string[] names;
 
         public FunctionPreview(Dictionary<string, List<Compiler.Function>> dic)
@@ -46,6 +47,14 @@ namespace JSharp
 
             Reload();
         }
+        public FunctionPreview(Dictionary<string, Compiler.Predicate> dic)
+        {
+            InitializeComponent();
+            this.predicate = dic;
+
+            Reload();
+        }
+
         public FunctionPreview(string[] dic)
         {
             InitializeComponent();
@@ -100,6 +109,16 @@ namespace JSharp
             if (names != null)
             {
                 foreach (string key in names)
+                {
+                    if (key.Contains(Filter.Text))
+                    {
+                        listBox1.Items.Add(key);
+                    }
+                }
+            }
+            if (predicate != null)
+            {
+                foreach (string key in predicate.Keys)
                 {
                     if (key.Contains(Filter.Text))
                     {
@@ -171,6 +190,11 @@ namespace JSharp
                     listBox2.Items.Clear();
                     listBox2.Items.Add(listBox1.SelectedItem.ToString());
                     richTextBox1.Text = listBox1.SelectedItem.ToString();
+                }
+                if (predicate != null)
+                {
+                    listBox2.Items.Clear();
+                    richTextBox1.Text = predicate[listBox1.SelectedItem.ToString()].baseFile.content;
                 }
             }
         }

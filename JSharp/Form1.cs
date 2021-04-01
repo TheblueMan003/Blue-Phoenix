@@ -1396,7 +1396,14 @@ namespace JSharp
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
-            CompileThread.Abort();
+            if (CompileThread != null)
+                CompileThread.Abort();
+        }
+
+        private void button12_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(Compiler.predicates);
+            fp.Show();
         }
     }
 

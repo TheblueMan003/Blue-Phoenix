@@ -80,6 +80,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.DatapackOpen = new System.Windows.Forms.OpenFileDialog();
+            this.button12 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -532,7 +533,7 @@
             this.button9.BackColor = System.Drawing.Color.Black;
             this.button9.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button9.ForeColor = System.Drawing.Color.White;
-            this.button9.Location = new System.Drawing.Point(1038, 342);
+            this.button9.Location = new System.Drawing.Point(1038, 373);
             this.button9.Name = "button9";
             this.button9.Size = new System.Drawing.Size(142, 23);
             this.button9.TabIndex = 16;
@@ -546,7 +547,7 @@
             this.button10.BackColor = System.Drawing.Color.Black;
             this.button10.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button10.ForeColor = System.Drawing.Color.White;
-            this.button10.Location = new System.Drawing.Point(1038, 313);
+            this.button10.Location = new System.Drawing.Point(1038, 344);
             this.button10.Name = "button10";
             this.button10.Size = new System.Drawing.Size(142, 23);
             this.button10.TabIndex = 17;
@@ -598,12 +599,27 @@
             this.label2.TabIndex = 21;
             this.label2.Text = "Source Code:";
             // 
+            // button12
+            // 
+            this.button12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button12.BackColor = System.Drawing.Color.Black;
+            this.button12.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button12.ForeColor = System.Drawing.Color.White;
+            this.button12.Location = new System.Drawing.Point(1038, 286);
+            this.button12.Name = "button12";
+            this.button12.Size = new System.Drawing.Size(142, 23);
+            this.button12.TabIndex = 22;
+            this.button12.Text = "Predicates";
+            this.button12.UseVisualStyleBackColor = false;
+            this.button12.Click += new System.EventHandler(this.button12_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(1192, 630);
+            this.Controls.Add(this.button12);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.ResourceListBox);
@@ -690,6 +706,7 @@
         private System.Windows.Forms.OpenFileDialog DatapackOpen;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem getCallStackTraceToolStripMenuItem;
+        private System.Windows.Forms.Button button12;
     }
 }
 

@@ -19,6 +19,7 @@ namespace JSharp
         public static Dictionary<string, Structure> structs;
         public static Dictionary<string, Class> classes;
         public static Dictionary<string, TagsList> blockTags;
+        public static Dictionary<string, Predicate> predicates;
         public static HashSet<string> functionTags;
 
 
@@ -66,7 +67,7 @@ namespace JSharp
         public static string Project;
         public static int autoIndented = 0;
         public static bool inGenericStruct;
-        private static Dictionary<string, string> typeMaps = new Dictionary<string, string>();
+        private static Stack<Dictionary<string, string>> typeMaps = new Stack<Dictionary<string, string>>();
         private static string currentPackage;
         private static Stack<string> adjPackage;
         private static string functionDesc = "";
@@ -104,6 +105,7 @@ namespace JSharp
         private static Regex elsifReg = new Regex(@"^el?s?e?\s*ifs?\s?\(");
         private static Regex ifReg = new Regex(@"^if\s*\(");
         private static Regex jsonFileReg = new Regex(@"^jsonfile\s+[\w\\/\-]+\{?");
+        private static Regex predicateFileReg = new Regex(@"^predicate\s+[\w\\/\-\(\)\$ ]+\{?");
         private static Regex ifsReg = new Regex(@"^ifs\s*\(");
         private static Regex switchReg = new Regex(@"^switch\s*\(");
         private static Regex caseReg = new Regex(@"^case\s*\(");
@@ -123,7 +125,7 @@ namespace JSharp
         private static Regex regEval = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.]*\)");
         private static Regex regEval2 = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.\(\)\s]*\)eval\$");
         private static Regex forgenInLineReg = new Regex(@"forgenerate\([^\(\)]*\)\{[^\{\}]*\}");
-        private static Regex dualCompVar = new Regex(@"^\$[\w\.\$]+\s*=\s*\$?[\w\.\$]+");
+        private static Regex dualCompVar = new Regex(@"^\$[\w\.\$]+\s*=\s*\$?[\w\.\$]+\s*");
         #endregion
 
         private static int isInLazyCompile;
@@ -167,6 +169,7 @@ namespace JSharp
                 enums = new Dictionary<string, Enum>();
                 structs = new Dictionary<string, Structure>();
                 classes = new Dictionary<string, Class>();
+                predicates = new Dictionary<string, Predicate>();
                 switches = new Stack<Switch>();
                 constants = new Dictionary<int, Variable>();
                 structMap = new Dictionary<string, string>();
@@ -249,7 +252,14 @@ namespace JSharp
                         }
                     }
                 }
-                returnFiles.AddRange(jsonFiles);
+                foreach (File item in jsonFiles)
+                {
+                    if (!item.notUsed)
+                    {
+                        returnFiles.Add(item);
+                    }
+                }
+                
                 callTrace += "}";
                 GobalDebug("Datapack contains: " + returnFiles.Count.ToString() + " files & "+lineCount.ToString()+" lines.", Color.LimeGreen);
                 
@@ -276,6 +286,7 @@ namespace JSharp
             lazyCall = new Stack<Function>();
             lazyEvalVar = new List<Dictionary<string, string>>();
             compVal = new List<Dictionary<string,string>>();
+            typeMaps = new Stack<Dictionary<string, string>>();
             LastCond = -1;
             currentFile = f.name;
             currentLine = 1;
@@ -518,6 +529,10 @@ namespace JSharp
                 else if (jsonFileReg.Match(text).Success)
                 {
                     return instJsonFile(text);
+                }
+                else if (predicateFileReg.Match(text).Success)
+                {
+                    return instPredicateFile(text);
                 }
                 //condition
                 else if (ifsReg.Match(text).Success)
@@ -2106,6 +2121,11 @@ namespace JSharp
                 string[] args = getArgs(text);
                 return Core.ConditionBlocks(args[0]);
             }
+            else if (context.GetPredicate(text, true) != null)
+            {
+                Predicate pred = predicates[context.GetPredicate(text)];
+                return new string[] { "if predicate " + pred.get(getArg(text))+" " ,""};
+            }
             else if (text.Contains("=="))
             {
                 string[] arg = text.Replace("==", "=").Split('=');
@@ -2921,7 +2941,12 @@ namespace JSharp
 
                     if (structStack.Count == 0)
                     {
-                        if (part == 2 && defValue[index].Replace(" ", "").ToLower().StartsWith(getStruct(text)))
+                        string strucName = getStruct(text);
+                        if (strucName.Contains("["))
+                        {
+                            strucName = strucName.Substring(0, strucName.IndexOf("["));
+                        }
+                        if (part == 2 && defValue[index].Replace(" ", "").ToLower().StartsWith(strucName))
                         {
                             string instArg = defValue[index].Substring(defValue[index].IndexOf('('),
                             defValue[index].LastIndexOf(')') - defValue[index].IndexOf('(') + 1);
@@ -4107,14 +4132,35 @@ namespace JSharp
             jsonIndent += text.Split('{').Length - text.Split('}').Length;
             return "";
         }
+        public static string instPredicateFile(string text)
+        {
+            string name = smartSplit(text, ' ', 1)[1].Replace("{", "");
+            name = name.Substring(0, name.IndexOf("("));
+            string[] args = getArgs(text);
+            File f = new File("predicates/" + context.GetFun().ToLower() + name.ToLower(), "", "json");
+            predicates.Add(context.GetFun().Replace(":",".").Replace("/", ".").ToLower() + name.ToLower(),
+                            new Predicate(context.GetFun().ToLower() + name.ToLower(), args, f));
+            f.notUsed = true;
+            
+            jsonFiles.Add(f);
+            if (text.Contains("{"))
+            {
+                jsonFiles[jsonFiles.Count - 1].AddLine(text.Substring(text.IndexOf("{"), text.Length - text.IndexOf("{")));
+            }
+            jsonIndent = text.Split('{').Length - text.Split('}').Length;
+            return "";
+        }
         #endregion
 
         private static bool containType(string text)
         {
-            foreach (string key in typeMaps.Keys)
+            if (typeMaps.Count > 0)
             {
-                if (text.ToLower().StartsWith(key))
-                    return true;
+                foreach (string key in typeMaps.Peek().Keys)
+                {
+                    if (text.ToLower().StartsWith(key))
+                        return true;
+                }
             }
             return false;
         }
@@ -4125,10 +4171,13 @@ namespace JSharp
             while (t.StartsWith(" "))
                 t = t.Substring(1, t.Length - 1);
 
-            foreach (string key in typeMaps.Keys)
+            if (typeMaps.Count > 0)
             {
-                if (t.ToLower().StartsWith(key))
-                    return getType(typeMaps[key]);
+                foreach (string key in typeMaps.Peek().Keys)
+                {
+                    if (t.ToLower().StartsWith(key))
+                        return getType(typeMaps.Peek()[key]);
+                }
             }
 
             Type type;
@@ -5336,12 +5385,14 @@ namespace JSharp
             while (text.StartsWith(" "))
                 text = text.Substring(1, text.Length - 1);
             text = text.Replace("{", " ") + " ";
-
-            foreach (string key in typeMaps.Keys)
+            if (typeMaps.Count > 0)
             {
-                if (text.ToLower().StartsWith(key.ToLower() + " "))
+                foreach (string key in typeMaps.Peek().Keys)
                 {
-                    return getEnum(typeMaps[key]);
+                    if (text.ToLower().StartsWith(key.ToLower() + " "))
+                    {
+                        return getEnum(typeMaps.Peek()[key]);
+                    }
                 }
             }
 
@@ -5404,12 +5455,14 @@ namespace JSharp
                 }
                 return text.Substring(0, getCloseCharIndex(text, '>') + 1).Replace("<", "[").Replace(">", "]").ToLower();
             }
-
-            foreach (string key in typeMaps.Keys)
+            if (typeMaps.Count > 0)
             {
-                if (text.ToLower().StartsWith(key.ToLower() + " ")|| text.ToLower().StartsWith(key.ToLower() + "["))
+                foreach (string key in typeMaps.Peek().Keys)
                 {
-                    return getStruct(typeMaps[key]);
+                    if (text.ToLower().StartsWith(key.ToLower() + " ") || text.ToLower().StartsWith(key.ToLower() + "["))
+                    {
+                        return getStruct(typeMaps.Peek()[key]);
+                    }
                 }
             }
 
@@ -5439,15 +5492,16 @@ namespace JSharp
                 }
                 return text.Substring(0, getCloseCharIndex(text, '>') + 1).Replace("<", "[").Replace(">", "]").ToLower();
             }
-
-            foreach (string key in typeMaps.Keys)
+            if (typeMaps.Count > 0)
             {
-                if (text.ToLower().StartsWith(key.ToLower() + " ") || text.ToLower().StartsWith(key.ToLower() + "["))
+                foreach (string key in typeMaps.Peek().Keys)
                 {
-                    return getClass(typeMaps[key]);
+                    if (text.ToLower().StartsWith(key.ToLower() + " ") || text.ToLower().StartsWith(key.ToLower() + "["))
+                    {
+                        return getClass(typeMaps.Peek()[key]);
+                    }
                 }
             }
-
             foreach (string key in classes.Keys)
             {
                 if (text.ToLower().StartsWith(key.ToLower() + " ") || text.ToLower().StartsWith(key.ToLower() + "["))
@@ -5676,6 +5730,7 @@ namespace JSharp
             public List<string> methodsName = new List<string>();
             public List<string> generic = new List<string>();
             public Dictionary<string,string> compField = new Dictionary<string, string>();
+            public Dictionary<string, string> typeMapContext = new Dictionary<string, string>();
 
             public string package;
             public bool isGeneric;
@@ -5706,6 +5761,13 @@ namespace JSharp
 
                     methods.AddRange(parent.methods);
                 }
+                if (typeMaps.Count > 0)
+                {
+                    foreach (string key in typeMaps.Peek().Keys)
+                    {
+                        typeMapContext.Add(key, typeMaps.Peek()[key]);
+                    }
+                }
             }
 
             public void addGeneric(string v)
@@ -5714,19 +5776,22 @@ namespace JSharp
             }
             public void createGeneric(string name, string[] mType)
             {
+                typeMaps.Push(new Dictionary<string, string>());
                 for (int i = 0; i < generic.Count; i++)
                 {
-                    typeMaps.Add(generic[i].ToLower(), mType[i]);
+                    typeMaps.Peek().Add(generic[i].ToLower(), mType[i]);
                 }
                 context.Sub("_", new File("", ""));
                 preparseLine("struct " + name + "{");
+                structInstCompVar = true;
                 foreach (string line in genericFile.parsed)
                 {
                     preparseLine(line);
                 }
+                structInstCompVar = false;
                 context.Parent();
 
-                typeMaps.Clear();
+                typeMaps.Pop();
             }
 
             public void addField(Variable variable)
@@ -5945,8 +6010,14 @@ namespace JSharp
                 Regex reg = new Regex("\\bthis\\.");
                 foreach(string line in fun.file.parsed)
                 {
-
-                    fFile.parsed.Add(compVarReplace(reg.Replace(line, context.GetVar())));
+                    if (compVal.Count > 0 && !(dualCompVar.Match(line).Success && structInstCompVar))
+                    {
+                        fFile.parsed.Add(compVarReplace(reg.Replace(line, context.GetVar())));
+                    }
+                    else
+                    {
+                        fFile.parsed.Add(reg.Replace(line, context.GetVar()));
+                    }
                 }
             }
             public string generate(string v, bool entity, Variable varOwner, string instArg = null)
@@ -5970,7 +6041,12 @@ namespace JSharp
                 compVal[compVal.Count - 1].Add("$this.name", varOwner.gameName);
                 compVal[compVal.Count - 1].Add("$this.scoreboard", varOwner.scoreboard());
                 compVal[compVal.Count - 1].Add("$this.scoreboardname", varOwner.scoreboard().Split(' ')[1]);
-                
+
+                typeMaps.Push(new Dictionary<string, string>());
+                foreach (string key in typeMapContext.Keys)
+                {
+                    typeMaps.Peek().Add(key, typeMapContext[key]);
+                }
                 foreach (string c in compField.Keys)
                 {
                     compVal[compVal.Count - 1].Add(c, compField[c]);
@@ -6025,6 +6101,7 @@ namespace JSharp
 
                 thisDef.Pop();
                 adjPackage.Pop();
+                typeMaps.Pop();
                 return output;
             }
 
@@ -6863,6 +6940,40 @@ namespace JSharp
                 }
             }
         }
+        public class Predicate
+        {
+            public string name;
+            public string[] args;
+            public File baseFile;
+            public List<string> generated = new List<string>();
+
+            public Predicate(string name, string[] args, File file) {
+                this.name = name;
+                this.args = args;
+                baseFile = file;
+            }
+
+            public string get(string arg)
+            {
+                arg = smartEmpty(arg);
+                string[] args2 = smartSplitJson(arg, ',');
+                if (!generated.Contains(arg))
+                {
+                    string text = baseFile.content;
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        text = text.Replace(args[i], args2[i]);
+                    }
+                    string filename = name.Substring(name.IndexOf(":") + 1, name.Length - name.IndexOf(":") - 1);
+                    File f = new File("predicates/" + filename + "_" + generated.Count(), "","json");
+                    f.AddLine(text);
+                    f.use();
+                    generated.Add(arg);
+                    files.Add(f);
+                }
+                return name + "_" + generated.IndexOf(arg);
+            }
+        }
 
         public class CompilerSetting
         {
@@ -6921,6 +7032,7 @@ namespace JSharp
             private int genAmount;
             public bool UnparsedFunctionFile;
             public string UnparsedFunctionFileContext;
+            public Dictionary<string, string> typeMapContext = new Dictionary<string, string>();
 
             public Function function;
             public Switch.Case switchcase;
@@ -6934,6 +7046,14 @@ namespace JSharp
                 this.name = name;
                 this.content = content;
                 this.type = type;
+
+                if (typeMaps.Count > 0)
+                {
+                    foreach (string key in typeMaps.Peek().Keys)
+                    {
+                        typeMapContext.Add(key, typeMaps.Peek()[key]);
+                    }
+                }
             }
 
             public File AddLine(string cont)
@@ -7243,12 +7363,18 @@ namespace JSharp
                 {
                     throw e;
                 }
+                typeMaps.Push(new Dictionary<string, string>());
 
+                foreach (string key in typeMapContext.Keys)
+                {
+                    typeMaps.Peek().Add(key, typeMapContext[key]);
+                }
                 adjPackage.Push(function.package);
                 foreach (string line in parsed)
                 {
                     preparseLine(line);
                 }
+                typeMaps.Pop();
                 context.currentFile().Close();
                 adjPackage.Pop();
                 UnparsedFunctionFile = false;
@@ -7638,6 +7764,57 @@ namespace JSharp
 
                 if (!safe)
                     throw new Exception("UNKNOW Variable (" + dir +"/"+ func + ") with package: "+adj);
+                else
+                    return null;
+            }
+
+            public string GetPredicate(string func, bool safe = false, bool bottleneck = false)
+            {
+                if (func.Contains("("))
+                {
+                    func = smartEmpty(func.Substring(0, func.IndexOf("(")));
+                }
+                func = toInternal(func.Replace(" ", "")).ToLower();
+
+                if (func.StartsWith("this.") && predicates.ContainsKey(func.Replace("this.", thisDef.Peek())))
+                {
+                    return func.Replace("this.", thisDef.Peek());
+                }
+
+                if (variables.ContainsKey(func))
+                {
+                    return func;
+                }
+                string dir = "";
+                string output = null;
+                foreach (string co in directories)
+                {
+                    dir += co.Substring(0, Math.Min(subDir, co.Length)).ToLower() + ".";
+                    if (predicates.ContainsKey(dir + func))
+                    {
+                        output = dir + func;
+                    }
+                }
+
+                if (output != null)
+                    return output;
+
+                string adj = "";
+                if (adjPackage.Count > 0 && !bottleneck)
+                {
+                    foreach (string pack in adjPackage)
+                    {
+                        string var = GetPredicate(pack + "." + func, true, true);
+                        if (var != null)
+                        {
+                            return var;
+                        }
+                        adj += pack + ", ";
+                    }
+                }
+
+                if (!safe)
+                    throw new Exception("UNKNOW Predicate (" + dir + "/" + func + ") with package: " + adj);
                 else
                     return null;
             }
