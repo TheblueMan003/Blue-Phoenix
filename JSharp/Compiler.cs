@@ -19,7 +19,7 @@ namespace JSharp
         public static Dictionary<string, Structure> structs;
         public static Dictionary<string, Class> classes;
         public static Dictionary<string, TagsList> blockTags;
-        public static Dictionary<string, Predicate> predicates;
+        public static Dictionary<string, List<Predicate>> predicates;
         public static HashSet<string> functionTags;
 
 
@@ -169,7 +169,7 @@ namespace JSharp
                 enums = new Dictionary<string, Enum>();
                 structs = new Dictionary<string, Structure>();
                 classes = new Dictionary<string, Class>();
-                predicates = new Dictionary<string, Predicate>();
+                predicates = new Dictionary<string, List<Predicate>>();
                 switches = new Stack<Switch>();
                 constants = new Dictionary<int, Variable>();
                 structMap = new Dictionary<string, string>();
@@ -1257,6 +1257,18 @@ namespace JSharp
             }
             return funObj;
         }
+        private static Predicate GetPredicate(string name, string[] args)
+        {
+            List<Predicate> preds = predicates[name];
+            foreach(Predicate p in preds)
+            {
+                if (p.args.Length == args.Length)
+                {
+                    return p;
+                }
+            }
+            throw new Exception("No Predicate Found for " + name + " " + args.Length.ToString());
+        }
 
         public static string getLazyVal(string val)
         {
@@ -2123,8 +2135,8 @@ namespace JSharp
             }
             else if (context.GetPredicate(text, true) != null)
             {
-                Predicate pred = predicates[context.GetPredicate(text)];
-                return new string[] { "if predicate " + pred.get(getArg(text))+" " ,""};
+                Predicate pred = GetPredicate(context.GetPredicate(text), getArgs(text));
+                return new string[] { "if predicate " + pred.get(getArg(text)) +" " ,""};
             }
             else if (text.Contains("=="))
             {
@@ -4137,9 +4149,20 @@ namespace JSharp
             string name = smartSplit(text, ' ', 1)[1].Replace("{", "");
             name = name.Substring(0, name.IndexOf("("));
             string[] args = getArgs(text);
+
             File f = new File("predicates/" + context.GetFun().ToLower() + name.ToLower(), "", "json");
-            predicates.Add(context.GetFun().Replace(":",".").Replace("/", ".").ToLower() + name.ToLower(),
-                            new Predicate(context.GetFun().ToLower() + name.ToLower(), args, f));
+            Predicate p = new Predicate(context.GetFun().ToLower() + name.ToLower(), args, f);
+            string key = context.GetFun().Replace(":", ".").Replace("/", ".").ToLower() + name.ToLower();
+
+            if (predicates.ContainsKey(key))
+            {
+                predicates[key].Add(p);
+            }
+            else
+            {
+                predicates.Add(key, new List<Predicate>() { p });
+            }
+
             f.notUsed = true;
             
             jsonFiles.Add(f);
@@ -5227,7 +5250,7 @@ namespace JSharp
         }
         public static string[] getArgs(string text)
         {
-            string[] args = smartSplit(getArg(text), ',');
+            string[] args = smartSplitJson(getArg(text), ',');
             for (int i = 0; i < args.Length; i++)
             {
                 args[i] = smartExtract(args[i]);
@@ -6962,10 +6985,10 @@ namespace JSharp
                     string text = baseFile.content;
                     for (int i = 0; i < args.Length; i++)
                     {
-                        text = text.Replace(args[i], args2[i]);
+                        text = text.Replace(args[i], args2[i].Replace("\"","\\\""));
                     }
                     string filename = name.Substring(name.IndexOf(":") + 1, name.Length - name.IndexOf(":") - 1);
-                    File f = new File("predicates/" + filename + "_" + generated.Count(), "","json");
+                    File f = new File("predicates/" + filename +"_"+args2.Length.ToString()+ "_" + generated.Count(), "","json");
                     f.AddLine(text);
                     f.use();
                     generated.Add(arg);
