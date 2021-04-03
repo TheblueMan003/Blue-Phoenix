@@ -130,6 +130,7 @@ namespace JSharp
 
         private static int isInLazyCompile;
         private static CompilerSetting compilerSetting = new CompilerSetting();
+        private static int maxRecCall = 300;
 
         private Compiler() { }
 
@@ -1398,21 +1399,26 @@ namespace JSharp
                 return output;
             }
         }
-        private static string eval(string val, Variable variable, Type ca, string op = "=")
+        private static string eval(string val, Variable variable, Type ca, string op = "=", int recCall = 0)
         {
             if (variable.isConst && variable.wasSet)
                 throw new Exception("Cannot moddify Constant!");
             variable.wasSet = true;
 
+            if (recCall > maxRecCall)
+            {
+                throw new Exception("Stack Overflow");
+            }
+
             if (containLazyVal(val))
             {
-                return eval(getLazyVal(val), variable, ca, op);
+                return eval(getLazyVal(val), variable, ca, op, recCall + 1);
             }
             
             if (context.IsFunction(val.Replace(" ", "")) && !val.Contains("(") && context.GetVariable(val, true) == null
                 && ca != Type.FUNCTION && !(ca == Type.ENUM && enums[variable.enums].Contains(val.ToLower())))
             {
-                return eval(val + "()", variable, ca, op);
+                return eval(val + "()", variable, ca, op, recCall + 1);
             }
             string output = "";
             
@@ -1442,17 +1448,17 @@ namespace JSharp
                 string cond = getCondition(a[0]);
                 string invCond = cond.Contains("if") ? cond.Replace("if", "unless") : cond.Replace("unless", "if");
 
-                output += cond + eval(b[0], variable, ca, op);
-                output += invCond + eval(b[1], variable, ca, op);
+                output += cond + eval(b[0], variable, ca, op, recCall + 1);
+                output += invCond + eval(b[1], variable, ca, op, recCall + 1);
             }
             else if ((smartContains(val,'^') || smartContains(val, '&') || smartContains(val,'|')) && ca == Type.BOOL)
             {
-                return splitEval(val, variable, ca, op);
+                return splitEval(val, variable, ca, op, recCall + 1);
             }
             else if ((smartContains(val,'+') || smartContains(val,'-') || smartContains(val,'*') || smartContains(val,'%') 
                 || smartContains(val, '/')) && ca != Type.FUNCTION && ca != Type.BOOL && ca != Type.STRING)
             {
-                return splitEval(val, variable, ca, op);
+                return splitEval(val, variable, ca, op, recCall + 1);
             }
             else if (val.Contains("(") && context.IsFunction(val.Substring(0, val.IndexOf('('))))
             {
@@ -1653,7 +1659,7 @@ namespace JSharp
                 else
                 {
                     output += parseLine(NBT_Data.getType(variable.gameName) +" tmp.0 = " + variable.name + "." + variable.gameName + op[0] + "(" + val + ")");
-                    output += eval("tmp.0", variable, ca, "=");
+                    output += eval("tmp.0", variable, ca, "=", recCall + 1);
                 }
             }
             else if (ca == Type.INT || ca == Type.ENUM)
@@ -1682,7 +1688,7 @@ namespace JSharp
                     else
                     {
                         output += parseLine("int tmp.0 = " + val);
-                        output += eval("tmp.0", variable, ca, op);
+                        output += eval("tmp.0", variable, ca, op, recCall + 1);
                         return output;
                     }
                 }
@@ -1693,7 +1699,7 @@ namespace JSharp
                     else
                     {
                         output += parseLine("int tmp.0 = " + val);
-                        output += eval("tmp.0", variable, ca, op);
+                        output += eval("tmp.0", variable, ca, op, recCall + 1);
                         return output;
                     }
                 }
@@ -1749,7 +1755,7 @@ namespace JSharp
                     else
                     {
                         output += parseLine("float tmp.0 = " + val);
-                        output += eval("tmp.0", variable, ca, op);
+                        output += eval("tmp.0", variable, ca, op, recCall + 1);
                         return output;
                     }
                 }
@@ -1760,7 +1766,7 @@ namespace JSharp
                     else
                     {
                         output += parseLine("float tmp.0 = " + val);
-                        output += eval("tmp.0", variable, ca, op);
+                        output += eval("tmp.0", variable, ca, op, recCall + 1);
                         return output;
                     }
                 }
@@ -1945,7 +1951,7 @@ namespace JSharp
 
             return output;
         }
-        private static string splitEval(string val, Variable variable, Type ca, string op)
+        private static string splitEval(string val, Variable variable, Type ca, string op, int recCall = 0)
         {
             string[] part;
             string output = "";
@@ -1962,11 +1968,11 @@ namespace JSharp
                     {
                         if (op[0] == '-')
                         {
-                            output += eval(getParenthis(part[0], 1), variable, ca, op);
+                            output += eval(getParenthis(part[0], 1), variable, ca, op, recCall + 1);
                             for (int i = 1; i < part.Length; i++)
                             {
                                 string value = part[i];
-                                output += eval(getParenthis(value, 1), variable, ca, "+=");
+                                output += eval(getParenthis(value, 1), variable, ca, "+=", recCall + 1);
                             }
                         }
                         else if (op[0] == '/')
@@ -1975,14 +1981,14 @@ namespace JSharp
                             for (int i = 1; i < part.Length; i++)
                             {
                                 string value = part[i];
-                                output += eval(getParenthis(value, 1), variable, ca, "*=");
+                                output += eval(getParenthis(value, 1), variable, ca, "*=", recCall + 1);
                             }
                         }
                         else
                         {
                             foreach (string value in part)
                             {
-                                output += eval(getParenthis(value, 1), variable, ca, op);
+                                output += eval(getParenthis(value, 1), variable, ca, op, recCall + 1);
                             }
                         }
                         
@@ -2013,22 +2019,22 @@ namespace JSharp
                         if (part[0] == "")
                             part[0] = "0";
 
-                        output += eval(getParenthis(part[0], 1), v1, ca);
+                        output += eval(getParenthis(part[0], 1), v1, ca, "=", recCall + 1);
                         for (int i = 1; i < part.Length; i++)
                         {
                             string value = part[i];
                             if (xop[0] == '-' && op[0] == '-')
                             {
-                                output += eval(getParenthis(value, 1), v1, ca, "+=");
+                                output += eval(getParenthis(value, 1), v1, ca, "+=", recCall + 1);
                             }
                             else
                             {
-                                output += eval(getParenthis(value, 1), v1, ca, xop[0] + "=");
+                                output += eval(getParenthis(value, 1), v1, ca, xop[0] + "=", recCall + 1);
                             }
                         }
 
                         if (op != "=")
-                            output += eval("__eval__" + (id).ToString(), variable, ca, op);
+                            output += eval("__eval__" + (id).ToString(), variable, ca, op, recCall + 1);
                         return output;
                     }
                 }
@@ -4187,19 +4193,24 @@ namespace JSharp
             }
             return false;
         }
-        public static Type getType(string t)
+        public static Type getType(string t, int recCall = 0)
         {
             t = t.Replace("{", "") + " ";
             
             while (t.StartsWith(" "))
                 t = t.Substring(1, t.Length - 1);
 
+            if (recCall > maxRecCall)
+            {
+                throw new Exception("Stack Overflow");
+            }
+
             if (typeMaps.Count > 0)
             {
                 foreach (string key in typeMaps.Peek().Keys)
                 {
                     if (t.ToLower().StartsWith(key))
-                        return getType(typeMaps.Peek()[key]);
+                        return getType(typeMaps.Peek()[key], recCall + 1);
                 }
             }
 
@@ -4258,7 +4269,7 @@ namespace JSharp
             }
             else if (containLazyVal(smartEmpty(t)))
             {
-                return getType(getLazyVal(smartEmpty(t)));
+                return getType(getLazyVal(smartEmpty(t)), recCall + 1);
             }
             else
             {
@@ -4266,9 +4277,9 @@ namespace JSharp
             }
             return type;
         }
-        public static Type getExprType(string t, int depth = 0)
+        public static Type getExprType(string t, int recCall = 0)
         {
-            if (depth > 100)
+            if (recCall > maxRecCall)
             {
                 throw new Exception("Stack Overflow!");
             }
@@ -4282,7 +4293,7 @@ namespace JSharp
             }
             if (t.StartsWith("(") && t.EndsWith(")"))
             {
-                return getExprType(getParenthis(t), depth+1);
+                return getExprType(getParenthis(t), recCall+1);
             }
             if (t.ToLower() == "true" || t.ToLower() == "false")
             {
@@ -5216,9 +5227,9 @@ namespace JSharp
         {
                return text.Substring(text.IndexOf('(') + 1, getCloseCharIndex(text,')') - text.IndexOf('(') - 1);
         }
-        public static string getParenthis(string text, int max = -1, int depth = 0)
+        public static string getParenthis(string text, int max = -1, int recCall = 0)
         {
-            if (depth > 200)
+            if (recCall > maxRecCall)
             {
                 throw new Exception("Stackoverflow");
             }
@@ -5232,7 +5243,7 @@ namespace JSharp
             }
             
             while (text.StartsWith("(") && text.EndsWith(")") && getCloseCharIndex(text, ')') == text.Length-1) {
-                return getParenthis(text.Substring(text.IndexOf('(') + 1, getCloseCharIndex(text,')') - text.IndexOf('(') - 1), max-1, depth+1);
+                return getParenthis(text.Substring(text.IndexOf('(') + 1, getCloseCharIndex(text,')') - text.IndexOf('(') - 1), max-1, recCall+1);
             }
             
             return text;
@@ -7693,12 +7704,16 @@ namespace JSharp
                 return false;
             }
 
-            public string GetVariableName(string func, bool safe = false, bool bottleneck = false)
+            public string GetVariableName(string func, bool safe = false, bool bottleneck = false, int recCall = 0)
             {
                 func = toInternal(smartEmpty(func));
+                if (recCall > maxRecCall)
+                {
+                    throw new Exception("Stack Overflow");
+                }
                 if (containLazyVal(func))
                 {
-                    return GetVariableName(getLazyVal(func), safe);
+                    return GetVariableName(getLazyVal(func), safe, bottleneck, recCall+1);
                 }
                 if (func.StartsWith("this.") && variables.ContainsKey(func.Replace("this.", thisDef.Peek())))
                 {
@@ -7726,7 +7741,7 @@ namespace JSharp
                 {
                     foreach (string pack in adjPackage)
                     {
-                        string var = GetVariableName(pack + "." + func, true, true);
+                        string var = GetVariableName(pack + "." + func, true, true, recCall + 1);
                         if (var != null)
                         {
                             return var;
@@ -7740,13 +7755,16 @@ namespace JSharp
                     return null;
             }
 
-            public string GetVariable(string func, bool safe = false, bool bottleneck = false)
+            public string GetVariable(string func, bool safe = false, bool bottleneck = false, int recCall = 0)
             {
                 func = toInternal(func.Replace(" ", ""));
-
+                if (recCall > maxRecCall)
+                {
+                    throw new Exception("Stack Overflow");
+                }
                 if (containLazyVal(func))
                 {
-                    return GetVariable(getLazyVal(func), safe);
+                    return GetVariable(getLazyVal(func), safe, bottleneck, recCall+1);
                 }
                 if (func.StartsWith("this.") && variables.ContainsKey(func.Replace("this.", thisDef.Peek())))
                 {
@@ -7776,7 +7794,7 @@ namespace JSharp
                 {
                     foreach(string pack in adjPackage)
                     {
-                        string var = GetVariable(pack + "." + func, true, true);
+                        string var = GetVariable(pack + "." + func, true, true, recCall + 1);
                         if (var != null)
                         {
                             return var;
