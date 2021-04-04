@@ -22,6 +22,8 @@ namespace JSharp
         public Dictionary<string, string> resources = new Dictionary<string, string>();
         public Dictionary<string, Dictionary<string, TagsList>> TagsList = new Dictionary<string, Dictionary<string, TagsList>>();
         public Dictionary<string, Dictionary<string, TagsList>> MCTagsList = new Dictionary<string, Dictionary<string, TagsList>>();
+        public Dictionary<string, DateTime> moddificationFileTime = new Dictionary<string, DateTime>();
+        public Dictionary<string, DateTime> moddificationResTime = new Dictionary<string, DateTime>();
         public Dictionary<string, string> structures = new Dictionary<string, string>();
         public ProjectVersion projectVersion = new ProjectVersion();
         public Compiler.CompilerSetting compilerSetting = new Compiler.CompilerSetting();
@@ -314,6 +316,9 @@ namespace JSharp
         }
         public void Open(string name, string data)
         {
+            moddificationFileTime = new Dictionary<string, DateTime>();
+            moddificationResTime = new Dictionary<string, DateTime>();
+
             ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
             CodeListBox.Items.Clear();
             code.Clear();
@@ -416,7 +421,9 @@ namespace JSharp
                         fname = file.Substring(dir.Length,file.Length - dir.Length - Path.GetExtension(file).Length);
                     else
                         fname = file.Substring(dir.Length, file.Length - dir.Length);
-                    
+
+                    moddificationFileTime.Add(fname.ToLower(), DateTime.Now);
+
                     if (!code.ContainsKey(fname.ToLower()) && fname != "desktop.ini")
                     {
                         try
@@ -437,6 +444,7 @@ namespace JSharp
                 foreach (var file in Directory.GetFiles(dirRes, "*.*", SearchOption.AllDirectories))
                 {
                     string fname = file.Substring(dirRes.Length, file.Length - dirRes.Length);
+                    moddificationResTime.Add(fname.ToLower(), DateTime.Now);
 
                     if (!resources.ContainsKey(fname.ToLower()))
                     {
@@ -460,6 +468,94 @@ namespace JSharp
             UpdateCodeBox();
             ignorNextListboxUpdate = false;
             projectDescription = project.description;
+        }
+        public void CheckFileModdification()
+        {
+            string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
+            string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
+            UpdateFile.Result prev = UpdateFile.Result.No;
+            List<string> keys = new List<string>();
+            keys.AddRange(moddificationFileTime.Keys);
+            foreach (string key in keys)
+            {
+                if (File.Exists(dir+key + ".bps") && moddificationFileTime[key] < File.GetLastWriteTime(dir+ key + ".bps"))
+                {
+                    if (prev == UpdateFile.Result.NoForAll)
+                    {
+                        moddificationFileTime[key] = File.GetLastWriteTime(dir + key + ".bps");
+                    }
+                    else if (prev == UpdateFile.Result.YesForAll)
+                    {
+                        code[key] = File.ReadAllText(dir + key + ".bps");
+                        moddificationFileTime[key] = File.GetLastWriteTime(dir + key + ".bps");
+                        if (previous == key)
+                        {
+                            CodeBox.Text = code[key];
+                            Formatter.reformat(CodeBox, this, false);
+                        }
+                    }
+                    else
+                    {
+                        var res = UpdateFile.ShowDialog("The File \"" + key + "\" has been moddify. Do you want to reload it?");
+                        prev = res;
+                        if (res == UpdateFile.Result.YesForAll || res == UpdateFile.Result.Yes)
+                        {
+                            code[key] = File.ReadAllText(dir + key + ".bps");
+                            moddificationFileTime[key] = File.GetLastWriteTime(dir + key + ".bps");
+                            if (previous == key)
+                            {
+                                CodeBox.Text = code[key];
+                                Formatter.reformat(CodeBox, this, false);
+                            }
+                        }
+                        else
+                        {
+                            moddificationFileTime[key] = File.GetLastWriteTime(dir + key + ".bps");
+                        }
+                    }
+                }
+            }
+            keys = new List<string>();
+            keys.AddRange(moddificationResTime.Keys);
+            foreach (string key in keys)
+            {
+                if (File.Exists(dir + key) && moddificationResTime[key] < File.GetLastWriteTime(dir + key))
+                {
+                    if (prev == UpdateFile.Result.NoForAll)
+                    {
+                        moddificationResTime[key] = File.GetLastWriteTime(dir + key);
+                    }
+                    else if (prev == UpdateFile.Result.YesForAll)
+                    {
+                        resources[key] = File.ReadAllText(dirRes + key);
+                        moddificationResTime[key] = File.GetLastWriteTime(dir + key);
+                        if (previous == key)
+                        {
+                            CodeBox.Text = resources[key];
+                            Formatter.reformat(CodeBox, this, false);
+                        }
+                    }
+                    else
+                    {
+                        var res = UpdateFile.ShowDialog("The Resource File \"" + key + "\" has been moddify. Do you want to reload it?");
+                        prev = res;
+                        if (res == UpdateFile.Result.YesForAll || res == UpdateFile.Result.Yes)
+                        {
+                            resources[key] = File.ReadAllText(dir + key);
+                            moddificationResTime[key] = File.GetLastWriteTime(dirRes + key);
+                            if (previous == key)
+                            {
+                                CodeBox.Text = resources[key];
+                                Formatter.reformat(CodeBox, this, false);
+                            }
+                        }
+                        else
+                        {
+                            moddificationResTime[key] = File.GetLastWriteTime(dir + key);
+                        }
+                    }
+                }
+            }
         }
         public void UpdateProjectList()
         {
@@ -1429,6 +1525,11 @@ namespace JSharp
         {
             FunctionPreview fp = new FunctionPreview(Compiler.predicates);
             fp.Show();
+        }
+
+        private void Form1_Activated(object sender, EventArgs e)
+        {
+            CheckFileModdification();
         }
     }
 

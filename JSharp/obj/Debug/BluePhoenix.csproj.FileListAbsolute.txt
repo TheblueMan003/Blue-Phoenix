@@ -24,3 +24,4 @@ F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.csproj.CoreCompileInputs
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.csproj.CopyComplete
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\JSharp.exe
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\JSharp.pdb
+F:\002_Software_dev\JSharp\JSharp\obj\Debug\JSharp.UpdateFile.resources

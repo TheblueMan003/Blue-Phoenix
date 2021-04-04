@@ -157,6 +157,12 @@
       <DependentUpon>TagsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="TagsList.cs" />
+    <Compile Include="UpdateFile.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UpdateFile.Designer.cs">
+      <DependentUpon>UpdateFile.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="CompileOrder.resx">
       <DependentUpon>CompileOrder.cs</DependentUpon>
     </EmbeddedResource>
@@ -208,6 +214,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="TagsForm.resx">
       <DependentUpon>TagsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UpdateFile.resx">
+      <DependentUpon>UpdateFile.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
