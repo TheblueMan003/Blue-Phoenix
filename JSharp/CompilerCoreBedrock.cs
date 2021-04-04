@@ -177,5 +177,77 @@ namespace JSharp
                     return selector+"[scores={" + var1.scoreboard().Replace("@s ", "") + "=" + val + "}]";
             }
         }
+
+        public override bool isValidSelector(string selector)
+        {
+            selector = Compiler.smartEmpty(selector);
+            if (selector.Contains("["))
+            {
+                if (!selector.EndsWith("]"))
+                    return false;
+                string args = selector.Substring(selector.IndexOf("[") + 1,
+                    selector.LastIndexOf("]") - selector.IndexOf("[") - 1);
+                foreach (string arg in Compiler.smartSplitJson(args, ',', -1))
+                {
+                    if (!isValidSelectorArgument(arg))
+                        return false;
+                }
+                if (selector.StartsWith("@s") || selector.StartsWith("@p") ||
+                    selector.StartsWith("@a") || selector.StartsWith("@r") || selector.StartsWith("@e"))
+                    return true;
+                else
+                    return false;
+            }
+            else
+            {
+                if (selector == "@s" || selector == "@p" || selector == "@a" || selector == "@r" || selector == "@e")
+                    return true;
+                else
+                    return false;
+            }
+        }
+        public override bool isValidSelectorArgument(string arg)
+        {
+            arg = Compiler.smartEmpty(arg);
+            string[] part = Compiler.smartSplit(arg, '=');
+            if (part.Length != 2)
+                return false;
+
+            if (part[0] == "x" || part[0] == "y" || part[0] == "z" || part[0] == "dx" || part[0] == "dy" || part[0] == "dz" ||
+                part[0] == "c")
+            {
+                return float.TryParse(part[1], out float t);
+            }
+            if (part[0] == "r" || part[0] == "level" || part[0] == "rx" || part[0] == "ry")
+            {
+                if (part[1].Contains(".."))
+                {
+                    string[] part2 = part[1].Replace("..", ",").Split(',');
+
+                    return (part2[0] == "" || float.TryParse(part2[0], out float t)) && (part2[1] == "" || float.TryParse(part2[1], out float u));
+                }
+                else
+                {
+                    return float.TryParse(part[1], out float t);
+                }
+            }
+            if (part[0] == "g")
+            {
+                part[1] = part[1].Replace("!", "");
+                return part[1] == "adventure" || part[1] == "survival" || part[1] == "creative" || part[1] == "spectator";
+            }
+            if (part[0] == "tag" || part[0] == "name" || part[0] == "team" || part[0] == "type")
+            {
+                return !part[1].Contains("\"");
+            }
+            if (part[0] == "scores")
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public override string getLibraryFolder() { return "bedrock";}
     }
 }

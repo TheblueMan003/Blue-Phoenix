@@ -11,7 +11,7 @@ namespace JSharp
     public static class CommandParser
     {
         public static string[] funcName = new string[] { "tellraw", "title", "say", "clear", "effect", "difficulty", "gamemode", "gamerule",
-            "kill", "spawnpoint", "setblock", "fill", "stopsound", "weather", "tp", "execute", "tag", "untag", "unitag", "structure","magictitle"};
+            "setblock", "fill", "stopsound", "weather", "tp", "execute", "structure","magictitle"};
         public static string[] difficulties;
         public static string[] effects;
         public static string[] gamemodes;
@@ -69,15 +69,6 @@ namespace JSharp
             if (text.ToLower().StartsWith("structure"))
                 return parseStructure(args, context, text);
 
-            if (text.ToLower().StartsWith("tag"))
-                return parseTag(args, context, text);
-
-            if (text.ToLower().StartsWith("unitag"))
-                return parseUniTag(args, context, text);
-
-            if (text.ToLower().StartsWith("untag"))
-                return parseUntag(args, context, text);
-
             if (text.ToLower().StartsWith("title"))
                 return parseTitle(args, context, text);
 
@@ -105,17 +96,8 @@ namespace JSharp
             if (text.ToLower().StartsWith("gamerule"))
                 return parseGamerule(args, context, text);
 
-            if (text.ToLower().StartsWith("kill"))
-                return parseKill(args, context, text);
-
-            if (text.ToLower().StartsWith("spawnpoint"))
-                return parseSpawnpoint(args, context, text);
-
             if (text.ToLower().StartsWith("fill"))
                 return parseFill(args, context, text);
-
-            if (text.ToLower().StartsWith("setblock"))
-                return parseSetblock(args, context, text);
 
             if (text.ToLower().StartsWith("stopsound"))
                 return parseStopsound(args, context, text);
@@ -128,90 +110,7 @@ namespace JSharp
 
             throw new NotImplementedException(text.Split(' ')[0] + " is not implemented");
         }
-        public static string parseTag(string[] args, Compiler.Context context, string text)
-        {
-            if (args.Length > 0)
-            {
-                string tmp = "";
-                string output = "";
-                if (args.Length == 1)
-                {
-                    output = "tag @s add " + args[0];
-                }
-                else
-                {
-                    tmp += "tag " + context.GetEntitySelector(args[0]) + " add ";
-                }
-                for (int i = 1; i < args.Length; i++)
-                {
-                    output += tmp + Compiler.smartEmpty(args[i]) + '\n';
-                }
-
-                return output;
-            }
-            else
-            {
-                return Compiler.functionEval(text);
-            }
-        }
-        public static string parseUniTag(string[] args, Compiler.Context context, string text)
-        {
-            if (args.Length > 0)
-            {
-                string tmp1 = "tag @e remove ";
-                string tmp2 = "";
-                string output = "";
-                if (args.Length == 1)
-                {
-                    output = "tag @e remove " + args[0] + "\ntag @s add " + args[0];
-                }
-                else
-                {
-                    tmp2 += "tag " + context.GetEntitySelector(args[0]) + " add ";
-                }
-
-                for (int i = 1; i < args.Length; i++)
-                {
-                    output += tmp1 + Compiler.smartEmpty(args[i]) + '\n';
-                }
-                for (int i = 1; i < args.Length; i++)
-                {
-                    output += tmp2 + Compiler.smartEmpty(args[i]) + '\n';
-                }
-
-                return output;
-            }
-            else
-            {
-                return Compiler.functionEval(text);
-            }
-        }
-        public static string parseUntag(string[] args, Compiler.Context context, string text)
-        {
-            if (args.Length > 0)
-            {
-                string tmp = "";
-                string output = "";
-                if (args.Length == 1)
-                {
-                    output = "tag @s remove " + args[0];
-                }
-                else
-                {
-                    tmp += "tag " + context.GetEntitySelector(args[0]) + " remove ";
-                }
-                for (int i = 1; i < args.Length; i++)
-                {
-                    output += tmp + Compiler.smartEmpty(args[i]) + '\n';
-                }
-
-                return output;
-            }
-            else
-            {
-                return Compiler.functionEval(text);
-            }
-        }
+        
         public static string parseTellraw(string[] args, Compiler.Context context, string text)
         {
             string output = "tellraw " + context.GetEntitySelector(args[0]) + " ";
@@ -461,77 +360,6 @@ namespace JSharp
                 return Compiler.functionEval(text);
             }
 }
-        public static string parseKill(string[] args, Compiler.Context context, string text)
-        {
-            if (args.Length == 0)
-            {
-                return "kill @s\n";
-            }
-            else if (context.isEntity(args[0]))
-            {
-                string output = "kill " + context.GetEntitySelector(args[0]);
-
-                return output + '\n';
-            }
-            else
-            {
-                return Compiler.functionEval(text);
-            }
-        }
-        public static string parseSpawnpoint(string[] args, Compiler.Context context, string text)
-        {
-            if (args.Length >= 0)
-            {
-                string output = "spawnpoint ";
-                if (context.isEntity(args[0]))
-                    output += context.GetEntitySelector(args[0]);
-                else
-                    output += "@s " + args[0];
-
-                for (int i = 1; i < args.Length; i++)
-                {
-                    output += " " + args[i];
-                }
-
-                return output + '\n';
-            }
-            else
-            {
-                return Compiler.functionEval(text);
-            }
-        }
-        public static string parseSetblock(string[] args, Compiler.Context context, string text)
-        {
-            if (args.Length == 1)
-            {
-                string output = "setblock";
-
-                if (args.Length == 1)
-                {
-                    if (args[0].Contains("~") || (args[0].Contains(" ") || int.TryParse(args[0].Split(' ')[0], out int t)))
-                    {
-                        output += " " + args[0];
-                    }
-                    else
-                    {
-                        output += " ~ ~ ~ " + args[0];
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < args.Length; i++)
-                    {
-                        output += " " + args[i];
-                    }
-                }
-
-                return output + '\n';
-            }
-            else
-            {
-                return Compiler.functionEval(text);
-            }
-        }
         public static string parseFill(string[] args, Compiler.Context context, string text)
         {
             if (args.Length == 1)
@@ -658,7 +486,15 @@ namespace JSharp
                 bool array = false;
                 if (subargs[0].Contains("\""))
                 {
-                    output += ",{\"text\":" + subargs[0];
+                    string ext = Compiler.smartExtract(subargs[0]);
+                    if (ext.StartsWith("\"") && ext.EndsWith("\""))
+                    {
+                        output += ",{\"text\":" + subargs[0];
+                    }
+                    else
+                    {
+                        throw new Exception("JSON Syntaxe Error");
+                    }
                 }
                 else if (subargs[0].Contains("@"))
                 {
@@ -801,80 +637,6 @@ namespace JSharp
                     output += ",\"color\":\"" + subargs[j] + "\"";
             }
             return output;
-        }
-
-        public static bool isValidSelector(string selector)
-        {
-            selector = Compiler.smartEmpty(selector);
-            if (selector.Contains("["))
-            {
-                if (!selector.EndsWith("]"))
-                    return false;
-                string args = selector.Substring(selector.IndexOf("[") + 1,
-                    selector.LastIndexOf("]") - selector.IndexOf("[") - 1);
-                foreach (string arg in Compiler.smartSplitJson(args, ',',-1))
-                {
-                    if (!isValidSelectorArgument(arg))
-                        return false;
-                }
-                if (selector.StartsWith("@s") || selector.StartsWith("@p") ||
-                    selector.StartsWith("@a") || selector.StartsWith("@r") || selector.StartsWith("@e"))
-                    return true;
-                else
-                    return false;
-            }
-            else
-            {
-                if (selector == "@s" || selector == "@p" || selector == "@a" || selector == "@r" || selector == "@e")
-                    return true;
-                else
-                    return false;
-            }
-        }
-        public static bool isValidSelectorArgument(string arg)
-        {
-            arg = Compiler.smartEmpty(arg);
-            string[] part  = Compiler.smartSplit(arg, '=');
-            if (part.Length != 2)
-                return false;
-            
-            if (part[0] == "x" || part[0] == "y" || part[0] == "z" || part[0] == "dx" || part[0] == "dy" || part[0] == "dz" ||
-                part[0] == "limit")
-            {
-                return float.TryParse(part[1], out float t);
-            }
-            if (part[0] == "distance" || part[0] == "level" || part[0] == "x_rotation" || part[0] == "y_rotation")
-            {
-                if (part[1].Contains(".."))
-                {
-                    string[] part2 = part[1].Replace("..", ",").Split(',');
-
-                    return (part2[0] == "" || float.TryParse(part2[0], out float t)) && (part2[1] == "" || float.TryParse(part2[1], out float u));
-                }
-                else
-                {
-                    return float.TryParse(part[1], out float t);
-                }
-            }
-            if (part[0] == "gamemode")
-            {
-                part[1] = part[1].Replace("!", "");
-                return part[1] == "adventure" || part[1] == "survival" || part[1] == "creative" || part[1] == "spectator";
-            }
-            if (part[0] == "sort")
-            {
-                return part[1] == "nearest" || part[1] == "furthest" || part[1] == "random" || part[1] == "arbitrary";
-            }
-            if (part[0] == "tag" || part[0] == "name" || part[0] == "team" || part[0] == "type")
-            {
-                return !part[1].Contains("\"");
-            }
-            if ("nbt".StartsWith(part[0]) || part[0] == "advancements‌" || part[0] == "predicate‌" || part[0] == "scores")
-            {
-                return true;
-            }
-
-            return false;
         }
 
         public class Gamerule

@@ -38,6 +38,13 @@
             this.button4 = new System.Windows.Forms.Button();
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.FloatPrecBox = new System.Windows.Forms.TextBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.TreeSizeBox = new System.Windows.Forms.TextBox();
+            this.RMFileBox = new System.Windows.Forms.CheckBox();
+            this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -83,7 +90,7 @@
             // button1
             // 
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button1.Location = new System.Drawing.Point(152, 142);
+            this.button1.Location = new System.Drawing.Point(151, 183);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 5;
@@ -142,12 +149,77 @@
             this.label4.TabIndex = 10;
             this.label4.Text = "Description:";
             // 
+            // FloatPrecBox
+            // 
+            this.FloatPrecBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.FloatPrecBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.FloatPrecBox.ForeColor = System.Drawing.Color.White;
+            this.FloatPrecBox.Location = new System.Drawing.Point(92, 16);
+            this.FloatPrecBox.Name = "FloatPrecBox";
+            this.FloatPrecBox.Size = new System.Drawing.Size(176, 20);
+            this.FloatPrecBox.TabIndex = 11;
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
+            this.groupBox1.Controls.Add(this.RMFileBox);
+            this.groupBox1.Controls.Add(this.label6);
+            this.groupBox1.Controls.Add(this.TreeSizeBox);
+            this.groupBox1.Controls.Add(this.label5);
+            this.groupBox1.Controls.Add(this.FloatPrecBox);
+            this.groupBox1.ForeColor = System.Drawing.Color.White;
+            this.groupBox1.Location = new System.Drawing.Point(376, 9);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(314, 197);
+            this.groupBox1.TabIndex = 12;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Compiler Setting";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(7, 18);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(79, 13);
+            this.label5.TabIndex = 12;
+            this.label5.Text = "Float Precision:";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(7, 44);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(55, 13);
+            this.label6.TabIndex = 14;
+            this.label6.Text = "Tree Size:";
+            // 
+            // TreeSizeBox
+            // 
+            this.TreeSizeBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.TreeSizeBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.TreeSizeBox.ForeColor = System.Drawing.Color.White;
+            this.TreeSizeBox.Location = new System.Drawing.Point(92, 42);
+            this.TreeSizeBox.Name = "TreeSizeBox";
+            this.TreeSizeBox.Size = new System.Drawing.Size(176, 20);
+            this.TreeSizeBox.TabIndex = 13;
+            // 
+            // RMFileBox
+            // 
+            this.RMFileBox.AutoSize = true;
+            this.RMFileBox.Location = new System.Drawing.Point(10, 174);
+            this.RMFileBox.Name = "RMFileBox";
+            this.RMFileBox.Size = new System.Drawing.Size(130, 17);
+            this.RMFileBox.TabIndex = 16;
+            this.RMFileBox.Text = "Remove Useless Files";
+            this.RMFileBox.UseVisualStyleBackColor = true;
+            // 
             // ProjectSetting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
-            this.ClientSize = new System.Drawing.Size(377, 177);
+            this.ClientSize = new System.Drawing.Size(696, 218);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.textBox2);
             this.Controls.Add(this.button4);
@@ -163,6 +235,8 @@
             this.Name = "ProjectSetting";
             this.Text = "Project Setting";
             this.Load += new System.EventHandler(this.ProjectSetting_Load);
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -180,5 +254,11 @@
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.TextBox textBox2;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.TextBox FloatPrecBox;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.TextBox TreeSizeBox;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.CheckBox RMFileBox;
     }
 }

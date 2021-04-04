@@ -22,7 +22,7 @@ namespace JSharp
             "switch", "case", "const","final","override",
             "struct", "extends", "static", "positioned", "lazy", "abstract", "this", "align", "alias",
             "ticking", "loading", "helper", "void", "null", "enum", "blocktags", "public", "private",
-            "new", "external", "jsonfile"};
+            "new", "external", "jsonfile", "require", "predicate"};
 
         private static List<string> enums = new List<string>();
         private static List<string> structs = new List<string>();

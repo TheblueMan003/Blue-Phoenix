@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -77,7 +79,6 @@ namespace JSharp
         private static string projectFolder;
         private static long[] pow64 = new long[11];
         private static string dirVar;
-        private static bool OffuscateNeed;
         private static CompilerCore Core;
         private static ProjectVersion projectVersion;
         private static int jsonIndent = 0;
@@ -126,16 +127,19 @@ namespace JSharp
         private static Regex regEval2 = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.\(\)\s]*\)eval\$");
         private static Regex forgenInLineReg = new Regex(@"forgenerate\([^\(\)]*\)\{[^\{\}]*\}");
         private static Regex dualCompVar = new Regex(@"^\$[\w\.\$]+\s*=\s*\$?[\w\.\$]+\s*");
+        private static Regex requireReg = new Regex(@"^require\s+\w+\s+\w+");
+        private static Regex indexedReg = new Regex(@"^indexed\s+\$\w+\s+\w+");
+        private static Regex revindexedReg = new Regex(@"^revindexed\s+\$\w+\s+\w+");
         #endregion
 
         private static int isInLazyCompile;
-        private static CompilerSetting compilerSetting = new CompilerSetting();
+        private static CompilerSetting compilerSetting;
         private static int maxRecCall = 300;
 
         private Compiler() { }
 
         public static List<File> compile(CompilerCore core,string project, List<File> codes, List<File> resources, Debug debug,
-                                            bool offuscated, ProjectVersion version, string pctFolder)
+                                            CompilerSetting setting, ProjectVersion version, string pctFolder)
         {
             callTrace = "digraph "+project+" {\nmain\nload\nhelper\n";
             Core = core;
@@ -145,7 +149,9 @@ namespace JSharp
                 pow64[i] = IntPow(alphabet.Length, i);
             }
             dirVar = project.Substring(0, Math.Min(4, project.Length));
-            OffuscateNeed = offuscated;
+
+            compilerSetting = setting;
+            
             offuscationMap = new Dictionary<string, string>();
             functionTags = new HashSet<string>();
             projectFolder = pctFolder;
@@ -215,13 +221,16 @@ namespace JSharp
                 }
                 
                 bool changed = true;
+                int pass = 1;
                 while (changed)
                 {
+                    GobalDebug("Funciton Pass: " + pass.ToString(), Color.YellowGreen);
+                    pass++;
                     int fi = 0;
                     changed = false;
                     while (fi < files.Count)
                     {
-                        if (files[fi].UnparsedFunctionFile && !files[fi].notUsed)
+                        if ((files[fi].UnparsedFunctionFile && !files[fi].notUsed) || !compilerSetting.removeUselessFile)
                         {
                             files[fi].Compile();
                             changed = true;
@@ -240,8 +249,11 @@ namespace JSharp
                 
                 foreach(File f in files)
                 {
-                    //returnFiles.Add(f);
-                    if (!f.notUsed && !f.isLazy && f.lineCount > 0)
+                    if (!compilerSetting.removeUselessFile)
+                    {
+                        returnFiles.Add(f);
+                    }
+                    else if (!f.notUsed && !f.isLazy && f.lineCount > 0)
                     {
                         returnFiles.Add(f);
                         foreach(string line in f.content.Split('\n'))
@@ -271,9 +283,9 @@ namespace JSharp
                 throw new Exception("Error in " + currentFile + " on line " + currentLine.ToString() + ": " + e.ToString());
             }
         }
-        public static string getStackCall(CompilerCore core, string project, List<File> codes, List<File> resources, Debug debug, bool offuscated, ProjectVersion version, string pctFolder)
+        public static string getStackCall(CompilerCore core, string project, List<File> codes, List<File> resources, Debug debug, CompilerSetting setting, ProjectVersion version, string pctFolder)
         {
-            compile(core, project, codes, resources, debug, offuscated, projectVersion, pctFolder);
+            compile(core, project, codes, resources, debug, setting, projectVersion, pctFolder);
             return callTrace;
         }
 
@@ -512,6 +524,18 @@ namespace JSharp
                     autoIndented = 0;
                     return parseLine(text.Substring(1, text.Length - 1));
                 }
+                else if (requireReg.Match(text).Success)
+                {
+                    return Require(text);
+                }
+                else if (indexedReg.Match(text).Success)
+                {
+                    return Indexed(text);
+                }
+                else if (revindexedReg.Match(text).Success)
+                {
+                    return Revindexed(text);
+                }
                 //return
                 else if ((text.StartsWith("return") && text.Contains("(") && text.Contains(")")) || text.StartsWith("return "))
                 {
@@ -706,38 +730,41 @@ namespace JSharp
         }
         public static string compVarReplace(string line)
         {
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            List<string> keys = new List<string>();
-            foreach (Dictionary<string, string> v in compVal)
+            if (!indexedReg.Match(line).Success)
             {
-                foreach (string key in v.Keys)
+                Dictionary<string, string> dic = new Dictionary<string, string>();
+                List<string> keys = new List<string>();
+                foreach (Dictionary<string, string> v in compVal)
                 {
-                    if (dic.ContainsKey(key))
+                    foreach (string key in v.Keys)
                     {
-                        dic[key] = v[key];
-                    }
-                    else
-                    {
-                        dic.Add(key, v[key]);
-                        keys.Add(key);
+                        if (dic.ContainsKey(key))
+                        {
+                            dic[key] = v[key];
+                        }
+                        else
+                        {
+                            dic.Add(key, v[key]);
+                            keys.Add(key);
+                        }
                     }
                 }
-            }
-            
-            keys.Sort();
-            keys.Reverse();
 
-            foreach (string key in keys)
-            {
-                Regex reg = new Regex(@"\b" + key + "\b");
-                if (key.Contains("$"))
-                    reg = new Regex("\\" + key);
+                keys.Sort();
+                keys.Reverse();
 
-                Match match = reg.Match(line);
-                while (match != null && dic[key] != key && match.Value != "" && match.Value != null)
+                foreach (string key in keys)
                 {
-                    line = regReplace(line, match, dic[key]);
-                    match = reg.Match(line);
+                    Regex reg = new Regex(@"\b" + key + "\b");
+                    if (key.Contains("$"))
+                        reg = new Regex("\\" + key);
+
+                    Match match = reg.Match(line);
+                    while (match != null && dic[key] != key && match.Value != "" && match.Value != null)
+                    {
+                        line = regReplace(line, match, dic[key]);
+                        match = reg.Match(line);
+                    }
                 }
             }
             return line;
@@ -899,39 +926,30 @@ namespace JSharp
             {
                 return "";
             }
-            if (System.IO.File.Exists("lib/" + text + ".tbms"))
+            string output = "";
+            if (!tryImport("lib/", text, fu, out output))
             {
-                forcedUnsed = fu;
-                string data = System.IO.File.ReadAllText("lib/" + text + ".tbms");
-                ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
-                
-                context.GoRoot();
-                if (project.resources != null)
+                if (!tryImport("lib/" + Core.getLibraryFolder() + "/", text, fu, out output))
                 {
-                    foreach (var f in project.resources)
+                    if (!tryImport(projectFolder + "/", text, fu, out output))
                     {
-                        if (!resourceFiles.ContainsKey(f.name))
-                            resourceFiles.Add(f.name, f.content);
+                        throw new Exception("Unknown library: " + text);
                     }
                 }
-
-                foreach (var file in project.files)
-                {
-                    compileFile(new File(text+"."+file.name, file.content), fu, true);
-                }
-
-                imported.Add(text);
-                forcedUnsed = false;
-                return "";
             }
-            if (System.IO.File.Exists(projectFolder+"/" + text + ".tbms"))
+            //context.currentFile().AddStartLine(output);
+            return "";
+        }
+        public static bool tryImport(string folder, string text, bool fu, out string msg)
+        {
+            if (System.IO.File.Exists(folder + text + ".tbms"))
             {
                 forcedUnsed = fu;
-                string data = System.IO.File.ReadAllText(projectFolder+"/" + text + ".tbms");
+                string data = System.IO.File.ReadAllText(folder + text + ".tbms");
                 ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
+                msg = "#Using TBMS Library: " + text + " v." + project.version.ToString()+"\n";
 
                 context.GoRoot();
-
                 if (project.resources != null)
                 {
                     foreach (var f in project.resources)
@@ -948,10 +966,13 @@ namespace JSharp
 
                 imported.Add(text);
                 forcedUnsed = false;
-                return "";
+                return true;
             }
-            
-            throw new Exception("Unknown library: " + text);
+            else
+            {
+                msg = "";
+                return false;
+            }
         }
         public static string instUsing(string text)
         {
@@ -1913,15 +1934,13 @@ namespace JSharp
                 }
                 else if (val.Contains("@"))
                 {
-                    output += "tag " + smartEmpty(val) + " add " + variable.gameName + '\n';
-                    string end = "tag @e remove " + variable.gameName + '\n';
-                    context.currentFile().AddEndLine(end);
+                    output += "tag @e remove " + variable.gameName + '\n'+
+                        "tag " + smartEmpty(val) + " add " + variable.gameName + '\n';
                 }
                 else
                 {
-                    output += "tag " + context.GetEntitySelector(val) + " add " + variable.gameName + '\n';
-                    string end = "tag @e remove " + variable.gameName + '\n';
-                    context.currentFile().AddEndLine(end);
+                    output += "tag @e remove " + variable.gameName + '\n'+
+                        "tag " + context.GetEntitySelector(val) + " add " + variable.gameName + '\n';
                 }
             }
             else if (ca == Type.STRING)
@@ -4181,6 +4200,111 @@ namespace JSharp
         }
         #endregion
 
+        #region Compiler Exception
+        public static string Require(string text)
+        {
+            string[] args = smartSplit(text, ' ');
+            if (args.Length > 2)
+            {
+                if (args[2] == "in")
+                {
+                    if (getEnum(args[3]) == null)
+                    {
+                        throw new Exception("No such enum: " + args[3]);
+                    }
+                    if (!enums[getEnum(args[3])].valuesName.Contains(args[1].ToLower()))
+                    {
+                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[3]);
+                    }
+                }
+                else
+                {
+                    if (getEnum(args[2]) == null)
+                    {
+                        throw new Exception("No such enum: " + args[2]);
+                    }
+                    if (!enums[getEnum(args[2])].valuesName.Contains(args[1].ToLower()))
+                    {
+                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[2]);
+                    }
+                }
+            }
+            else
+            {
+                throw new Exception("No Enough argument for require");
+            }
+            return "";
+        }
+        public static string Indexed(string text)
+        {
+            string[] args = smartSplit(text, ' ');
+            if (args.Length > 2)
+            {
+                if (args[2] == "in")
+                {
+                    if (getEnum(args[3]) == null)
+                    {
+                        throw new Exception("No such enum: " + args[3]);
+                    }
+                    if (!enums[getEnum(args[3])].valuesName.Contains(args[1].ToLower()))
+                    {
+                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[3]);
+                    }
+                }
+                else
+                {
+                    if (getEnum(args[2]) == null)
+                    {
+                        throw new Exception("No such enum: " + args[2]);
+                    }
+                    if (!enums[getEnum(args[2])].valuesName.Contains(args[1].ToLower()))
+                    {
+                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[2]);
+                    }
+                }
+            }
+            else
+            {
+                throw new Exception("No Enough argument for require");
+            }
+            return "";
+        }
+        public static string Revindexed(string text)
+        {
+            string[] args = smartSplit(text, ' ');
+            if (args.Length > 2)
+            {
+                if (args[2] == "in")
+                {
+                    if (getEnum(args[3]) == null)
+                    {
+                        throw new Exception("No such enum: " + args[3]);
+                    }
+                    if (!enums[getEnum(args[3])].valuesName.Contains(args[1].ToLower()))
+                    {
+                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[3]);
+                    }
+                }
+                else
+                {
+                    if (getEnum(args[2]) == null)
+                    {
+                        throw new Exception("No such enum: " + args[2]);
+                    }
+                    if (!enums[getEnum(args[2])].valuesName.Contains(args[1].ToLower()))
+                    {
+                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[2]);
+                    }
+                }
+            }
+            else
+            {
+                throw new Exception("No Enough argument for require");
+            }
+            return "";
+        }
+        #endregion
+
         private static bool containType(string text)
         {
             if (typeMaps.Count > 0)
@@ -4617,7 +4741,15 @@ namespace JSharp
                         {
                             if (a.name.StartsWith("$"))
                             {
-                                if (a.type == Type.INT || a.type == Type.FUNCTION || a.type == Type.FLOAT)
+                                if (a.type == Type.ENTITY)
+                                {
+                                    if (!context.isEntity(smartExtract(args[i])))
+                                    {
+                                        throw new Exception("Entity is required!");
+                                    }
+                                    compVal[compVal.Count - 1].Add(a.name, context.GetEntitySelector(smartExtract(args[i])));
+                                }
+                                else if (a.type == Type.INT || a.type == Type.FUNCTION || a.type == Type.FLOAT)
                                 {
                                     if (context.GetVariable(smartExtract(args[i]),true) != null){
                                         compVal[compVal.Count-1].Add(a.name + ".enums", GetVariableByName(smartExtract(args[i])).enums);
@@ -5573,7 +5705,7 @@ namespace JSharp
         }
         public static string offuscationMapAdd(string text)
         {
-            if (!OffuscateNeed)
+            if (!compilerSetting.offuscate)
                 return text;
 
             if (offuscationMap.ContainsKey(text))
@@ -5923,7 +6055,7 @@ namespace JSharp
                 }
 
                 fFile.notUsed = !fun.isLoading && !fun.isHelper && !fun.isTicking && fun.tags.Count == 0;
-                fFile.use();
+                //fFile.use();
 
                 int i = 0;
                 foreach (Variable output in fun.outputs)
@@ -7009,10 +7141,31 @@ namespace JSharp
             }
         }
 
+        [Serializable]
         public class CompilerSetting
         {
             public int TreeMaxSize = 20;
             public int FloatPrecision = 1000;
+            public bool removeUselessFile = true;
+            public bool offuscate = true;
+
+            public CompilerSetting()
+            {
+            }
+
+            public CompilerSetting withoutOffuscation()
+            {
+                using (var ms = new MemoryStream())
+                {
+                    var formatter = new BinaryFormatter();
+                    formatter.Serialize(ms, this);
+                    ms.Position = 0;
+
+                    CompilerSetting newSetting = (CompilerSetting)formatter.Deserialize(ms);
+                    newSetting.offuscate = false;
+                    return newSetting;
+                }
+            }
         }
 
         public class Argument : Variable
@@ -7864,7 +8017,7 @@ namespace JSharp
             {
                 if (value.Contains("@"))
                 {
-                    if (!CommandParser.isValidSelector(value.Split('.')[0]))
+                    if (!Core.isValidSelector(value.Split('.')[0]))
                         throw new Exception("Invalid Selctor " + value.Split('.')[0]);
                     return value.Split('.')[0];
                 }
@@ -7884,7 +8037,7 @@ namespace JSharp
                     string t = context.GetVariable(value.Split('.')[0]);
                     if (t.Contains("@"))
                     {
-                        if (!CommandParser.isValidSelector(value))
+                        if (!Core.isValidSelector(value))
                             throw new Exception("Invalid Selctor " + value);
                         return t;
                     }
@@ -7899,7 +8052,7 @@ namespace JSharp
                     string t = context.GetVariable(value.Split('.')[0]);
                     if (t.Contains("@"))
                     {
-                        if (!CommandParser.isValidSelector(value))
+                        if (!Core.isValidSelector(value))
                             throw new Exception("Invalid Selctor " + value);
                         return t;
                     }
@@ -7916,7 +8069,7 @@ namespace JSharp
             {
                 if (value.Contains("@"))
                 {
-                    if (!CommandParser.isValidSelector(value))
+                    if (!Core.isValidSelector(value))
                         throw new Exception("Invalid Selctor "+value);
                     return smartEmpty(value);
                 }

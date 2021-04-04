@@ -24,6 +24,7 @@ namespace JSharp
         public Dictionary<string, Dictionary<string, TagsList>> MCTagsList = new Dictionary<string, Dictionary<string, TagsList>>();
         public Dictionary<string, string> structures = new Dictionary<string, string>();
         public ProjectVersion projectVersion = new ProjectVersion();
+        public Compiler.CompilerSetting compilerSetting = new Compiler.CompilerSetting();
         public string projectDescription;
 
         private string previous = "load";
@@ -254,6 +255,7 @@ namespace JSharp
             save.version = projectVersion;
             save.offuscate = isLibraryCheckbox.Checked;
             save.isLibrary = isLibraryCheckbox.Checked;
+            save.compilationSetting = compilerSetting;
             List<ProjectSave.FileSave> lst = new List<ProjectSave.FileSave>();
             List<ProjectSave.FileSave> lstRes = new List<ProjectSave.FileSave>();
             save.compileOrder = new List<string>();
@@ -323,6 +325,8 @@ namespace JSharp
             projectName = project.projectName;
             currentDataPack = project.datapackDirectory;
             isLibraryCheckbox.Checked = project.isLibrary;
+            compilerSetting = project.compilationSetting;
+
             previous = "$$$$$$$$$";
             int i = 0;
             string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
@@ -679,7 +683,7 @@ namespace JSharp
             }
 
             List<Compiler.File> cFiles = Compiler.compile(new CompilerCoreJava(), projectName, files, resourcesfiles,
-                                        DebugThread, true, projectVersion, Path.GetDirectoryName(projectPath));
+                                        DebugThread, compilerSetting, projectVersion, Path.GetDirectoryName(projectPath));
             foreach (Compiler.File f in cFiles)
             {
                 string fileName;
@@ -866,8 +870,18 @@ namespace JSharp
             try
             {
                 isCompiling = 1;
-                compileFiled = Compiler.compile(new CompilerCoreJava(), projectName, compileFile, compileResource, DebugThread, exporting, projectVersion,
-                    Path.GetDirectoryName(projectPath));
+                if (exporting)
+                {
+                    compileFiled = Compiler.compile(new CompilerCoreJava(), projectName, compileFile, compileResource,
+                        DebugThread, compilerSetting, projectVersion,
+                        Path.GetDirectoryName(projectPath));
+                }
+                else
+                {
+                    compileFiled = Compiler.compile(new CompilerCoreJava(), projectName, compileFile, compileResource,
+                        DebugThread, compilerSetting.withoutOffuscation(), projectVersion,
+                        Path.GetDirectoryName(projectPath));
+                }
 
                 if (showForm)
                 {
@@ -890,8 +904,18 @@ namespace JSharp
             try
             {
                 isCompiling = 1;
-                compileFiled = Compiler.compile(new CompilerCoreBedrock(), projectName, compileFile, compileResource, DebugThread, exporting, projectVersion,
-                    Path.GetDirectoryName(projectPath));
+                if (exporting)
+                {
+                    compileFiled = Compiler.compile(new CompilerCoreBedrock(), projectName, compileFile, compileResource,
+                        DebugThread, compilerSetting, projectVersion,
+                        Path.GetDirectoryName(projectPath));
+                }
+                else
+                {
+                    compileFiled = Compiler.compile(new CompilerCoreBedrock(), projectName, compileFile, compileResource,
+                        DebugThread, compilerSetting.withoutOffuscation(), projectVersion,
+                        Path.GetDirectoryName(projectPath));
+                }
 
                 if (showForm)
                 {
@@ -914,7 +938,8 @@ namespace JSharp
             try
             {
                 isCompiling = 1;
-                string file = Compiler.getStackCall(new CompilerCoreJava(), projectName, compileFile, compileResource, DebugThread, exporting, projectVersion,
+                string file = Compiler.getStackCall(new CompilerCoreJava(), projectName, compileFile, compileResource,
+                    DebugThread, compilerSetting.withoutOffuscation(), projectVersion,
                     Path.GetDirectoryName(projectPath));
                 compileFiled = new List<Compiler.File>();
                 compileFiled.Add(new Compiler.File("Call Stacks", file));
@@ -1381,7 +1406,7 @@ namespace JSharp
 
         private void settingToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ProjectSetting settingForm = new ProjectSetting(projectName, projectVersion, projectDescription);
+            ProjectSetting settingForm = new ProjectSetting(projectName, projectVersion, projectDescription, compilerSetting);
             settingForm.ShowDialog();
 
             projectName = settingForm.ProjectName;

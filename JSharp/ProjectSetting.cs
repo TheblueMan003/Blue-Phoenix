@@ -14,20 +14,27 @@ namespace JSharp
     public partial class ProjectSetting : Form
     {
         public ProjectVersion version;
+        public Compiler.CompilerSetting compilerSetting;
 
         public object Keyboard { get; private set; }
         public string ProjectName;
         public string description;
 
-        public ProjectSetting(string ProjectName, ProjectVersion version, string description)
+        public ProjectSetting(string ProjectName, ProjectVersion version, string description, Compiler.CompilerSetting compilerSetting)
         {
             InitializeComponent();
             this.ProjectName = ProjectName;
             this.description = description;
             this.version = version;
+            this.compilerSetting = compilerSetting;
+
             textBox1.Text = ProjectName;
             label3.Text = version.ToString();
             textBox2.Text = description;
+
+            TreeSizeBox.Text = compilerSetting.TreeMaxSize.ToString();
+            FloatPrecBox.Text = compilerSetting.FloatPrecision.ToString();
+            RMFileBox.Checked = compilerSetting.removeUselessFile;
         }
 
         private void ProjectSetting_Load(object sender, EventArgs e)
@@ -55,6 +62,17 @@ namespace JSharp
 
         private void button1_Click(object sender, EventArgs e)
         {
+            try
+            {
+                compilerSetting.TreeMaxSize = int.Parse(TreeSizeBox.Text);
+                compilerSetting.FloatPrecision = int.Parse(FloatPrecBox.Text);
+                compilerSetting.removeUselessFile = RMFileBox.Checked;
+            }
+            catch(Exception exc)
+            {
+                MessageBox.Show(exc.ToString());
+            }
+
             Close();
         }
 
