@@ -11,7 +11,7 @@ namespace JSharp
     public static class CommandParser
     {
         public static string[] funcName = new string[] { "tellraw", "title", "say", "clear", "effect", "difficulty", "gamemode", "gamerule",
-            "setblock", "fill", "stopsound", "weather", "tp", "execute", "structure","magictitle"};
+            "fill", "stopsound", "weather", "tp", "execute", "structure","magictitle"};
         public static string[] difficulties;
         public static string[] effects;
         public static string[] gamemodes;
