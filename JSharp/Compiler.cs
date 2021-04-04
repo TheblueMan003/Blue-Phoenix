@@ -127,9 +127,8 @@ namespace JSharp
         private static Regex regEval2 = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.\(\)\s]*\)eval\$");
         private static Regex forgenInLineReg = new Regex(@"forgenerate\([^\(\)]*\)\{[^\{\}]*\}");
         private static Regex dualCompVar = new Regex(@"^\$[\w\.\$]+\s*=\s*\$?[\w\.\$]+\s*");
-        private static Regex requireReg = new Regex(@"^require\s+\w+\s+\w+");
-        private static Regex indexedReg = new Regex(@"^indexed\s+\$\w+\s+\w+");
-        private static Regex revindexedReg = new Regex(@"^revindexed\s+\$\w+\s+\w+");
+        private static Regex requireReg = new Regex(@"^require\s+\$?\w+\s+\w+");
+        private static Regex indexedReg = new Regex(@"^indexed\s+\$?\w+\s+\w+");
         #endregion
 
         private static int isInLazyCompile;
@@ -532,10 +531,6 @@ namespace JSharp
                 {
                     return Indexed(text);
                 }
-                else if (revindexedReg.Match(text).Success)
-                {
-                    return Revindexed(text);
-                }
                 //return
                 else if ((text.StartsWith("return") && text.Contains("(") && text.Contains(")")) || text.StartsWith("return "))
                 {
@@ -730,7 +725,7 @@ namespace JSharp
         }
         public static string compVarReplace(string line)
         {
-            if (!indexedReg.Match(line).Success)
+            if (!requireReg.Match(line).Success && !indexedReg.Match(line).Success)
             {
                 Dictionary<string, string> dic = new Dictionary<string, string>();
                 List<string> keys = new List<string>();
@@ -768,6 +763,21 @@ namespace JSharp
                 }
             }
             return line;
+        }
+        public static void compVarChange(string name, string value)
+        {
+            Dictionary<string, string> dic = null;
+
+            foreach (Dictionary<string, string> v in compVal)
+            {
+                if (v.ContainsKey(name))
+                {
+                    dic = v;
+                }
+            }
+            if (dic == null)
+                throw new Exception("Comp Var Not found: " + name);
+            dic[name] = value;
         }
         public static string desugar(string text)
         {
@@ -4206,15 +4216,22 @@ namespace JSharp
             string[] args = smartSplit(text, ' ');
             if (args.Length > 2)
             {
+                string comVar = args[1];
+                string value = compVarReplace(comVar);
+                
                 if (args[2] == "in")
                 {
                     if (getEnum(args[3]) == null)
                     {
                         throw new Exception("No such enum: " + args[3]);
                     }
-                    if (!enums[getEnum(args[3])].valuesName.Contains(args[1].ToLower()))
+                    if (int.TryParse(value, out int _))
                     {
-                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[3]);
+                        compVarChange(comVar, enums[getEnum(args[3])].valuesName[int.Parse(value)]);
+                    }
+                    else if (!enums[getEnum(args[3])].valuesName.Contains(value.ToLower()))
+                    {
+                        throw new Exception("Fail requirement: " + value + " must be in enum " + args[3]);
                     }
                 }
                 else
@@ -4223,9 +4240,13 @@ namespace JSharp
                     {
                         throw new Exception("No such enum: " + args[2]);
                     }
-                    if (!enums[getEnum(args[2])].valuesName.Contains(args[1].ToLower()))
+                    if (int.TryParse(value, out int _))
                     {
-                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[2]);
+                        compVarChange(comVar, enums[getEnum(args[2])].valuesName[int.Parse(value)]);
+                    }
+                    else if (!enums[getEnum(args[2])].valuesName.Contains(value.ToLower()))
+                    {
+                        throw new Exception("Fail requirement: " + value + " must be in enum " + args[2]);
                     }
                 }
             }
@@ -4240,15 +4261,30 @@ namespace JSharp
             string[] args = smartSplit(text, ' ');
             if (args.Length > 2)
             {
+                string comVar = args[1];
+                string value = compVarReplace(comVar);
+
                 if (args[2] == "in")
                 {
                     if (getEnum(args[3]) == null)
                     {
                         throw new Exception("No such enum: " + args[3]);
                     }
-                    if (!enums[getEnum(args[3])].valuesName.Contains(args[1].ToLower()))
+                    int a;
+                    if (int.TryParse(value, out a))
                     {
-                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[3]);
+                        if (a >= enums[getEnum(args[3])].valuesName.Count || a < 0)
+                        {
+                            throw new Exception("Index Out of Bound");
+                        }
+                    }
+                    else if (enums[getEnum(args[3])].valuesName.Contains(value.ToLower()))
+                    {
+                        compVarChange(comVar, enums[getEnum(args[3])].valuesName.IndexOf(value).ToString());
+                    }
+                    else
+                    {
+                        throw new Exception("Fail requirement: " + value + " must be in enum " + args[3]);
                     }
                 }
                 else
@@ -4257,9 +4293,21 @@ namespace JSharp
                     {
                         throw new Exception("No such enum: " + args[2]);
                     }
-                    if (!enums[getEnum(args[2])].valuesName.Contains(args[1].ToLower()))
+                    int a;
+                    if (int.TryParse(value, out a))
                     {
-                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[2]);
+                        if (a >= enums[getEnum(args[2])].valuesName.Count || a < 0)
+                        {
+                            throw new Exception("Index Out of Bound");
+                        }
+                    }
+                    else if (enums[getEnum(args[2])].valuesName.Contains(value.ToLower()))
+                    {
+                        compVarChange(comVar, enums[getEnum(args[2])].valuesName.IndexOf(value).ToString());
+                    }
+                    else
+                    {
+                        throw new Exception("Fail requirement: " + value + " must be in enum " + args[3]);
                     }
                 }
             }
@@ -4268,41 +4316,7 @@ namespace JSharp
                 throw new Exception("No Enough argument for require");
             }
             return "";
-        }
-        public static string Revindexed(string text)
-        {
-            string[] args = smartSplit(text, ' ');
-            if (args.Length > 2)
-            {
-                if (args[2] == "in")
-                {
-                    if (getEnum(args[3]) == null)
-                    {
-                        throw new Exception("No such enum: " + args[3]);
-                    }
-                    if (!enums[getEnum(args[3])].valuesName.Contains(args[1].ToLower()))
-                    {
-                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[3]);
-                    }
-                }
-                else
-                {
-                    if (getEnum(args[2]) == null)
-                    {
-                        throw new Exception("No such enum: " + args[2]);
-                    }
-                    if (!enums[getEnum(args[2])].valuesName.Contains(args[1].ToLower()))
-                    {
-                        throw new Exception("Fail requirement: " + args[1] + " must be in enum " + args[2]);
-                    }
-                }
-            }
-            else
-            {
-                throw new Exception("No Enough argument for require");
-            }
-            return "";
-        }
+        }        
         #endregion
 
         private static bool containType(string text)
