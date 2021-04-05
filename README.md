@@ -2,7 +2,10 @@
  Minecraft Command Blocks Compiler
 # Language Syntax
 ## Variables
- Variables can be define with <type> <variable_name>
+ Variables can be define with 
+ ```
+ <type> <variable_name>
+ ```
  The type must be in lower case even for structs type and enum.
  Variables will not be associated with any entity when compiled.
  ```
@@ -19,10 +22,14 @@
  ```
  Default avaible type: int, float, string, bool, function
 ### Entity Variable
- Variables can be define with <TYPE> <variable_name> = [scoreboard type]
+ Variables can be define with 
+ ```
+ <TYPE> <variable_name> = [scoreboard type]
+ ```
  The type must be in upper case even for structs type and enum.
  Variables will be associated with any entity when compiled (default to "@s").
- ```INT variable1
+ ```
+ INT variable1
  FLOAT variable2 = dummy
  ```
 ## MCC
@@ -35,28 +42,28 @@
 ## Conditions
  ```
  if (variable1 && variable2 == 0){
-  variable1 ++
+     variable1 ++
  }
  ```
  ### Block && Blocks
   ```
  if (block(~ ~ ~ stone)){
-  variable1 ++
+     variable1 ++
  }
  if (blocks(0 0 0 1 1 1 ~ ~ ~)){
-  variable1 ++
+     variable1 ++
  }
  ```
  ### Else & Else If
   ```
  if (condition1){
-  variable1 ++
+     variable1 ++
  }
  else if (condition2){
-  variable2 ++
+     variable2 ++
  }
  else{
-  variable3 ++
+     variable3 ++
  }
  ```
  ## Switch Statement
@@ -66,7 +73,7 @@
   0 -> /tellraw(@a,"action1")
   1 -> /tellraw(@a,"action2")
   case(2){
-   /tellraw(@a,"action3")
+     /tellraw(@a,"action3")
   }
  }
  ```
@@ -95,8 +102,8 @@ Enums can also have a list of parameters
 ```
  enum direction(int x, int y) = up(0,1), down(0,-1), left(-1,0), right(1,0)
  enum example(int x, int z = 0){
-  val1(0), 
-  val2(0)
+    val1(0), 
+    val2(0)
  }
  direction dir = up
  int x = dir.x
@@ -124,26 +131,26 @@ Types are infered by the compiler. If not type is found json is choosen.
  Functions can also take arguments && have return types:
  ```
   def name(int arg1, float arg2):int{
-   return(0)
+     return(0)
   }
   def name(int arg1, float arg2):int,int{
-   return(0,0)
+     return(0,0)
   }
   int name(int arg1, float arg2){
-   return(0)
+     return(0)
   }
  ```
  
  Functions can be put inside variables of type functions:
  ```
   def name(){
-   return(0)
+     return(0)
   }
   function func = name
   func()
   
   def name(int arg1, float arg2):int,int{
-   return(0,0)
+      return(0,0)
   }
   function<(int,float),(int,int)> func2 = name
   a,b = func2(0,0)
@@ -170,7 +177,7 @@ Types are infered by the compiler. If not type is found json is choosen.
  Lazy functions are function that are evaluation by substitution (during compiling time) meaning that calling one will simply replace it with it body.
  ```
  def lazy example(){
-  tellraw(@a,"test")
+    tellraw(@a,"test")
  }
  example()
  ```
@@ -182,13 +189,13 @@ Types are infered by the compiler. If not type is found json is choosen.
   function: Will be replace by function name instead of function as lambda.
  ```
  def lazy say(int $text){
-  /say $text
+    /say $text
  }
  ```
  Lazy functions can have special argument types such as json && params. Those must always be the last arguments.
  ```
  def lazy show(json $text){
-  tellraw(@a,$text)
+     tellraw(@a,$text)
  }
  show("test",("test",red),("test",yellow))
  ```
@@ -198,12 +205,12 @@ Types are infered by the compiler. If not type is found json is choosen.
  Functions that have function as argument can be call in that manner:
  ```
  def decorator(function func){
-  /say start
-  func()
-  /say end
+    /say start
+    func()
+    /say end
  }
  decorator(){
-  /say body
+    /say body
  }
  ```
  ### Functions tags
@@ -235,7 +242,7 @@ Types are infered by the compiler. If not type is found json is choosen.
  For Instance this:
  ```
  forgenerate($i,0,10){
-  tellraw(@a,"$i")
+    tellraw(@a,"$i")
  }
  ```
  Will become this:
@@ -249,7 +256,7 @@ Types are infered by the compiler. If not type is found json is choosen.
  ```
  enum example = val1, val2
  forgenerate($i,example){
-  tellraw(@a,"$i.index / $i.length -> $i")
+     tellraw(@a,"$i.index / $i.length -> $i")
  }
  ```
  Will be compiled to
@@ -270,15 +277,15 @@ Types are infered by the compiler. If not type is found json is choosen.
  Struct are another way to create new types. Struct can have variable and function inside of them.
  ```
  struct vector{
-  int x,y,z
-  def __init__(int x, int y, int z){
-   this.x = x
-   this.y = y
-   this.z = z
-  }
-  int sum(){
-   return(x,y,z)
-  }
+   int x,y,z
+   def __init__(int x, int y, int z){
+      this.x = x
+      this.y = y
+      this.z = z
+   }
+   int sum(){
+      return(x,y,z)
+   }
  }
  ```
  The constructor of a struct is the function call __init__.
@@ -292,13 +299,13 @@ Types are infered by the compiler. If not type is found json is choosen.
  Struct also support generic type.
  ```
  struct cell<X>{
-  X val
-  def set(X val){
-   this.val = val
-  }
-  def get():X{
-   return(val)
-  }
+   X val
+   def set(X val){
+     this.val = val
+   }
+   def get():X{
+     return(val)
+   }
  }
  ```
  Note: inside a struct function can also be static.
