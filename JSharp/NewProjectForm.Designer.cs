@@ -145,7 +145,7 @@
             // 
             // pictureBox1
             // 
-            this.pictureBox1.BackgroundImage = global::JSharp.Properties.Resources.logo;
+            this.pictureBox1.BackgroundImage = global::BluePhoenix.Properties.Resources.logo;
             this.pictureBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.pictureBox1.Location = new System.Drawing.Point(157, -17);
             this.pictureBox1.Name = "pictureBox1";

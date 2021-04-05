@@ -150,10 +150,16 @@ namespace JSharp
         }
         public override string[] ConditionBlock(string val)
         {
+            if (Compiler.smartSplit(val, ' ').Length == 1)
+            {
+                val = "~ ~ ~ " + val;
+            }
             return new string[] { "if block " + val+" ", "" };
         }
         public override string[] ConditionBlocks(string val)
         {
+            if (!val.EndsWith("all") && !val.EndsWith("masked"))
+                val += " all";
             return new string[] { "if blocks " + val+" ", "" };
         }
         public override string Condition(string val)

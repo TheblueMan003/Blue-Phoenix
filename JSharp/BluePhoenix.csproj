@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{E0EA81A9-3B41-482F-8500-813945EBE3A1}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>JSharp</RootNamespace>
-    <AssemblyName>JSharp</AssemblyName>
+    <RootNamespace>BluePhoenix</RootNamespace>
+    <AssemblyName>BluePhoenix</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

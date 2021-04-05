@@ -6188,15 +6188,30 @@ namespace JSharp
                 
                 context.Parent();
                 Regex reg = new Regex("\\bthis\\.");
-                foreach(string line in fun.file.parsed)
+                Regex reg2 = new Regex("\\$this\\.");
+                foreach (string line in fun.file.parsed)
                 {
-                    if (compVal.Count > 0 && !(dualCompVar.Match(line).Success && structInstCompVar))
+                    if (reg2.Match(line).Success)
                     {
-                        fFile.parsed.Add(compVarReplace(reg.Replace(line, context.GetVar())));
+                        if (compVal.Count > 0 && !(dualCompVar.Match(line).Success && structInstCompVar))
+                        {
+                            fFile.parsed.Add(compVarReplace(line));
+                        }
+                        else
+                        {
+                            fFile.parsed.Add(line);
+                        }
                     }
                     else
                     {
-                        fFile.parsed.Add(reg.Replace(line, context.GetVar()));
+                        if (compVal.Count > 0 && !(dualCompVar.Match(line).Success && structInstCompVar))
+                        {
+                            fFile.parsed.Add(compVarReplace(reg.Replace(line, context.GetVar())));
+                        }
+                        else
+                        {
+                            fFile.parsed.Add(reg.Replace(line, context.GetVar()));
+                        }
                     }
                 }
             }
@@ -6216,6 +6231,8 @@ namespace JSharp
                     strVar.CopyTo(varName, v, entity || strVar.entity, varOwner.isPrivate);
                 }
                 compVal[compVal.Count - 1].Add("$this", varOwner.uuid);
+                compVal[compVal.Count - 1].Add("$this.lower", varOwner.uuid.ToLower());
+                compVal[compVal.Count - 1].Add("$this.upper", varOwner.uuid.ToUpper());
                 compVal[compVal.Count - 1].Add("$this.enums", varOwner.enums);
                 compVal[compVal.Count - 1].Add("$this.type", varOwner.GetTypeString());
                 compVal[compVal.Count - 1].Add("$this.name", varOwner.gameName);

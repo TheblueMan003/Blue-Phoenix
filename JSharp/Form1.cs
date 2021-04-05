@@ -271,11 +271,13 @@ namespace JSharp
                 {
                     if (!file.Contains('.')) {
                         SafeWriteFile(dir + file + ".bps", code[file]);
+                        moddificationFileTime[file] = DateTime.Now.AddSeconds(5);
                         save.compileOrder.Add(file);
                     }
                     else
                     {
                         SafeWriteFile(dir + file, code[file]);
+                        moddificationFileTime[file] = DateTime.Now.AddSeconds(5);
                         save.compileOrder.Add(file);
                     }
                 }
@@ -289,6 +291,7 @@ namespace JSharp
                 if (isLibraryCheckbox.Checked)
                 {
                     SafeWriteFile(dirRes + file, resources[file]);
+                    moddificationResTime[file] = DateTime.Now.AddSeconds(5);
                 }
                 else
                 {
@@ -1532,5 +1535,4 @@ namespace JSharp
             CheckFileModdification();
         }
     }
-
 }
