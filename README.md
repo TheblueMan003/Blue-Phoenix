@@ -2,7 +2,10 @@
  Minecraft Command Blocks Compiler
 # Language Syntax
 ## Variables
- Variables can be define with <type> <variable_name>
+ Variables can be define with 
+ ```
+ <type> <variable_name>
+ ```
  The type must be in lower case even for structs type and enum.
  Variables will not be associated with any entity when compiled.
  ```
