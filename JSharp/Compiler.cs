@@ -22,10 +22,9 @@ namespace JSharp
         public static Dictionary<string, Class> classes;
         public static Dictionary<string, TagsList> blockTags;
         public static Dictionary<string, List<Predicate>> predicates;
-        public static HashSet<string> functionTags;
+        public static Dictionary<string, List<string>> functionTags;
 
 
-        private static Dictionary<string, string> structMap;
         public static Dictionary<string, string> offuscationMap;
         private static Dictionary<string, string> packageMap;
         private static List<Dictionary<string, string>> lazyEvalVar;
@@ -152,7 +151,7 @@ namespace JSharp
             compilerSetting = setting;
             
             offuscationMap = new Dictionary<string, string>();
-            functionTags = new HashSet<string>();
+            functionTags = new Dictionary<string, List<string>>();
             projectFolder = pctFolder;
             GobalDebug = debug;
             Project = project;
@@ -178,7 +177,6 @@ namespace JSharp
                 predicates = new Dictionary<string, List<Predicate>>();
                 switches = new Stack<Switch>();
                 constants = new Dictionary<int, Variable>();
-                structMap = new Dictionary<string, string>();
                 functDelegated = new Dictionary<string, List<Function>>();
                 functDelegatedFile = new Dictionary<string, List<File>>();
                 offuscationSet = new HashSet<string>();
@@ -279,6 +277,8 @@ namespace JSharp
             }
             catch (Exception e)
             {
+                GobalDebug("Dumped Core",Color.Yellow);
+                updateFormater();
                 throw new Exception("Error in " + currentFile + " on line " + currentLine.ToString() + ": " + e.ToString());
             }
         }
@@ -398,7 +398,7 @@ namespace JSharp
             Formatter.setEnumValue(formEnums);
             Formatter.setStructs(new List<string>(structs.Keys));
             Formatter.setpackage(packages);
-            Formatter.setTags(functionTags);
+            Formatter.setTags(functionTags.Keys.ToList());
             Formatter.setDefWord(funcDef);
             Formatter.loadDict();
         }
@@ -2649,7 +2649,7 @@ namespace JSharp
         {
             if (!functions.ContainsKey(Project + ".__tags__." + tag.ToLower()))
             {
-                functionTags.Add(tag.ToLower());
+                functionTags.Add(tag.ToLower(), new List<string>());
 
                 File tagFile = new File("__tags__/" + tag.Replace(".", "/").ToLower());
                 tagFile.notUsed = true;
@@ -2672,6 +2672,7 @@ namespace JSharp
 
             File f = CreateFunctionTag(tag)
                 .AddLine(parseLine(func.gameName.Replace(":", ".").Replace("/", ".") + "()"));
+            functionTags[tag].Add(func.gameName.Replace(":", ".").Replace("/", "."));
             func.file.notUsed = wasUsed;
             f.addChild(func.file);
         }
@@ -3990,14 +3991,14 @@ namespace JSharp
             {
                 if (!variables.ContainsKey(context.GetVar() + f2))
                 {
-                    variables.Add(context.GetVar() + f2, variables[context.GetVariable(f1)]);
+                    addVariable(context.GetVar() + f2, variables[context.GetVariable(f1)]);
                 }
             }
             else if (context.GetVariable(f2, true) != null)
             {
                 if (!variables.ContainsKey(context.GetVar() + f1))
                 {
-                    variables.Add(context.GetVar() + f1, variables[context.GetVariable(f2)]);
+                    addVariable(context.GetVar() + f1, variables[context.GetVariable(f2)]);
                 }
             }
             else
@@ -4542,7 +4543,7 @@ namespace JSharp
             {
                 return getExprType(getLazyVal(smartEmpty(t)));
             }
-            
+            context.GetVariable(t, true, false, 0, true);
             throw new Exception("Unparsable: "+t);
         }
         public static string getExprEnum(string t)
@@ -5699,12 +5700,6 @@ namespace JSharp
         {
             return getClass(text) != null;
         }
-        public static string structMapAdd(string text)
-        {
-            string map = alphabet[structMap.Count() / alphabet.Length] +""+ alphabet[structMap.Count() % alphabet.Length]; ;
-            structMap.Add(text, map);
-            return map;
-        }
         public static long IntPow(long x, long pow)
         {
             long ret = 1;
@@ -5741,7 +5736,6 @@ namespace JSharp
             }
 
             offuscationSet.Add(map);
-            structMap.Add(text, map);
             offuscationMap.Add(text, map);
             return map;
         }
@@ -6217,12 +6211,12 @@ namespace JSharp
             }
             public string generate(string v, bool entity, Variable varOwner, string instArg = null)
             {
-                //v = structMapAdd(v);
                 string cont = context.GetVar();
                 string output = "";
 
                 thisDef.Push(context.GetVar() + v+".");
                 context.Sub(v, new File("", ""));
+                
                 context.currentFile().notUsed = true;
 
                 foreach (Variable strVar in fields)
@@ -6475,10 +6469,6 @@ namespace JSharp
                     variable.CreateArray();
                 }
 
-                /*
-                if (structStack.Count > 0 && !isInStructMethod)
-                    structStack.Peek().addField(variable);
-                    */
                 if (this.type == Type.STRUCT)
                 {
                     variable.SetEnum(this.enums);
@@ -7395,6 +7385,14 @@ namespace JSharp
                         generate(value.name);
                     }
                 }
+                else if (enumGen != null && functionTags.ContainsKey(enumGen.Replace("@","")))
+                {
+                    genAmount = functionTags[enumGen.Replace("@", "")].Count;
+                    foreach (string value in functionTags[enumGen.Replace("@", "")])
+                    {
+                        generate(value);
+                    }
+                }
                 else if (enumGen != null)
                 {
                     throw new Exception("Unknown generator:" + enumGen);
@@ -7795,10 +7793,6 @@ namespace JSharp
                     {
                         output += packageMap[v[i]] + ".";
                     }
-                    else if (structMap.ContainsKey(v[i]))
-                    {
-                        output += structMap[v[i]] + ".";
-                    }
                     else
                     {
                         output += v[i].Substring(0, Math.Min(maxC, v[i].Length)) + ".";
@@ -7939,9 +7933,10 @@ namespace JSharp
                     return null;
             }
 
-            public string GetVariable(string func, bool safe = false, bool bottleneck = false, int recCall = 0)
+            public string GetVariable(string func, bool safe = false, bool bottleneck = false, int recCall = 0, bool debug = false)
             {
                 func = toInternal(func.Replace(" ", ""));
+
                 if (recCall > maxRecCall)
                 {
                     throw new Exception("Stack Overflow");
@@ -7952,7 +7947,7 @@ namespace JSharp
                 }
                 if (func.StartsWith("this.") && variables.ContainsKey(func.Replace("this.", thisDef.Peek())))
                 {
-                    return func.Replace("this.", thisDef.Peek());
+                    //return func.Replace("this.", thisDef.Peek());
                 }
 
                 if (variables.ContainsKey(func))
@@ -7964,6 +7959,7 @@ namespace JSharp
                 foreach (string co in directories)
                 {
                     dir += co.Substring(0, Math.Min(subDir, co.Length)) + ".";
+
                     if (variables.ContainsKey(dir + func))
                     {
                         output = dir + func;
@@ -7986,7 +7982,7 @@ namespace JSharp
                         adj += pack + ", ";
                     }
                 }
-
+                
                 if (!safe)
                     throw new Exception("UNKNOW Variable (" + dir +"/"+ func + ") with package: "+adj);
                 else

@@ -36,7 +36,7 @@ namespace JSharp
         public bool ignorNextListboxUpdate = false;
         public bool ignorNextKey = false;
         public int isCompiling = 0;
-        private Thread CompileThread;
+        private Task CompileThread;
         public List<Compiler.File> compileFile;
         public List<Compiler.File> compileResource;
         public List<Compiler.File> compileFiled;
@@ -730,12 +730,16 @@ namespace JSharp
         }
         public static void SafeWriteFile(string fileName, string content)
         {
-            string filePath = fileName.Substring(0, fileName.LastIndexOf('/'));
-            if (!Directory.Exists(filePath))
+            Task.Factory.StartNew(() =>
             {
-                Directory.CreateDirectory(filePath);
+                string filePath = fileName.Substring(0, fileName.LastIndexOf('/'));
+                if (!Directory.Exists(filePath))
+                {
+                    Directory.CreateDirectory(filePath);
+                }
+                File.WriteAllText(fileName, content);
             }
-            File.WriteAllText(fileName, content);
+            );
         }
         public void ExportDataPackThread()
         {
@@ -782,7 +786,8 @@ namespace JSharp
             }
 
             List<Compiler.File> cFiles = Compiler.compile(new CompilerCoreJava(), projectName, files, resourcesfiles,
-                                        DebugThread, compilerSetting, projectVersion, Path.GetDirectoryName(projectPath));
+                                        DebugThread, compilerSetting, projectVersion, 
+                                        Path.GetDirectoryName(projectPath));
             foreach (Compiler.File f in cFiles)
             {
                 string fileName;
@@ -837,16 +842,16 @@ namespace JSharp
         public void ExportReadMe(string path)
         {
             string readme = "This Datapack was made using TheblueMan003's Compiler.\n" +
-                            "Therefor all variables & functions might have wierd name.\n"+
+                            "Therefor all variables & functions might have wierd name.\n" +
                             "Please refers to MAPS.txt";
             string offuscation = "#==================================#\n" +
-                                 "In order to compile each variable to a unique scoreboard name the compiler use an offuscation map\n"+
-                                 "#==================================#\n";
-            offuscation += "variable count = " + Compiler.offuscationMap.Keys.Count+"\n";
+                                    "In order to compile each variable to a unique scoreboard name the compiler use an offuscation map\n" +
+                                    "#==================================#\n";
+            offuscation += "variable count = " + Compiler.offuscationMap.Keys.Count + "\n";
             offuscation += "alphabet = " + Compiler.alphabet + "\n\n";
             foreach (string key in Compiler.offuscationMap.Keys)
             {
-                offuscation += key + " <===> " + Compiler.offuscationMap[key]+"\n";
+                offuscation += key + " <===> " + Compiler.offuscationMap[key] + "\n";
             }
             string fileNameReadMe = path + "/README.txt";
             string fileNameOffuscation = path + "/MAPS.txt";
@@ -859,19 +864,21 @@ namespace JSharp
             {
                 throw new Exception("Notice " + e.ToString());
             }
-            
         }
         public void ExportStructures(string path)
         {
-            if (Directory.Exists(ProjectFolder() + "/structures"))
+            Task.Factory.StartNew(() =>
             {
-                Directory.CreateDirectory(path + "/data/" + projectName.ToLower() + "/structures/");
-                
-                foreach (string file in Directory.GetFiles(ProjectFolder() + "/structures"))
+                if (Directory.Exists(ProjectFolder() + "/structures"))
                 {
-                    File.Copy(file, path + "/data/" + projectName.ToLower() + "/structures/" + Path.GetFileName(file));
+                    Directory.CreateDirectory(path + "/data/" + projectName.ToLower() + "/structures/");
+
+                    foreach (string file in Directory.GetFiles(ProjectFolder() + "/structures"))
+                    {
+                        File.Copy(file, path + "/data/" + projectName.ToLower() + "/structures/" + Path.GetFileName(file));
+                    }
                 }
-            }
+            });
         }
         public void ChangeCompileOrder()
         {
@@ -888,7 +895,7 @@ namespace JSharp
         {
             if (isCompiling > 0)
             {
-                CompileThread.Abort();
+                CompileThread.Dispose();
                 isCompiling = 0;
             }
             if (isCompiling == 0)
@@ -910,7 +917,7 @@ namespace JSharp
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
 
-                CompileThread = new Thread(new ThreadStart(CompileJavaThreaded));
+                CompileThread = new Task(CompileJavaThreaded);
                 CompileThread.Start();
             }
         }
@@ -935,8 +942,8 @@ namespace JSharp
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
 
-                Thread t = new Thread(new ThreadStart(GetCallStackTraceThreaded));
-                t.Start();
+                CompileThread = new Task(GetCallStackTraceThreaded);
+                CompileThread.Start();
             }
         }
         public void CompileBedrock(bool showForm = false)
@@ -959,8 +966,8 @@ namespace JSharp
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
 
-                Thread t = new Thread(new ThreadStart(CompileBedrockThreaded));
-                t.Start();
+                CompileThread = new Task(CompileBedrockThreaded);
+                CompileThread.Start();
             }
         }
 
@@ -1521,7 +1528,7 @@ namespace JSharp
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             if (CompileThread != null)
-                CompileThread.Abort();
+                CompileThread.Dispose();
         }
 
         private void button12_Click(object sender, EventArgs e)

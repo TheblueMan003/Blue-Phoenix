@@ -132,7 +132,7 @@ namespace JSharp
             }
             else
             {
-                throw new Exception("Unknown " + value);
+                throw new Exception("Unknown " + value+" in context: "+Compiler.context.GetVar());
             }
         }
         public static string limitedEntity(string entity)

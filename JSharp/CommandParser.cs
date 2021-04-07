@@ -575,6 +575,10 @@ namespace JSharp
                     }
                     output += ",{\"text\":\"" + ")" + "\"";
                 }
+                else if (float.TryParse(subargs[0], out float _))
+                {
+                    output += ",{\"text\":\"" + subargs[0]+"\"";
+                }
                 else
                 {
                     string[] v = context.GetVariableName(subargs[0]).Split(' ');

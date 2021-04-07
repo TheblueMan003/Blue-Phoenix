@@ -14,11 +14,9 @@ namespace JSharp
     {
         List<Compiler.File> files;
         public bool closed = false;
+        Task task;
 
-        public FilePreview(List<Compiler.File> files)
-        {
-            InitializeComponent();
-            this.files = files;
+        private void UpdateList(){
             if (files.Count > 0)
             {
                 foreach (var f in files)
@@ -26,9 +24,17 @@ namespace JSharp
                     listBox1.Items.Add(f);
                 }
                 richTextBox1.Text = files[0].content;
-                Text = "File Preview: " + files[0].name;
+                //Text = "File Preview: " + files[0].name;
             }
-            FormatterCommand.reformat(richTextBox1,this,false);
+            //FormatterCommand.reformat(richTextBox1, this, false);
+        }
+
+        public FilePreview(List<Compiler.File> files)
+        {
+            InitializeComponent();
+            this.files = files;
+            task = new Task(UpdateList);
+            task.Start();
         }
 
         private void FilePreview_Load(object sender, EventArgs e)

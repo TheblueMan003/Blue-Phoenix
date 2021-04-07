@@ -24,16 +24,19 @@ namespace JSharp
 
                 if (part.Length > 1)
                 {
+                    Task<float> task1 = Task<float>.Factory.StartNew(() => Calculate(part[0]));
+                    Task<float> task2 = Task<float>.Factory.StartNew(() => Calculate(part[1]));
+
                     if (xop == "*")
-                        return Calculate(part[0]) * Calculate(part[1]);
+                        return task1.Result * task2.Result;
                     if (xop == "/")
-                        return Calculate(part[0]) / Calculate(part[1]);
+                        return task1.Result / task2.Result;
                     if (xop == "%")
-                        return Calculate(part[0]) % Calculate(part[1]);
+                        return task1.Result % task2.Result;
                     if (xop == "-")
-                        return Calculate(part[0]) - Calculate(part[1]);
+                        return task1.Result - task2.Result;
                     if (xop == "+")
-                        return Calculate(part[0]) + Calculate(part[1]);
+                        return task1.Result + task2.Result;
                 }
             }
 

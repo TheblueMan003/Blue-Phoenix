@@ -89,7 +89,7 @@ namespace JSharp
         {
             package = keys;
         }
-        public static void setTags(HashSet<string> keys)
+        public static void setTags(List<string> keys)
         {
             tags = new List<string>();
             foreach(string tag in keys)
