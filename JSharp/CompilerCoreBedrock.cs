@@ -105,14 +105,9 @@ namespace JSharp
             return "function " + function.gameName.Replace(":", "/");
         }
 
-        public override string DefineVariable(Compiler.Variable var)
+        public override string DefineScoreboard(Compiler.Scoreboard var)
         {
-            if (var.entity)
-            {
-                return "scoreboard objectives add " + var.scoreboard().Replace("@s ", "") + " " + var.def;
-            }
-            else
-                return "";
+            return "scoreboard objectives add " + var.name + " " + var.property;
         }
         public override string VariableOperation(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
         {

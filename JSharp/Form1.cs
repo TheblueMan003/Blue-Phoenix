@@ -28,7 +28,7 @@ namespace JSharp
         public ProjectVersion projectVersion = new ProjectVersion();
         public Compiler.CompilerSetting compilerSetting = new Compiler.CompilerSetting();
         public string projectDescription;
-
+        
         private string previous = "load";
         private string projectName = "default";
         private string currentDataPack;
@@ -36,7 +36,10 @@ namespace JSharp
         public bool ignorNextListboxUpdate = false;
         public bool ignorNextKey = false;
         public int isCompiling = 0;
+
         private Task CompileThread;
+        private CancellationTokenSource tokenSource2 = new CancellationTokenSource();
+
         public List<Compiler.File> compileFile;
         public List<Compiler.File> compileResource;
         public List<Compiler.File> compileFiled;
@@ -895,7 +898,7 @@ namespace JSharp
         {
             if (isCompiling > 0)
             {
-                CompileThread.Dispose();
+                tokenSource2.Cancel();
                 isCompiling = 0;
             }
             if (isCompiling == 0)
@@ -917,7 +920,7 @@ namespace JSharp
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
 
-                CompileThread = new Task(CompileJavaThreaded);
+                CompileThread = new Task(CompileJavaThreaded, tokenSource2.Token);
                 CompileThread.Start();
             }
         }
@@ -942,7 +945,7 @@ namespace JSharp
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
 
-                CompileThread = new Task(GetCallStackTraceThreaded);
+                CompileThread = new Task(GetCallStackTraceThreaded, tokenSource2.Token);
                 CompileThread.Start();
             }
         }
@@ -966,7 +969,7 @@ namespace JSharp
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
 
-                CompileThread = new Task(CompileBedrockThreaded);
+                CompileThread = new Task(CompileBedrockThreaded, tokenSource2.Token);
                 CompileThread.Start();
             }
         }
@@ -1528,7 +1531,7 @@ namespace JSharp
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             if (CompileThread != null)
-                CompileThread.Dispose();
+                tokenSource2.Cancel();
         }
 
         private void button12_Click(object sender, EventArgs e)

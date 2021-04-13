@@ -16,6 +16,7 @@ namespace JSharp
     {
         public static Dictionary<string, List<Function>> functions;
         public static HashSet<Function> abstractFunctionsNeeded;
+        public static Dictionary<string, Scoreboard> scoreboards;
         public static Dictionary<string, Variable> variables;
         public static Dictionary<string, Enum> enums;
         public static Dictionary<string, Structure> structs;
@@ -92,10 +93,10 @@ namespace JSharp
         private static Regex funcReg = new Regex(@"^(@?[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])*\s+)+[\w\.]+\s*\(.*\)");
         private static Regex nullReg = new Regex(@"\s*null\s*");
         private static Regex outterReg = new Regex(@"(?s)\[.*\]");
-        private static Regex getReg = new Regex("\\w*\\s*=[ a-z\\.A-Z0-9]*\\[.*\\]");
+        private static Regex getReg = new Regex(@"\w*\s*=[ a-z\.A-Z0-9]*\[.*\]");
         private static Regex oppReg = new Regex(@"[a-zA-Z0-9\._]+\[.*\]\s*[+\-/\*%]=");
-        private static Regex setReg = new Regex("\\[.*\\]\\s*=\\s*.*");
-        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9\- ,_=:\.""'!\[\]]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9\- ,_=:\.""'!:\[\]\(\)]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9\- ,_=""'\[\]!:\(\)]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9\- ,_=:\.""'\[\]!\(\)]*\))?,?\s*)*\})");
+        private static Regex setReg = new Regex(@"\[.*\]\s*=\s*.*");
+        private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9\- ,_=:/\\\.""'!\[\]]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9/\\\- ,_=:\.""'!:\[\]\(\)]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9/\\\- ,_=""'\[\]!:\(\)]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9/\\\- ,_=:\.""'\[\]!\(\)]*\))?,?\s*)*\})");
         private static Regex blocktagsDesugarReg = new Regex(@"(?s)(blocktags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|blocktags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex ifsDesugarReg = new Regex(@"(?s)^(if\s*\(.*\)\{.*\}\s*else)|(if\s*\(.*\).*\s*else)");
         private static Regex funArgTypeReg = new Regex(@"^([@\w\.]*\s*(<\(?\w*\)?,?\(?\w*\)?>)?(\[\d+\])?)*\(");
@@ -104,7 +105,7 @@ namespace JSharp
         private static Regex opReg = new Regex(@"((#=)|(\+=)|(\-=)|(\*=)|(/=)|(\%=)|(\&=)|(\|=)|(\^=)|(=))");
         private static Regex elsifReg = new Regex(@"^el?s?e?\s*ifs?\s?\(");
         private static Regex ifReg = new Regex(@"^if\s*\(");
-        private static Regex jsonFileReg = new Regex(@"^jsonfile\s+[\w\\/\-]+\{?");
+        private static Regex jsonFileReg = new Regex(@"^jsonfile\s+[\w\\/\-\.]+\{?");
         private static Regex predicateFileReg = new Regex(@"^predicate\s+[\w\\/\-\(\)\$ ]+\{?");
         private static Regex ifsReg = new Regex(@"^ifs\s*\(");
         private static Regex switchReg = new Regex(@"^switch\s*\(");
@@ -169,6 +170,7 @@ namespace JSharp
                 At.SwitchNumber = new Dictionary<string, int>();
                 Lambda.SwitchNumber = new Dictionary<string, int>();
 
+                scoreboards = new Dictionary<string, Scoreboard>();
                 functions = new Dictionary<string, List<Function>>();
                 variables = new Dictionary<string, Variable>();
                 enums = new Dictionary<string, Enum>();
@@ -202,7 +204,10 @@ namespace JSharp
                 structMethodFile = null;
                 loadFile = new File("load", "");
                 loadFile.AddScoreboardDefLine(Core.LoadBase());
-                
+                new Scoreboard(compilerSetting.scoreboardValue, "dummy");
+                new Scoreboard(compilerSetting.scoreboardConst, "dummy");
+                new Scoreboard(compilerSetting.scoreboardTmp, "dummy");
+
                 files.Add(loadFile);
                 mainFile = new File("main", "");
                 mainFile.AddScoreboardDefLine(Core.MainBase());
@@ -216,26 +221,12 @@ namespace JSharp
                 {
                     compileFile(f);
                 }
-                
-                bool changed = true;
-                int pass = 1;
-                while (changed)
-                {
-                    GobalDebug("Funciton Pass: " + pass.ToString(), Color.YellowGreen);
-                    pass++;
-                    int fi = 0;
-                    changed = false;
-                    while (fi < files.Count)
-                    {
-                        if ((files[fi].UnparsedFunctionFile && !files[fi].notUsed) || !compilerSetting.removeUselessFile)
-                        {
-                            files[fi].Compile();
-                            changed = true;
-                        }
-                        fi++;
-                    }
-                }
-                generateStringPool();
+
+                FunctionCreate();
+                ConstCreate();
+                ScoreboardCreate();
+                StringPoolCreate();
+
                 loadFile.Close();
                 mainFile.Close();
 
@@ -262,6 +253,15 @@ namespace JSharp
                         }
                     }
                 }
+
+                GobalDebug("================[Datapack Stats]================", Color.LimeGreen);
+                GobalDebug("\t" + returnFiles.Count.ToString() + " MCfunction Files", Color.LimeGreen);
+                GobalDebug("\t" + lineCount.ToString()       + " MC Commands", Color.LimeGreen);
+                GobalDebug("\t" + jsonFiles.Count.ToString() + " Json files", Color.LimeGreen);
+                GobalDebug("\t" + variables.Count.ToString() + " TBMS variables", Color.LimeGreen);
+                GobalDebug("\t" + functions.Count.ToString() + " TBMS functions", Color.LimeGreen);
+                GobalDebug("================================================", Color.LimeGreen);
+
                 foreach (File item in jsonFiles)
                 {
                     if (!item.notUsed)
@@ -271,7 +271,7 @@ namespace JSharp
                 }
                 
                 callTrace += "}";
-                GobalDebug("Datapack contains: " + returnFiles.Count.ToString() + " files & "+lineCount.ToString()+" lines.", Color.LimeGreen);
+                
                 
                 return returnFiles;
             }
@@ -1341,15 +1341,6 @@ namespace JSharp
             variables.Add("__multiplex__.sstring.__strSelector__", c);
             function.args.Add(b);
         }
-        private static void generateStringPool()
-        {
-            int i = 0;
-            foreach (string s in stringSet) {
-                Variable mux = GetVariable("__multiplex__.sstring.__strSelector__");
-                stringPool.AddLine("execute if score "+ mux.scoreboard() + " matches " + i.ToString() + " run summon minecraft:area_effect_cloud ~ ~ ~ { CustomName: \"\\\"" + s + "\\\"\",Tags:[\"__str__\"]}");
-                i++;
-            }
-        }
         public static bool isStringVar(string val)
         {
             return context.GetVariable(val) != null && variables[context.GetVariable(val)].type == Type.STRING;
@@ -1432,6 +1423,7 @@ namespace JSharp
         }
         private static string eval(string val, Variable variable, Type ca, string op = "=", int recCall = 0)
         {
+            variable.use();
             if (variable.isConst && variable.wasSet)
                 throw new Exception("Cannot moddify Constant!");
             variable.wasSet = true;
@@ -1928,6 +1920,17 @@ namespace JSharp
                     if (op != "=" || smartEmpty(context.GetVariableName(val)) != smartEmpty(variable.scoreboard()))
                         return Core.VariableOperation(variable, GetVariableByName(val), "=");
                 }
+                else if (context.isEntity(val))
+                {
+                    if (op == "=")
+                        return "execute store result score " + variable.scoreboard() + " run " + NBT_Data.parseGet(context.ConvertEntity(val), 1) + '\n';
+                    else
+                    {
+                        output += parseLine("bool tmp.0 = " + val);
+                        output += eval("tmp.0", variable, ca, op, recCall + 1);
+                        return output;
+                    }
+                }
                 else
                 {
                     output += Core.VariableOperation(variable, 0, "=");
@@ -2208,6 +2211,7 @@ namespace JSharp
                 else
                 {
                     int idVal3 = condID++;
+                    
                     pre += parseLine(getExprType(arg[0]).ToString().ToLower() + " cond_" + idVal3.ToString() + " = " + arg[0]);
                     var = GetVariableByName("cond_" + idVal3);
                 }
@@ -2219,7 +2223,8 @@ namespace JSharp
 
                 if (arg[1] == "null")
                 {
-                    return Core.ConditionInverse(Core.CompareVariable(GetVariableByName(arg[0]), GetVariableByName(arg[0]), "=", selector1, selector1));
+                    return Core.ConditionInverse(
+                        appendPreCond(Core.CompareVariable(GetVariableByName(arg[0]), GetVariableByName(arg[0]), "=", selector1, selector1),pre));
                 }
 
                 if (t == Type.STRUCT)
@@ -2239,18 +2244,18 @@ namespace JSharp
                         if (part[1] != "")
                             p2 = ((int)(int.Parse(part[1])));
 
-                        return Core.CompareVariable(var, p1,p2, selector1);
+                        return appendPreCond(Core.CompareVariable(var, p1,p2, selector1),pre);
                     }
                     else if(int.TryParse(arg[1], out tmpI))
                     {
-                        return Core.CompareVariable(var, tmpI, "=", selector1);
+                        return appendPreCond(Core.CompareVariable(var, tmpI, "=", selector1),pre);
                     }
                     
                     if (var.enums != null && enums[var.enums].Contains(smartEmpty(arg[1].ToLower())))
                     {
-                        return Core.CompareVariable(var, enums[var.enums].IndexOf(smartEmpty(arg[1].ToLower())), "=", selector1);
+                        return appendPreCond(Core.CompareVariable(var, enums[var.enums].IndexOf(smartEmpty(arg[1].ToLower())), "=", selector1),pre);
                     }
-                    return Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2);
+                    return appendPreCond(Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2),pre);
                 }
                 else if (t == Type.FLOAT && arg[1].Contains(".."))
                 {
@@ -2263,28 +2268,28 @@ namespace JSharp
                     if (part[1] != "")
                         p2 = ((int)(float.Parse(part[1])* compilerSetting.FloatPrecision));
 
-                    return Core.CompareVariable(var, p1, p2, selector1);
+                    return appendPreCond(Core.CompareVariable(var, p1, p2, selector1),pre);
                 }
                 else if (t == Type.FLOAT && float.TryParse(arg[1], out tmpF))
                 {
-                    return Core.CompareVariable(var, (int)(tmpF * compilerSetting.FloatPrecision), "=", selector1);
+                    return appendPreCond(Core.CompareVariable(var, (int)(tmpF * compilerSetting.FloatPrecision), "=", selector1),pre);
                 }
                 else if (t == Type.BOOL)
                 {
                     if (arg[1] == "true")
-                        return Core.CompareVariable(var, 1, "=");
+                        return appendPreCond(Core.CompareVariable(var, 1, "="),pre);
                     else if (arg[1] == "false")
-                        return Core.CompareVariable(var, 0, "=");
+                        return appendPreCond(Core.CompareVariable(var, 0, "="),pre);
                     else
-                        return Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2);
+                        return appendPreCond(Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2),pre);
                 }
                 else if (t == Type.STRING && arg[1].Contains("\""))
                 {
-                    return Core.CompareVariable(var, getStringID(arg[1]), "=", selector1);
+                    return appendPreCond(Core.CompareVariable(var, getStringID(arg[1]), "=", selector1),pre);
                 }
                 else if (context.GetVariable(arg[1], true) != null)
                 {
-                    return Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2);
+                    return appendPreCond(Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2),pre);
                 }
                 else
                 {
@@ -2292,7 +2297,6 @@ namespace JSharp
                     pre += parseLine(getExprType(arg[1]).ToString().ToLower() + " cond_" + idVal2.ToString() + " = " + arg[1]);
                     return appendPreCond(Core.CompareVariable(var, GetVariableByName("cond_" + idVal2), "=", selector1), pre);
                 }
-
             }
             else if (text.Contains("!="))
             {
@@ -2321,7 +2325,7 @@ namespace JSharp
                         var = GetVariableByName("cond_" + idVal3);
                     }
 
-                    return Core.CompareVariable(var, var, "==", selector1);
+                    return appendPreCond(Core.CompareVariable(var, var, "==", selector1),pre);
                 }
                 else
                 {
@@ -2406,6 +2410,7 @@ namespace JSharp
                 else
                 {
                     int idVal3 = condID++;
+                    
                     pre += parseLine(getExprType(arg[0]).ToString().ToLower() + " cond_" + idVal3.ToString() + " = " + arg[0]);
                     var = GetVariableByName("cond_" + idVal3);
                 }
@@ -2672,7 +2677,7 @@ namespace JSharp
 
             File f = CreateFunctionTag(tag)
                 .AddLine(parseLine(func.gameName.Replace(":", ".").Replace("/", ".") + "()"));
-            functionTags[tag].Add(func.gameName.Replace(":", ".").Replace("/", "."));
+            functionTags[tag.ToLower()].Add(func.gameName.Replace(":", ".").Replace("/", "."));
             func.file.notUsed = wasUsed;
             f.addChild(func.file);
         }
@@ -3009,13 +3014,20 @@ namespace JSharp
                     }
                 }
                 
+                if (isConst)
+                {
+                    variable.constValue = splited[1];
+                    variable.UnparsedFunctionFileContext = context.GetVar();
+                }
+
                 if (ca == Type.STRUCT && part == 2 && defValue[index].Replace(" ","").ToLower().StartsWith(getStruct(text)))
                 {
                     index = (index + 1) % defValue.Length;
                 }
             }
+
             if (context.currentFile().type != "struct" && ((!entity && text.Contains("=")) ||
-                     (entity && part == 2 && entityFormatVar)) && !instantiated)
+                     (entity && part == 2 && entityFormatVar)) && !instantiated && !isConst)
             {
                 output += modVar(vari +"="+ splited[1]);
             }
@@ -3707,7 +3719,7 @@ namespace JSharp
                 }
                 else if (subField1[i] == "enum" || subField1[i] == "")
                 {
-                    
+
                 }
                 else if (name == "")
                 {
@@ -3729,10 +3741,29 @@ namespace JSharp
             }
             if (overriding && enums.ContainsKey(name))
                 enums.Remove(name);
-            if (fields != null) 
-                enums.Add(name,new Enum(name,fields,smartSplit(field[1], ','),final));
+            if (enums.ContainsKey(name))
+            {
+                foreach (string s in smartSplit(field[1], ','))
+                {
+                    enums[name].Add(s);
+                }
+            }
+            else if (fields != null)
+            {
+                enums.Add(name, new Enum(name, fields, smartSplit(field[1], ','), final));
+            }
             else
-                enums.Add(name, new Enum(name,smartSplit(field[1], ','), final));
+            {
+                enums.Add(name, new Enum(name, smartSplit(field[1], ','), final));
+            }
+            string varNames = (Project + "." + name).ToLower();
+            if (!variables.ContainsKey(varNames + ".length"))
+            {
+                addVariable(varNames + ".length", new Variable("length", varNames + ".length", Type.INT, false));
+                variables[varNames + ".length"].isConst = true;
+                variables[varNames + ".length"].UnparsedFunctionFileContext = varNames;
+            }
+            variables[varNames + ".length"].constValue = enums[name].values.Count.ToString();
 
             return "";
         }
@@ -5754,6 +5785,88 @@ namespace JSharp
                         + "" + alphabet[(int)(c & 63)];
         }
 
+        public static void ConstCreate()
+        {
+            bool change = true;
+            do
+            {
+                change = false;
+                foreach (Variable var in variables.Values)
+                {
+                    if (var.wasUsed && !var.wasAdded && var.isConst && var.constValue != null)
+                    {
+                        if (var.UnparsedFunctionFileContext != null)
+                            context.GoTo(var.UnparsedFunctionFileContext);
+                        else
+                            context.GoTo(Project.ToLower()+".const");
+                        
+                        var.wasAdded = true;
+                        var.isConst = false;
+                        change = true;
+
+                        try
+                        {
+                            loadFile.AddStartLine(eval(var.constValue, var, var.type));
+                        }
+                        catch(Exception e)
+                        {
+                            throw new Exception("Exception while calculating const value: " + e.ToString());
+                        }
+                        var.isConst = true;
+                    }
+                }
+            } while (change);
+        }
+        public static void ScoreboardCreate()
+        {
+            bool change = true;
+            do
+            {
+                change = false;
+                foreach (Scoreboard var in scoreboards.Values)
+                {
+                    if (var.wasUsed && !var.wasAdded)
+                    {
+                        var.wasAdded = true;
+                        change = true;
+
+                        loadFile.AddScoreboardDefLine(Core.DefineScoreboard(var));
+                    }
+                }
+            } while (change);
+        }
+        public static void FunctionCreate()
+        {
+            bool changed = true;
+            int pass = 1;
+            while (changed)
+            {
+                GobalDebug("Funciton Pass: " + pass.ToString(), Color.YellowGreen);
+                pass++;
+                int fi = 0;
+                changed = false;
+                while (fi < files.Count)
+                {
+                    if ((files[fi].UnparsedFunctionFile && !files[fi].notUsed) || !compilerSetting.removeUselessFile)
+                    {
+                        files[fi].Compile();
+                        changed = true;
+                    }
+                    fi++;
+                }
+            }
+        }
+        private static void StringPoolCreate()
+        {
+            int i = 0;
+            foreach (string s in stringSet)
+            {
+                Variable mux = GetVariable("__multiplex__.sstring.__strSelector__");
+                stringPool.AddLine("execute if score " + mux.scoreboard() + " matches " + i.ToString() + " run summon minecraft:area_effect_cloud ~ ~ ~ { CustomName: \"\\\"" + s + "\\\"\",Tags:[\"__str__\"]}");
+                i++;
+            }
+        }
+
         public static ParenthiseError checkParenthisation(string[] file)
         {
             Stack<char> chars = new Stack<char>();
@@ -6222,7 +6335,8 @@ namespace JSharp
                 foreach (Variable strVar in fields)
                 {
                     string varName = context.toInternal(context.GetVar() + strVar.name);
-                    strVar.CopyTo(varName, v, entity || strVar.entity, varOwner.isPrivate);
+                    var tmpV = strVar.CopyTo(varName, v, entity || strVar.entity, varOwner.isPrivate);
+                    tmpV.parent = varOwner;
                 }
                 compVal[compVal.Count - 1].Add("$this", varOwner.uuid);
                 compVal[compVal.Count - 1].Add("$this.lower", varOwner.uuid.ToLower());
@@ -6327,6 +6441,7 @@ namespace JSharp
             public bool isConst = false;
             public bool wasSet = false;
             public string def;
+            public Scoreboard scoreboardObj;
             public bool isPrivate = false;
             public string privateContext;
             public bool isStructureVar;
@@ -6334,11 +6449,17 @@ namespace JSharp
             private string score = null;
             public string uuid = "";
             public string typeArray;
+            public string constValue;
+            public string UnparsedFunctionFileContext;
+            public bool wasUsed;
+            public bool wasAdded;
+            public Variable parent;
 
             public List<Argument> args = new List<Argument>();
             public List<Variable> outputs = new List<Variable>();
 
             private Variable() { }
+
             public Variable(string name, string gameName, Type type, bool entity = false, string def="dummy", string forcedOffuscation="")
             {
                 this.name = name;
@@ -6358,27 +6479,27 @@ namespace JSharp
                     {
                         uuid = offuscationMapAdd(gameName);
                         score = "@s " + uuid;
-                        loadFile.AddScoreboardDefLine(Core.DefineVariable(this));
                     }
                     else
                     {
                         uuid = forcedOffuscation;
                         score = "@s "+forcedOffuscation;
-                        loadFile.AddScoreboardDefLine(Core.DefineVariable(this));
                     }
+                    scoreboardObj = new Scoreboard(uuid, def);
                 }
                 else
                 {
                     if (forcedOffuscation != "")
                     {
                         uuid = offuscationMapAdd(gameName);
-                        score = forcedOffuscation + (isConst ? " tbms.const" : " tbms.value");
-                        loadFile.AddScoreboardDefLine(Core.DefineVariable(this));
+                        score = forcedOffuscation + " "+(isConst ? compilerSetting.scoreboardConst: compilerSetting.scoreboardValue);
                     }
                     else
                     {
                         uuid = offuscationMapAdd(gameName);
                     }
+
+                    scoreboardObj = scoreboards[isConst ? compilerSetting.scoreboardConst : compilerSetting.scoreboardValue];
                 }
             }
             public virtual void SetEnum(string enums)
@@ -6387,6 +6508,8 @@ namespace JSharp
             }
             public virtual string scoreboard()
             {
+                use();
+
                 if (isPrivate && !context.GetVar().StartsWith(privateContext))
                     throw new Exception("can not asign private variable in context: "+ context.GetVar() +" from "+ privateContext);
 
@@ -6400,7 +6523,7 @@ namespace JSharp
                 }
                 else
                 {
-                    score = offuscationMapAdd(gameName) + (isConst ? " tbms.const" : " tbms.value");
+                    score = offuscationMapAdd(gameName) + " "+(isConst ? compilerSetting.scoreboardConst : compilerSetting.scoreboardValue);
                     return score;
                 }
             }
@@ -6505,6 +6628,8 @@ namespace JSharp
             }
             public Variable Select(string entitySelector)
             {
+                wasUsed = true;
+
                 Variable var = new Variable();
                 var.name = name;
                 var.gameName = gameName;
@@ -6547,7 +6672,39 @@ namespace JSharp
                 else
                     return type.ToString();
             }
+
+            public void use(){
+                if (!entity)
+                {
+                    scoreboardObj = scoreboards[isConst ? compilerSetting.scoreboardConst : compilerSetting.scoreboardValue];
+                }
+
+                wasUsed = true;
+                if (parent!=null)
+                    parent.use();
+                scoreboardObj.use();
+            }
         }
+        public class Scoreboard
+        {
+            public string name;
+            public string property;
+            public bool wasUsed;
+            public bool wasAdded;
+
+            public Scoreboard(string name, string property)
+            {
+                this.name = name;
+                this.property = property;
+
+                scoreboards.Add(name, this);
+            }
+            public void use()
+            {
+                wasUsed = true;
+            }
+        }
+
         public class Enum
         {
             public class EnumValue
@@ -7169,6 +7326,9 @@ namespace JSharp
             public int FloatPrecision = 1000;
             public bool removeUselessFile = true;
             public bool offuscate = true;
+            public string scoreboardValue = "tbms.value";
+            public string scoreboardConst = "tbms.const";
+            public string scoreboardTmp = "tbms.tmp";
 
             public CompilerSetting()
             {

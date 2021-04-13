@@ -10,7 +10,7 @@ namespace JSharp
     {
         public abstract string LoadBase();
         public abstract string MainBase();
-        public abstract string DefineVariable(Compiler.Variable var);
+        public abstract string DefineScoreboard(Compiler.Scoreboard var);
         public abstract string VariableOperation(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "");
         public abstract string VariableOperation(Compiler.Variable var, int value, string op, string selector = "");
         public abstract string[] CompareVariable(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "");

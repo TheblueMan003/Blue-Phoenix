@@ -10,6 +10,7 @@ namespace JSharp
     {
         public override string LoadBase()
         {
+            return "";
             return "scoreboard objectives add tbms.value dummy\n" +
                 "scoreboard objectives add tbms.const dummy\n" +
                 "scoreboard objectives add tbms.tmp dummy\n";
@@ -55,14 +56,9 @@ namespace JSharp
             }
         }
 
-        public override string DefineVariable(Compiler.Variable var)
+        public override string DefineScoreboard(Compiler.Scoreboard var)
         {
-            if (var.entity)
-            {
-                return "scoreboard objectives add " + var.scoreboard().Replace("@s ","") + " " + var.def;
-            }
-            else
-                return "";
+            return "scoreboard objectives add " + var.name + " " + var.property;
         }
 
         public override string VariableOperation(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
