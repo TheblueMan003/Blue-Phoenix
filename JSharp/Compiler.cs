@@ -5791,7 +5791,7 @@ namespace JSharp
             do
             {
                 change = false;
-                foreach (Variable var in variables.Values)
+                foreach (Variable var in variables.Values.Reverse())
                 {
                     if (var.wasUsed && !var.wasAdded && var.isConst && var.constValue != null)
                     {
