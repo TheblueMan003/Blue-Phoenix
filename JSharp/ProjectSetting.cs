@@ -35,6 +35,10 @@ namespace JSharp
             TreeSizeBox.Text = compilerSetting.TreeMaxSize.ToString();
             FloatPrecBox.Text = compilerSetting.FloatPrecision.ToString();
             RMFileBox.Checked = compilerSetting.removeUselessFile;
+
+            ValueScoreboardBox.Text = compilerSetting.scoreboardValue;
+            ConstScoreboardBox.Text = compilerSetting.scoreboardConst;
+            TempScoreboardBox.Text = compilerSetting.scoreboardTmp;
         }
 
         private void ProjectSetting_Load(object sender, EventArgs e)
@@ -67,6 +71,10 @@ namespace JSharp
                 compilerSetting.TreeMaxSize = int.Parse(TreeSizeBox.Text);
                 compilerSetting.FloatPrecision = int.Parse(FloatPrecBox.Text);
                 compilerSetting.removeUselessFile = RMFileBox.Checked;
+
+                compilerSetting.scoreboardValue = ValueScoreboardBox.Text.Replace(" ","").Replace("\t", "");
+                compilerSetting.scoreboardConst = ConstScoreboardBox.Text.Replace(" ", "").Replace("\t", "");
+                compilerSetting.scoreboardTmp = TempScoreboardBox.Text.Replace(" ", "").Replace("\t", "");
             }
             catch(Exception exc)
             {

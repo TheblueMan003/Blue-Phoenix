@@ -40,10 +40,16 @@
             this.label4 = new System.Windows.Forms.Label();
             this.FloatPrecBox = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.label5 = new System.Windows.Forms.Label();
+            this.RMFileBox = new System.Windows.Forms.CheckBox();
             this.label6 = new System.Windows.Forms.Label();
             this.TreeSizeBox = new System.Windows.Forms.TextBox();
-            this.RMFileBox = new System.Windows.Forms.CheckBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
+            this.ValueScoreboardBox = new System.Windows.Forms.TextBox();
+            this.ConstScoreboardBox = new System.Windows.Forms.TextBox();
+            this.TempScoreboardBox = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -162,6 +168,12 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
+            this.groupBox1.Controls.Add(this.TempScoreboardBox);
+            this.groupBox1.Controls.Add(this.ConstScoreboardBox);
+            this.groupBox1.Controls.Add(this.ValueScoreboardBox);
+            this.groupBox1.Controls.Add(this.label9);
+            this.groupBox1.Controls.Add(this.label8);
+            this.groupBox1.Controls.Add(this.label7);
             this.groupBox1.Controls.Add(this.RMFileBox);
             this.groupBox1.Controls.Add(this.label6);
             this.groupBox1.Controls.Add(this.TreeSizeBox);
@@ -175,14 +187,15 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Compiler Setting";
             // 
-            // label5
+            // RMFileBox
             // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(7, 18);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(79, 13);
-            this.label5.TabIndex = 12;
-            this.label5.Text = "Float Precision:";
+            this.RMFileBox.AutoSize = true;
+            this.RMFileBox.Location = new System.Drawing.Point(10, 174);
+            this.RMFileBox.Name = "RMFileBox";
+            this.RMFileBox.Size = new System.Drawing.Size(130, 17);
+            this.RMFileBox.TabIndex = 16;
+            this.RMFileBox.Text = "Remove Useless Files";
+            this.RMFileBox.UseVisualStyleBackColor = true;
             // 
             // label6
             // 
@@ -203,15 +216,71 @@
             this.TreeSizeBox.Size = new System.Drawing.Size(176, 20);
             this.TreeSizeBox.TabIndex = 13;
             // 
-            // RMFileBox
+            // label5
             // 
-            this.RMFileBox.AutoSize = true;
-            this.RMFileBox.Location = new System.Drawing.Point(10, 174);
-            this.RMFileBox.Name = "RMFileBox";
-            this.RMFileBox.Size = new System.Drawing.Size(130, 17);
-            this.RMFileBox.TabIndex = 16;
-            this.RMFileBox.Text = "Remove Useless Files";
-            this.RMFileBox.UseVisualStyleBackColor = true;
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(7, 18);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(79, 13);
+            this.label5.TabIndex = 12;
+            this.label5.Text = "Float Precision:";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(7, 72);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(54, 13);
+            this.label7.TabIndex = 17;
+            this.label7.Text = "Value SB:";
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(7, 99);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(54, 13);
+            this.label8.TabIndex = 18;
+            this.label8.Text = "Const SB:";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(7, 125);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(54, 13);
+            this.label9.TabIndex = 19;
+            this.label9.Text = "Temp SB:";
+            // 
+            // ValueScoreboardBox
+            // 
+            this.ValueScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.ValueScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.ValueScoreboardBox.ForeColor = System.Drawing.Color.White;
+            this.ValueScoreboardBox.Location = new System.Drawing.Point(92, 70);
+            this.ValueScoreboardBox.Name = "ValueScoreboardBox";
+            this.ValueScoreboardBox.Size = new System.Drawing.Size(176, 20);
+            this.ValueScoreboardBox.TabIndex = 20;
+            // 
+            // ConstScoreboardBox
+            // 
+            this.ConstScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.ConstScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.ConstScoreboardBox.ForeColor = System.Drawing.Color.White;
+            this.ConstScoreboardBox.Location = new System.Drawing.Point(92, 97);
+            this.ConstScoreboardBox.Name = "ConstScoreboardBox";
+            this.ConstScoreboardBox.Size = new System.Drawing.Size(176, 20);
+            this.ConstScoreboardBox.TabIndex = 21;
+            // 
+            // TempScoreboardBox
+            // 
+            this.TempScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.TempScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.TempScoreboardBox.ForeColor = System.Drawing.Color.White;
+            this.TempScoreboardBox.Location = new System.Drawing.Point(92, 123);
+            this.TempScoreboardBox.Name = "TempScoreboardBox";
+            this.TempScoreboardBox.Size = new System.Drawing.Size(176, 20);
+            this.TempScoreboardBox.TabIndex = 22;
             // 
             // ProjectSetting
             // 
@@ -260,5 +329,11 @@
         private System.Windows.Forms.TextBox TreeSizeBox;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.CheckBox RMFileBox;
+        private System.Windows.Forms.TextBox TempScoreboardBox;
+        private System.Windows.Forms.TextBox ConstScoreboardBox;
+        private System.Windows.Forms.TextBox ValueScoreboardBox;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label label7;
     }
 }
