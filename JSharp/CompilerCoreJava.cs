@@ -160,7 +160,14 @@ namespace JSharp
         }
         public override string Condition(string val)
         {
-            return "execute " + val + "run ";
+            if (val != "")
+            {
+                return "execute " + val + "run ";
+            }
+            else
+            {
+                return "";
+            }
         }
 
         public override string AsAt(string entity, string cond = "")

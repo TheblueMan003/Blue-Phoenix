@@ -184,7 +184,7 @@ namespace JSharp
                         }
                         json[i - 3 - argIndex] += ")";
                         string[] jsonParsed = jsonFormat(json, context, 0);
-                        output += "execute if score " + context.GetVariableName(args[0]) + " matches " + time.ToString() + " run " + titleLine + jsonParsed[0] + "\n";
+                        output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + " run " + titleLine + jsonParsed[0] + "\n";
                         time++;
                     }
                 }
@@ -197,15 +197,15 @@ namespace JSharp
                     }
                     
                     string[] jsonParsed = jsonFormat(json, context, 0);
-                    output += "execute if score " + context.GetVariableName(args[0]) + " matches " + time.ToString() + " run " + titleLine + jsonParsed[0] + "\n";
+                    output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + " run " + titleLine + jsonParsed[0] + "\n";
                     time++;
                 }
             }
             string[] jsonParsedGlobal = jsonFormat(args, context, 3 +argIndex);
-            output += "execute if score " + context.GetVariableName(args[0]) + " matches " + time.ToString() + ".. run " +titleLine + jsonParsedGlobal[0] + "\n";
+            output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + ".. run " +titleLine + jsonParsedGlobal[0] + "\n";
             if (maxTime > -1)
             {
-                output += "execute if score " + context.GetVariableName(args[0]) + " matches " + (time+ maxTime).ToString() + ".. run scoreboard players set " + context.GetVariableName(args[0]) + " -100000\n";
+                output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + (time+ maxTime).ToString() + ".. run scoreboard players set " + Compiler.GetVariableByName(args[0]).scoreboard() + " -100000\n";
             }
             return jsonParsedGlobal[1]+output+ jsonParsedGlobal[2] + '\n';
         }
@@ -539,7 +539,7 @@ namespace JSharp
                                 output += jsonSubArg(subargs, context);
                                 output += "}";
                             }
-                            string[] v = context.GetVariableName(subargs[0]+"."+j.ToString()).Split(' ');
+                            string[] v = Compiler.GetVariableByName(subargs[0]+"."+j.ToString()).scoreboard().Split(' ');
                             output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
                             output += jsonSubArg(subargs, context);
                             output += "}";
@@ -581,7 +581,7 @@ namespace JSharp
                 }
                 else
                 {
-                    string[] v = context.GetVariableName(subargs[0]).Split(' ');
+                    string[] v = Compiler.GetVariableByName(subargs[0]).scoreboard().Split(' ');
                     output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
                 }
                 if (!array)
