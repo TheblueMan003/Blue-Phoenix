@@ -18,6 +18,7 @@ namespace JSharp
         public FileSave[] resources;
         public Dictionary<string, Dictionary<string, TagsList>> TagsList;
         public Dictionary<string, Dictionary<string, TagsList>> mcTagsList;
+
         public List<string> compileOrder;
         public ProjectVersion version = new ProjectVersion();
         public Compiler.CompilerSetting compilationSetting = new Compiler.CompilerSetting();

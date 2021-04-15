@@ -15,18 +15,19 @@ namespace JSharp
     {
         public ProjectVersion version;
         public Compiler.CompilerSetting compilerSetting;
-
+        public Dictionary<string,Compiler.Variable> variables;
         public object Keyboard { get; private set; }
         public string ProjectName;
         public string description;
 
-        public ProjectSetting(string ProjectName, ProjectVersion version, string description, Compiler.CompilerSetting compilerSetting)
+        public ProjectSetting(string ProjectName, ProjectVersion version, string description, Compiler.CompilerSetting compilerSetting, Dictionary<string, Compiler.Variable> variables)
         {
             InitializeComponent();
             this.ProjectName = ProjectName;
             this.description = description;
             this.version = version;
             this.compilerSetting = compilerSetting;
+            this.variables = variables;
 
             textBox1.Text = ProjectName;
             label3.Text = version.ToString();
@@ -92,6 +93,12 @@ namespace JSharp
         private void textBox2_TextChanged(object sender, EventArgs e)
         {
             this.description = textBox2.Text;
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            ForceOffuscation form = new ForceOffuscation(variables, compilerSetting.forcedOffuscation);
+            form.ShowDialog();
         }
     }
 }

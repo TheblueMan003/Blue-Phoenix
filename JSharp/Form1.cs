@@ -1515,7 +1515,7 @@ namespace JSharp
 
         private void settingToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ProjectSetting settingForm = new ProjectSetting(projectName, projectVersion, projectDescription, compilerSetting);
+            ProjectSetting settingForm = new ProjectSetting(projectName, projectVersion, projectDescription, compilerSetting, Compiler.variables);
             settingForm.ShowDialog();
 
             projectName = settingForm.ProjectName;

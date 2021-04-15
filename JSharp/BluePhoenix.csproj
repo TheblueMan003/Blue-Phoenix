@@ -90,6 +90,12 @@
     <Compile Include="Find_and_Replace.Designer.cs">
       <DependentUpon>Find_and_Replace.cs</DependentUpon>
     </Compile>
+    <Compile Include="ForceOffuscation.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ForceOffuscation.Designer.cs">
+      <DependentUpon>ForceOffuscation.cs</DependentUpon>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -174,6 +180,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Find_and_Replace.resx">
       <DependentUpon>Find_and_Replace.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ForceOffuscation.resx">
+      <DependentUpon>ForceOffuscation.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>

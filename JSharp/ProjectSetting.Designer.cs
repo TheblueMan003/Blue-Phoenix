@@ -40,16 +40,17 @@
             this.label4 = new System.Windows.Forms.Label();
             this.FloatPrecBox = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.TempScoreboardBox = new System.Windows.Forms.TextBox();
+            this.ConstScoreboardBox = new System.Windows.Forms.TextBox();
+            this.ValueScoreboardBox = new System.Windows.Forms.TextBox();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
             this.RMFileBox = new System.Windows.Forms.CheckBox();
             this.label6 = new System.Windows.Forms.Label();
             this.TreeSizeBox = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.label8 = new System.Windows.Forms.Label();
-            this.label9 = new System.Windows.Forms.Label();
-            this.ValueScoreboardBox = new System.Windows.Forms.TextBox();
-            this.ConstScoreboardBox = new System.Windows.Forms.TextBox();
-            this.TempScoreboardBox = new System.Windows.Forms.TextBox();
+            this.button5 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -168,6 +169,7 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
+            this.groupBox1.Controls.Add(this.button5);
             this.groupBox1.Controls.Add(this.TempScoreboardBox);
             this.groupBox1.Controls.Add(this.ConstScoreboardBox);
             this.groupBox1.Controls.Add(this.ValueScoreboardBox);
@@ -186,6 +188,63 @@
             this.groupBox1.TabIndex = 12;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Compiler Setting";
+            // 
+            // TempScoreboardBox
+            // 
+            this.TempScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.TempScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.TempScoreboardBox.ForeColor = System.Drawing.Color.White;
+            this.TempScoreboardBox.Location = new System.Drawing.Point(92, 123);
+            this.TempScoreboardBox.Name = "TempScoreboardBox";
+            this.TempScoreboardBox.Size = new System.Drawing.Size(176, 20);
+            this.TempScoreboardBox.TabIndex = 22;
+            // 
+            // ConstScoreboardBox
+            // 
+            this.ConstScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.ConstScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.ConstScoreboardBox.ForeColor = System.Drawing.Color.White;
+            this.ConstScoreboardBox.Location = new System.Drawing.Point(92, 97);
+            this.ConstScoreboardBox.Name = "ConstScoreboardBox";
+            this.ConstScoreboardBox.Size = new System.Drawing.Size(176, 20);
+            this.ConstScoreboardBox.TabIndex = 21;
+            // 
+            // ValueScoreboardBox
+            // 
+            this.ValueScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.ValueScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.ValueScoreboardBox.ForeColor = System.Drawing.Color.White;
+            this.ValueScoreboardBox.Location = new System.Drawing.Point(92, 70);
+            this.ValueScoreboardBox.Name = "ValueScoreboardBox";
+            this.ValueScoreboardBox.Size = new System.Drawing.Size(176, 20);
+            this.ValueScoreboardBox.TabIndex = 20;
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(7, 125);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(54, 13);
+            this.label9.TabIndex = 19;
+            this.label9.Text = "Temp SB:";
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(7, 99);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(54, 13);
+            this.label8.TabIndex = 18;
+            this.label8.Text = "Const SB:";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(7, 72);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(54, 13);
+            this.label7.TabIndex = 17;
+            this.label7.Text = "Value SB:";
             // 
             // RMFileBox
             // 
@@ -225,62 +284,16 @@
             this.label5.TabIndex = 12;
             this.label5.Text = "Float Precision:";
             // 
-            // label7
+            // button5
             // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(7, 72);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(54, 13);
-            this.label7.TabIndex = 17;
-            this.label7.Text = "Value SB:";
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(7, 99);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(54, 13);
-            this.label8.TabIndex = 18;
-            this.label8.Text = "Const SB:";
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(7, 125);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(54, 13);
-            this.label9.TabIndex = 19;
-            this.label9.Text = "Temp SB:";
-            // 
-            // ValueScoreboardBox
-            // 
-            this.ValueScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.ValueScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ValueScoreboardBox.ForeColor = System.Drawing.Color.White;
-            this.ValueScoreboardBox.Location = new System.Drawing.Point(92, 70);
-            this.ValueScoreboardBox.Name = "ValueScoreboardBox";
-            this.ValueScoreboardBox.Size = new System.Drawing.Size(176, 20);
-            this.ValueScoreboardBox.TabIndex = 20;
-            // 
-            // ConstScoreboardBox
-            // 
-            this.ConstScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.ConstScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.ConstScoreboardBox.ForeColor = System.Drawing.Color.White;
-            this.ConstScoreboardBox.Location = new System.Drawing.Point(92, 97);
-            this.ConstScoreboardBox.Name = "ConstScoreboardBox";
-            this.ConstScoreboardBox.Size = new System.Drawing.Size(176, 20);
-            this.ConstScoreboardBox.TabIndex = 21;
-            // 
-            // TempScoreboardBox
-            // 
-            this.TempScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.TempScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.TempScoreboardBox.ForeColor = System.Drawing.Color.White;
-            this.TempScoreboardBox.Location = new System.Drawing.Point(92, 123);
-            this.TempScoreboardBox.Name = "TempScoreboardBox";
-            this.TempScoreboardBox.Size = new System.Drawing.Size(176, 20);
-            this.TempScoreboardBox.TabIndex = 22;
+            this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button5.Location = new System.Drawing.Point(207, 168);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(101, 23);
+            this.button5.TabIndex = 13;
+            this.button5.Text = "Force Offuscation";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // ProjectSetting
             // 
@@ -335,5 +348,6 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Button button5;
     }
 }

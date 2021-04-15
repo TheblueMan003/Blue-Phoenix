@@ -152,8 +152,15 @@ namespace JSharp
             dirVar = project.Substring(0, Math.Min(4, project.Length));
 
             compilerSetting = setting;
+
             
             offuscationMap = new Dictionary<string, string>();
+
+            foreach(string key in setting.forcedOffuscation.Keys)
+            {
+                offuscationMapAdd(key, setting.forcedOffuscation[key]);
+            }
+
             functionTags = new Dictionary<string, List<string>>();
             projectFolder = pctFolder;
             GlobalDebug = debug;
@@ -1188,17 +1195,17 @@ namespace JSharp
                     Variable var;
                     if (context.isEntity(left[i]))
                     {
-                        var = new Variable(context.GetEntityName(left[i]), left[i].Split('.')[1], Type.ENTITY_COMPONENT);
+                        var = new Variable(context.GetEntityName(smartExtract(left[i])), smartExtract(left[i].Split('.')[1]), Type.ENTITY_COMPONENT);
                     }
                     else
                     {
-                        var = GetVariableByName(left[i]);
+                        var = GetVariableByName(smartExtract(left[i]));
                     }
 
                     if (right.Length > 1)
-                        output += eval(right[i], var, var.type, op);
+                        output += eval(smartExtract(right[i]), var, var.type, op);
                     else
-                        output += eval(right[0], var, var.type, op);
+                        output += eval(smartExtract(right[0]), var, var.type, op);
                 }
                 return output;
             }
@@ -1215,9 +1222,9 @@ namespace JSharp
                 throw new Exception("Stack Overflow");
             }
 
-            if (containLazyVal(smartEmpty(val)))
+            if (containLazyVal(val))
             {
-                return eval(getLazyVal(smartEmpty(val)), variable, ca, op, recCall + 1);
+                return eval(getLazyVal(val), variable, ca, op, recCall + 1);
             }
             
             if (context.IsFunction(val.Replace(" ", "")) && !val.Contains("(") && context.GetVariable(val, true) == null
@@ -5918,6 +5925,23 @@ namespace JSharp
             offuscationMap.Add(text, map);
             return map;
         }
+        public static string offuscationMapAdd(string text, string forced)
+        {
+            if (!compilerSetting.offuscate)
+                return text;
+
+            if (offuscationMap.ContainsKey(text))
+                return offuscationMap[text];
+
+            if (offuscationSet.Contains(forced))
+            {
+                return offuscationMapAdd(text + "_");
+            }
+
+            offuscationSet.Add(forced);
+            offuscationMap.Add(text, forced);
+            return forced;
+        }
         public static string getMap(long c)
         {
             return dirVar + "."
@@ -6608,7 +6632,7 @@ namespace JSharp
 
             private Variable() { }
 
-            public Variable(string name, string gameName, Type type, bool entity = false, string def="dummy", string forcedOffuscation="")
+            public Variable(string name, string gameName, Type type, bool entity = false, string def="dummy")
             {
                 this.name = name;
                 this.gameName = gameName;
@@ -6623,30 +6647,16 @@ namespace JSharp
 
                 if (entity && type != Type.STRUCT)
                 {
-                    if (forcedOffuscation == "")
-                    {
-                        uuid = offuscationMapAdd(gameName);
-                        score = "@s " + uuid;
-                    }
-                    else
-                    {
-                        uuid = forcedOffuscation;
-                        score = "@s "+forcedOffuscation;
-                    }
+                    uuid = offuscationMapAdd(gameName);
+                    score = "@s " + uuid;
+                    
                     scoreboardObj = new Scoreboard(uuid, def);
                 }
                 else
                 {
-                    if (forcedOffuscation != "")
-                    {
-                        uuid = offuscationMapAdd(gameName);
-                        score = forcedOffuscation + " "+(isConst ? compilerSetting.scoreboardConst: compilerSetting.scoreboardValue);
-                    }
-                    else
-                    {
-                        uuid = offuscationMapAdd(gameName);
-                        score = uuid + " " + (isConst ? compilerSetting.scoreboardConst : compilerSetting.scoreboardValue);
-                    }
+                    uuid = offuscationMapAdd(gameName);
+                    score = uuid + " " + (isConst ? compilerSetting.scoreboardConst : compilerSetting.scoreboardValue);
+                    
 
                     scoreboardObj = scoreboards[isConst ? compilerSetting.scoreboardConst : compilerSetting.scoreboardValue];
                 }
@@ -7549,6 +7559,7 @@ namespace JSharp
             public string scoreboardValue = "tbms.value";
             public string scoreboardConst = "tbms.const";
             public string scoreboardTmp = "tbms.tmp";
+            public Dictionary<string, string> forcedOffuscation = new Dictionary<string, string>();
 
             public CompilerSetting()
             {
@@ -7569,7 +7580,7 @@ namespace JSharp
             }
         }
 
-        public class Argument : Variable
+        public class Argument: Variable
         {
             public string defValue = null;
             public bool isImplicite;
