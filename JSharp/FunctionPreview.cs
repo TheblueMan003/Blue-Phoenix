@@ -168,7 +168,7 @@ namespace JSharp
                 {
                     listBox2.Items.Clear();
                     Compiler.Variable f = vars[listBox1.SelectedItem.ToString()];
-                    richTextBox1.Text = f.gameName + ": "+f.GetTypeString();
+                    richTextBox1.Text = f.gameName + ": "+f.GetTypeString()+" entity:"+f.entity.ToString();
                     /*
                     foreach (var arg in f.enums)
                     {

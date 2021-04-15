@@ -655,7 +655,7 @@ namespace JSharp
                 Text = projectName + " - TBMScript";
 
                 code.Clear();
-                code.Add("import", "import standard.java\nimport standard.entity_id\n");
+                code.Add("import", "import standard.java\nimport standard.entity_id\nimport standard.object\n");
                 code.Add("load", "package main\n");
                 code.Add("main", "package main\n");
 
