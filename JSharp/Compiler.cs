@@ -101,7 +101,7 @@ namespace JSharp
         private static Regex funArgTypeReg = new Regex(@"^([@\w\.]*\s*(<\(?\w*\)?,?\(?\w*\)?>)?(\[\d+\])?)*\(");
         private static Regex arraySizeReg = new Regex(@"(?:\[)\d+(?:\])");
         private static Regex arrayTypeReg = new Regex(@"\b\w+(?:\[)");
-        private static Regex opReg = new Regex(@"((#=)|(\+=)|(\-=)|(\*=)|(/=)|(\%=)|(\&=)|(\|=)|(\^=)|(=))");
+        private static Regex opReg = new Regex(@"((#=)|(\+=)|(\-=)|(\*=)|(/=)|(\%=)|(\&=)|(\|=)|(\^=)|(:=)|(=))");
         private static Regex elsifReg = new Regex(@"^el?s?e?\s*ifs?\s?\(");
         private static Regex ifReg = new Regex(@"^if\s*\(");
         private static Regex jsonFileReg = new Regex(@"^jsonfile\s+[\w\\/\-\.]+\{?");
@@ -1131,15 +1131,30 @@ namespace JSharp
 
             if (op == "=")
             {
-                left = smartSplit(smartExtract(smartSplit(text, '=', 1)[0]), ',');
-                right = smartSplit(smartExtract(smartSplit(text, '=', 1)[1]), ',');
+                string[] splitted = smartSplit(text, '=', 1);
+                left = smartSplit(splitted[0], ',');
+                right = smartSplit(splitted[1], ',');
+            }
+            else if (op == ":=")
+            {
+                string[] splitted = smartSplit(text.Replace(op, "="), '=', 1);
+                left = smartSplit(splitted[0], ',');
+                right = smartSplit(splitted[1], ',');
+
+                string output = "";
+                for (int i = 0; i < left.Length; i++)
+                {
+                    output+=parseLine("if (" + left[i] + "==null){" +left[i] +"="+ right[i%right.Length]+"}")+"\n";
+                }
+                return output;
             }
             else
             {
-                left = smartSplit(smartExtract(smartSplit(text.Replace(op, "§"), '§', 1)[0]), ',');
-                right = smartSplit(smartExtract(smartSplit(text.Replace(op, "§"), '§', 1)[1]), ',');
+                string[] splitted = smartSplit(text.Replace(op, "="), '=', 1);
+                left = smartSplit(splitted[0], ',');
+                right = smartSplit(splitted[1], ',');
             }
-
+            
             if (right[0].Contains("(") && context.IsFunction(right[0].Substring(0, right[0].IndexOf('(')))
                 && !smartContains(right[0], '+') && !smartContains(right[0], '-') && !smartContains(right[0], '*')
                 && !smartContains(right[0], '%') && !smartContains(right[0], '/'))
@@ -1194,15 +1209,15 @@ namespace JSharp
             if (variable.isConst && variable.wasSet)
                 throw new Exception("Cannot moddify Constant!");
             variable.wasSet = true;
-
+            
             if (recCall > maxRecCall)
             {
                 throw new Exception("Stack Overflow");
             }
 
-            if (containLazyVal(val))
+            if (containLazyVal(smartEmpty(val)))
             {
-                return eval(getLazyVal(val), variable, ca, op, recCall + 1);
+                return eval(getLazyVal(smartEmpty(val)), variable, ca, op, recCall + 1);
             }
             
             if (context.IsFunction(val.Replace(" ", "")) && !val.Contains("(") && context.GetVariable(val, true) == null
@@ -1515,7 +1530,7 @@ namespace JSharp
                                 return Core.VariableOperation(variable, valVar, "=");
                             else
                             {
-                                if (valVar.type != Type.FLOAT)
+                                if (valVar != null && valVar.type != Type.FLOAT)
                                     return Core.VariableOperation(variable, valVar, op);
                                 else
                                 {
@@ -1589,33 +1604,37 @@ namespace JSharp
                 {
                     if (op != "=" || valVar != variable)
                     {
-                        if (valVar.type == Type.INT && (op == "+=" || op == "-="))
+                        if (valVar != null && valVar.type == Type.INT && (op == "+=" || op == "-="))
                         {
                             output += parseLine("int tmp.1 = "+ compilerSetting.FloatPrecision.ToString()+ "*" + val);
                             return output + Core.VariableOperation(variable, GetVariableByName("tmp.1"), op);
                         }
-                        else if (valVar.type == Type.INT && op == "#=")
+                        else if (valVar != null && valVar.type == Type.INT && op == "#=")
                         {
                             return output + Core.VariableOperation(variable, GetVariableByName(val), "=");
                         }
-                        else if (valVar.type == Type.INT && op == "=")
+                        else if (valVar != null && valVar.type == Type.INT && op == "=")
                         {
                             output += Core.VariableOperation(variable, valVar, op);
                             return output + Core.VariableOperation(variable, compilerSetting.FloatPrecision, "*=");
                         }
-                        else if (valVar.type == Type.FLOAT && op == "*=")
+                        else if (valVar != null && valVar.type == Type.FLOAT && op == "*=")
                         {
                             output += Core.VariableOperation(variable, valVar, op);
                             return output + Core.VariableOperation(variable, compilerSetting.FloatPrecision, "/=");
                         }
-                        else if (valVar.type == Type.FLOAT && op == "/=")
+                        else if (valVar != null && valVar.type == Type.FLOAT && op == "/=")
                         {
                             output += Core.VariableOperation(variable, compilerSetting.FloatPrecision, "*=");
                             return output + Core.VariableOperation(variable, valVar, op);
                         }
-                        else
+                        else if (valVar != null)
                         {
                             return Core.VariableOperation(variable, valVar, op);
+                        }
+                        else
+                        {
+                            throw new Exception("Unkowned: \"" + smartEmpty(val)+"\" in context "+context.GetVar());
                         }
                     }
                 }
@@ -2895,18 +2914,20 @@ namespace JSharp
 
             bool entity = text.ToUpper().Substring(0, 3) == text.Substring(0, 3);
 
+            string op = opReg.Match(text).Value;
+
             if (text.Contains("="))
             {
                 if (ca == Type.FUNCTION && text.Contains("<"))
                 {
                     int f = text.IndexOf(" ", text.IndexOf(">"))+1;
-                    vari = smartEmpty(text.Substring(f, text.IndexOf("=") - f));
+                    vari = smartEmpty(text.Substring(f, text.IndexOf(op) - f));
                     
                 }
                 else
                 {
                     vari = smartEmpty(text.Substring(text.IndexOf(" ") + 1,
-                        text.IndexOf('=') - text.IndexOf(" ") - 1).Replace(" ", ""));
+                        text.IndexOf(op) - text.IndexOf(" ") - 1).Replace(" ", ""));
                 }
             }
             else
@@ -2926,7 +2947,10 @@ namespace JSharp
 
             Variable variable;
             string def = "dummy";
-            string[] splited = smartSplit(text, '=', entity?2:1);
+
+            string[] splited = op!="" ? 
+                                smartSplit(text.Replace(op,"="), '=', entity?2:1) : 
+                                smartSplit(text, '=', entity ? 2 : 1);
 
             if (text.Contains("="))
                 def = splited[1].Replace(" ", "");
@@ -2943,7 +2967,6 @@ namespace JSharp
             int index = 0;
             string[] defValue = null;
 
-            
             if (!entity && text.Contains("="))
             {
                 defValue = smartSplit(splited[1], ',');
@@ -3113,11 +3136,11 @@ namespace JSharp
             if (context.currentFile().type != "struct" && ((!entity && text.Contains("=")) ||
                      (entity && part == 2 && entityFormatVar)) && !instantiated && !isConst)
             {
-                output += modVar(vari +"="+ splited[1]);
+                output += modVar(vari + op + splited[1]);
             }
             if (context.currentFile().type != "struct" && ((entity && part == 3)) && !instantiated)
             {
-                output += modVar(vari + "=" + splited[2]);
+                output += modVar(vari + op + splited[2]);
             }
 
             return output;
@@ -8451,10 +8474,6 @@ namespace JSharp
                     string ent = value.Split('.')[0];
 
                     return (GetVariable(ent, true) != null && (Compiler.GetVariable(GetVariable(ent, true)).type == Type.ENTITY));
-                }
-                else if (GetVariable(value,true)!=null)
-                {
-                    return true;
                 }
                 else
                     return false;
