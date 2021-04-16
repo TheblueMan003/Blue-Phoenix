@@ -4030,6 +4030,7 @@ namespace JSharp
             bool overriding = false;
 
             string name = "";
+            string contextName = context.GetVar();
             string[] fields = null;
             for (int i = 0; i < subField1.Length; i++)
             {
@@ -4063,31 +4064,49 @@ namespace JSharp
                     throw new Exception("Unknown keyword: " + subField1[i]);
                 }
             }
-            if (overriding && enums.ContainsKey(name))
+            if (overriding && !enums.ContainsKey(contextName + name))
+                throw new Exception("Nothing to Override for Enum:" + contextName + name);
+
+            if (overriding && enums.ContainsKey(contextName+name))
                 enums.Remove(name);
-            if (enums.ContainsKey(name))
+
+            if (enums.ContainsKey(contextName + name))
             {
                 foreach (string s in smartSplit(field[1], ','))
                 {
-                    enums[name].Add(s);
+                    enums[contextName + name].Add(s);
                 }
-            }
-            else if (fields != null)
-            {
-                enums.Add(name, new Enum(name, fields, smartSplit(field[1], ','), final));
             }
             else
             {
-                enums.Add(name, new Enum(name, smartSplit(field[1], ','), final));
+                Enum e = null;
+                if (fields != null)
+                {
+                    e = new Enum(contextName + name, fields, smartSplit(field[1], ','), final);
+                }
+                else
+                {
+                    e = new Enum(contextName + name, smartSplit(field[1], ','), final);
+                }
+                string dir = "";
+                for (int i = contextName.Split('.').Length - 2; i >= 0; i--)
+                {
+                    enums[dir + name] = e;
+                    dir = contextName.Split('.')[i] + "." + dir;
+                }
+                enums[dir + name] = e;
             }
-            string varNames = (Project + "." + name).ToLower();
+            
+
+            string varNames = (contextName + name).ToLower();
             if (!variables.ContainsKey(varNames + ".length"))
             {
                 AddVariable(varNames + ".length", new Variable("length", varNames + ".length", Type.INT, false));
                 variables[varNames + ".length"].isConst = true;
                 variables[varNames + ".length"].UnparsedFunctionFileContext = varNames;
             }
-            variables[varNames + ".length"].constValue = enums[name].values.Count.ToString();
+            
+            variables[varNames + ".length"].constValue = enums[contextName + name].values.Count.ToString();
 
             return "";
         }
@@ -4294,6 +4313,7 @@ namespace JSharp
                 generics = name.Substring(name.IndexOf("<") + 1, name.LastIndexOf(">") - name.IndexOf("<") - 1);
                 name = smartEmpty(name.Substring(0, name.IndexOf("<")));
             }
+            
             string[] contextName = context.GetVar().Split('.');
             context.Sub("__struct__"+name, new File("struct/"+name,"", "struct"));
             
@@ -4310,7 +4330,7 @@ namespace JSharp
                     structs[dir+name] = stru;
                     dir = contextName[i] + "."+ dir;
                 }
-                
+                structs[dir + name] = stru;
                 structStack.Push(stru);
             }
             catch(Exception e)

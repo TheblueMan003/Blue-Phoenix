@@ -81,6 +81,8 @@
             this.label2 = new System.Windows.Forms.Label();
             this.DatapackOpen = new System.Windows.Forms.OpenFileDialog();
             this.button12 = new System.Windows.Forms.Button();
+            this.button13 = new System.Windows.Forms.Button();
+            this.button14 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -533,7 +535,7 @@
             this.button9.BackColor = System.Drawing.Color.Black;
             this.button9.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button9.ForeColor = System.Drawing.Color.White;
-            this.button9.Location = new System.Drawing.Point(1038, 373);
+            this.button9.Location = new System.Drawing.Point(1038, 438);
             this.button9.Name = "button9";
             this.button9.Size = new System.Drawing.Size(142, 23);
             this.button9.TabIndex = 16;
@@ -547,7 +549,7 @@
             this.button10.BackColor = System.Drawing.Color.Black;
             this.button10.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button10.ForeColor = System.Drawing.Color.White;
-            this.button10.Location = new System.Drawing.Point(1038, 344);
+            this.button10.Location = new System.Drawing.Point(1038, 409);
             this.button10.Name = "button10";
             this.button10.Size = new System.Drawing.Size(142, 23);
             this.button10.TabIndex = 17;
@@ -605,7 +607,7 @@
             this.button12.BackColor = System.Drawing.Color.Black;
             this.button12.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button12.ForeColor = System.Drawing.Color.White;
-            this.button12.Location = new System.Drawing.Point(1038, 286);
+            this.button12.Location = new System.Drawing.Point(1038, 335);
             this.button12.Name = "button12";
             this.button12.Size = new System.Drawing.Size(142, 23);
             this.button12.TabIndex = 22;
@@ -613,12 +615,42 @@
             this.button12.UseVisualStyleBackColor = false;
             this.button12.Click += new System.EventHandler(this.button12_Click);
             // 
+            // button13
+            // 
+            this.button13.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button13.BackColor = System.Drawing.Color.Black;
+            this.button13.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button13.ForeColor = System.Drawing.Color.White;
+            this.button13.Location = new System.Drawing.Point(1038, 286);
+            this.button13.Name = "button13";
+            this.button13.Size = new System.Drawing.Size(142, 23);
+            this.button13.TabIndex = 23;
+            this.button13.Text = "Class";
+            this.button13.UseVisualStyleBackColor = false;
+            this.button13.Click += new System.EventHandler(this.button13_Click);
+            // 
+            // button14
+            // 
+            this.button14.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button14.BackColor = System.Drawing.Color.Black;
+            this.button14.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button14.ForeColor = System.Drawing.Color.White;
+            this.button14.Location = new System.Drawing.Point(1038, 364);
+            this.button14.Name = "button14";
+            this.button14.Size = new System.Drawing.Size(142, 23);
+            this.button14.TabIndex = 24;
+            this.button14.Text = "Blocktags";
+            this.button14.UseVisualStyleBackColor = false;
+            this.button14.Click += new System.EventHandler(this.button14_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(1192, 630);
+            this.Controls.Add(this.button14);
+            this.Controls.Add(this.button13);
             this.Controls.Add(this.button12);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -708,6 +740,8 @@
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem getCallStackTraceToolStripMenuItem;
         private System.Windows.Forms.Button button12;
+        private System.Windows.Forms.Button button13;
+        private System.Windows.Forms.Button button14;
     }
 }
 

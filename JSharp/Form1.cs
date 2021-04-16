@@ -1414,7 +1414,7 @@ namespace JSharp
 
         private void button6_Click(object sender, EventArgs e)
         {
-            FunctionPreview fp = new FunctionPreview(Compiler.structs);
+            FunctionPreview fp = new FunctionPreview(Compiler.structs, false);
             fp.Show();
         }
 
@@ -1543,6 +1543,18 @@ namespace JSharp
         private void Form1_Activated(object sender, EventArgs e)
         {
             CheckFileModdification();
+        }
+
+        private void button13_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(Compiler.structs, true);
+            fp.Show();
+        }
+
+        private void button14_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(Compiler.blockTags);
+            fp.Show();
         }
     }
 }

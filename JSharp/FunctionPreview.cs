@@ -17,7 +17,9 @@ namespace JSharp
         private Dictionary<string, Compiler.Variable> vars;
         private Dictionary<string, Compiler.Enum> enums;
         private Dictionary<string, List<Compiler.Predicate>> predicate;
+        private Dictionary<string, TagsList> blocktags;
         private string[] names;
+        private bool isClass;
 
         public FunctionPreview(Dictionary<string, List<Compiler.Function>> dic)
         {
@@ -26,10 +28,11 @@ namespace JSharp
 
             Reload();
         }
-        public FunctionPreview(Dictionary<string, Compiler.Structure> dic)
+        public FunctionPreview(Dictionary<string, Compiler.Structure> dic, bool isClass)
         {
             InitializeComponent();
             this.structs = dic;
+            this.isClass = isClass;
 
             Reload();
         }
@@ -44,6 +47,13 @@ namespace JSharp
         {
             InitializeComponent();
             this.enums = dic;
+
+            Reload();
+        }
+        public FunctionPreview(Dictionary<string, TagsList> dic)
+        {
+            InitializeComponent();
+            this.blocktags = dic;
 
             Reload();
         }
@@ -80,7 +90,7 @@ namespace JSharp
             {
                 foreach (string key in structs.Keys)
                 {
-                    if (key.Contains(Filter.Text))
+                    if (key.Contains(Filter.Text) && structs[key].isClass == isClass)
                     {
                         listBox1.Items.Add(key);
                     }
@@ -99,6 +109,16 @@ namespace JSharp
             if (enums != null)
             {
                 foreach (string key in enums.Keys)
+                {
+                    if (key.Contains(Filter.Text))
+                    {
+                        listBox1.Items.Add(key);
+                    }
+                }
+            }
+            if (blocktags != null)
+            {
+                foreach (string key in blocktags.Keys)
                 {
                     if (key.Contains(Filter.Text))
                     {
@@ -180,6 +200,16 @@ namespace JSharp
                     listBox2.Items.Clear();
                     List<string> f = enums[listBox1.SelectedItem.ToString()].Values();
                     
+                    foreach (var arg in f)
+                    {
+                        listBox2.Items.Add(arg);
+                    }
+                }
+                if (blocktags != null)
+                {
+                    listBox2.Items.Clear();
+                    List<string> f = blocktags[listBox1.SelectedItem.ToString()].values;
+
                     foreach (var arg in f)
                     {
                         listBox2.Items.Add(arg);
