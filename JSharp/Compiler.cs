@@ -134,6 +134,7 @@ namespace JSharp
         private static int isInLazyCompile;
         private static CompilerSetting compilerSetting;
         private static int maxRecCall = 300;
+        private static bool muxAdding;
 
         private Compiler() { }
 
@@ -143,6 +144,7 @@ namespace JSharp
             callTrace = "digraph "+project+" {\nmain\nload\nhelper\n";
             Core = core;
             projectVersion = version;
+            muxAdding = false;
             for (int i = 0; i < 11; i++)
             {
                 pow64[i] = IntPow(alphabet.Length, i);
@@ -1339,11 +1341,16 @@ namespace JSharp
             }
             else if (ca == Type.FUNCTION)
             {
+                int intVal=0;
                 if (val.Contains("=>"))
                 {
                     return instLamba(val, variable);
                 }
-                else if (valVar == null || context.GetFunctionName(val,true)!=null)
+                else if (op == "#=" && int.TryParse(val, out intVal))
+                {
+                    return Core.VariableOperation(variable, intVal, "=");
+                }
+                else if (valVar == null ||(op == "#="))
                 {
                     Function func = GetFunction(context.GetFunctionName(val), variable.args);
                     if (!func.isStructMethod)
@@ -1379,21 +1386,55 @@ namespace JSharp
                     {
                         if (stru1.isClass)
                         {
+                            Structure stru2 = structs[valVar.enums];
+
                             output += Core.VariableOperation(variable, valVar, "=");
-                            if (variable.entity)
+                            if (stru2 != stru1)
                             {
-                                preparseLine("__class_pointer__ #= " + variable.gameName);
-                                preparseLine("with(@e[tag=__class__],false,__CLASS__==__class_pointer__){");
+                                bool isVirtual = true;
+                                bool isLazy = true;
+
+                                foreach (Function f in structs[variable.enums].methods)
+                                {
+                                    if (f.name != "__init__")
+                                    {
+                                        if (!f.isVirtual && !f.isOverride)
+                                        {
+                                            isVirtual = false;
+                                        }
+                                        if (f.isVirtual || f.isOverride)
+                                        {
+                                            isLazy = false;
+                                        }
+                                    }
+                                }
+                                if (!isLazy && !isVirtual)
+                                {
+                                    throw new Exception("Not all function of Class " + variable.enums + " is virtual!");
+                                }
+                                if (isLazy)
+                                {
+                                    if (variable.entity)
+                                    {
+                                        preparseLine("__class_pointer__ #= " + variable.gameName);
+                                        preparseLine("with(@e[tag=__class__],false,__CLASS__==__class_pointer__){");
+                                    }
+                                    else
+                                    {
+                                        preparseLine("with(@e[tag=__class__],false,__CLASS__==" + variable.gameName + "){");
+                                    }
+                                    HashSet<string> set = new HashSet<string>();
+                                    foreach (Variable struV in structs[variable.enums].fields)
+                                    {
+                                        if (!set.Contains(struV.name))
+                                        {
+                                            preparseLine(variable.gameName + "." + struV.name + "=" + val + "." + struV.name);
+                                            set.Add(struV.name);
+                                        }
+                                    }
+                                    preparseLine("}");
+                                }
                             }
-                            else
-                            {
-                                preparseLine("with(@e[tag=__class__],false,__CLASS__==" + variable.gameName + "){");
-                            }
-                            foreach (Variable struV in structs[variable.enums].fields)
-                            {
-                                preparseLine(variable.gameName + "." + struV.name + "=" + val + "." + struV.name);
-                            }
-                            preparseLine("}");
                         }
                         else if (stru1.methodsName.Contains("__set__"))
                         {
@@ -1406,9 +1447,14 @@ namespace JSharp
                             {
                                 throw new Exception("Cannot use " + op + " between " + stru2.name + " inside " + stru1.name);
                             }
+                            HashSet<string> set = new HashSet<string>();
                             foreach (Variable struV in structs[variable.enums].fields)
                             {
-                                preparseLine(variable.gameName + "." + struV.name + "=" + val + "." + struV.name);
+                                if (!set.Contains(struV.name))
+                                {
+                                    preparseLine(variable.gameName + "." + struV.name + "=" + val + "." + struV.name);
+                                    set.Add(struV.name);
+                                }
                             }
                         }
                     }
@@ -2332,6 +2378,13 @@ namespace JSharp
 
 
         #region function
+        public static void AddFunction(string name, Function func)
+        {
+            if (functions.ContainsKey(name))
+                functions[name].Add(func);
+            else
+                functions.Add(name, new List<Function>() { func });
+        }
         public static Function GetFunction(string funcName, string[] input_args, bool lambda = false)
         {
             Function funObj = null;
@@ -2686,7 +2739,10 @@ namespace JSharp
                     fFile.AddLine(cond + line);
                 }
             }
-            func.file.AddLine(cond + Core.VariableOperation(mux, -1, "="));
+            if (func.file.UnparsedFunctionFile)
+                func.file.addParsedLine("if ("+mux.gameName + "== " + id.ToString()+"){" + mux.gameName +"=-1}");
+            else
+                func.file.AddLine(cond + Core.VariableOperation(mux, -1, "="));
             int i = 0;
             foreach (Variable outputVar in variable.outputs)
             {
@@ -2702,6 +2758,7 @@ namespace JSharp
         {
             functDelegated[grp].Add(func);
             List<File> fFiles = functDelegatedFile[grp];
+            muxAdding = true;
             if ((functDelegated[grp].Count-1) % (compilerSetting.TreeMaxSize) == 0 && functDelegated[grp].Count > 1)
             {
                 Variable mux = GetVariable("__mux__" + grp);
@@ -2737,6 +2794,7 @@ namespace JSharp
 
             File fFile = fFiles[fFiles.Count - 1];
             AddFunctionToGRPFile(variable, func, grp, fFile);
+            muxAdding = false;
         }
         public static int GetFunctionIndex(Variable variable, Function func)
         {
@@ -3241,6 +3299,8 @@ namespace JSharp
             bool isPrivate = false;
             bool isLambda = false;
             bool isExternal = false;
+            bool isVirtual = false;
+            bool isOverride = false;
             string arg = getArg(text);
             string[] args = smartSplit(arg, ',');
             
@@ -3288,6 +3348,18 @@ namespace JSharp
                     {
                         isPrivate = true;
                     }
+                    else if (funArgType[i] == "public")
+                    {
+                        isPrivate = false;
+                    }
+                    else if (funArgType[i] == "virtual")
+                    {
+                        isVirtual = true;
+                    }
+                    else if (funArgType[i] == "override")
+                    {
+                        isOverride = true;
+                    }
                     else if (funArgType[i].StartsWith("@"))
                     {
                         tags.Add(funArgType[i].Replace("@", ""));
@@ -3330,10 +3402,58 @@ namespace JSharp
             function.isPrivate = isPrivate;
             function.isLambda = isLambda;
             function.isExternal = isExternal;
+            function.isVirtual = isVirtual;
+            function.isOverride = isOverride;
 
             function.privateContext = context.GetVar();
 
-            if (!functions.ContainsKey(funcID))
+            if (isOverride)
+            {
+                if (!functions.ContainsKey(funcID))
+                {
+                    if (structStack.Count > 0)
+                    {
+                        List<Function> lst = new List<Function>();
+                        lst.Add(function);
+                        functions.Add(funcID, lst);
+                    }
+                    else
+                    {
+                        throw new Exception("Nothing to Override for " + funcID + "!");
+                    }
+                }
+                else
+                {
+                    bool contain = true;
+                    while (contain)
+                    {
+                        function.gameName = function.gameName + "_";
+                        fFile.name = fFile.name + "_";
+                        func = func + "_";
+
+                        contain = false;
+                        for (int j = 0; j < functions[funcID].Count; j++)
+                        {
+                            Function f = functions[funcID][j];
+                            if (f.gameName == function.gameName && f != function)
+                            {
+                                contain = true;
+
+                                if (f.args.Count == 0 && args.Length == 0)
+                                {
+                                    function.gameName = f.gameName;
+                                    fFile.name = f.file.name;
+                                    func = f.name;
+                                    functions[funcID].Remove(f);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    functions[funcID].Add(function);
+                }
+            }
+            else if (!functions.ContainsKey(funcID))
             {
                 List<Function> lst = new List<Function>();
                 lst.Add(function);
@@ -4178,6 +4298,7 @@ namespace JSharp
             context.Sub("__struct__"+name, new File("struct/"+name,"", "struct"));
             
             Structure stru = new Structure(name, parent);
+           
             stru.isClass = isClass;
             stru.classInitBase = functionBaseFile;
 
@@ -4857,7 +4978,7 @@ namespace JSharp
             try
             {
                 string func = smartExtract(text.Substring(0, text.IndexOf('(')));
-                if (GetVariableByName(func).type == Type.FUNCTION)
+                if (GetVariableByName(func).type == Type.FUNCTION && !muxAdding)
                 {
                     return functionVarEval(text, outVar, op);
                 }
@@ -6144,7 +6265,6 @@ namespace JSharp
                 return new ParenthiseError(++lineIndex, 0, chars.Pop());
         }
 
-
         public class Function
         {
             public string name;
@@ -6168,6 +6288,8 @@ namespace JSharp
             public bool isLambda;
             public bool isExternal;
             public bool isPrivate = false;
+            public bool isVirtual = false;
+            public bool isOverride = false;
             public string privateContext;
             public bool isStructMethod = false;
             public int argNeeded = 0;
@@ -6179,10 +6301,52 @@ namespace JSharp
                 this.gameName = gameName;
                 this.file = file;
                 this.package = currentPackage;
+
                 if (adjPackage.Count > 0)
                 {
                     package = adjPackage.Peek();
                 }
+            }
+
+            public void LinkCopyTo(string v)
+            {
+                AddFunction(v + "." + name, this);
+                foreach(Variable var in args)
+                {
+                    var.LinkCopyTo(v);
+                }
+                foreach (Variable var in outputs)
+                {
+                    var.LinkCopyTo(v);
+                }
+            }
+            public Function CopyTo(string gameName, string name, File f)
+            {
+                Function newfunc = new Function(name, gameName, f);
+
+                newfunc.gameName = gameName;
+                newfunc.name = name;
+                newfunc.file = f;
+                newfunc.args = args;
+                newfunc.outputs = outputs;
+                newfunc.isPrivate = isPrivate;
+                newfunc.isStructMethod = isStructMethod;
+                newfunc.isStructMethod = isStructMethod;
+
+                newfunc.desc = desc;
+                newfunc.lazy = lazy;
+                newfunc.isAbstract = isAbstract;
+                newfunc.isPrivate = isPrivate;
+                newfunc.argNeeded = argNeeded;
+                newfunc.maxArgNeeded = maxArgNeeded;
+                newfunc.package = package;
+                newfunc.isOverride = isOverride;
+                newfunc.isVirtual = isVirtual;
+
+                newfunc.argNeeded = argNeeded;
+                newfunc.maxArgNeeded = maxArgNeeded;
+
+                return newfunc;
             }
 
             public override string ToString()
@@ -6210,6 +6374,8 @@ namespace JSharp
             public File classInitBase;
 
             public File genericFile = new File("____","");
+            public File initBase = new File("", "");
+            private Variable representative;
 
             public Structure(string name, Structure parent)
             {
@@ -6230,8 +6396,11 @@ namespace JSharp
 
                         fields.Add(variable);
                     }
-
-                    methods.AddRange(parent.methods);
+                    foreach(Function f in parent.methods)
+                    {
+                        Function newFun = f.CopyTo(f.gameName, f.name, f.file);
+                        methods.Add(newFun);
+                    }
                 }
                 if (typeMaps.Count > 0)
                 {
@@ -6270,17 +6439,49 @@ namespace JSharp
             {
                 fields.Insert(0, variable);
             }
-            public void addMethod(Function variable)
+            public void addMethod(Function element)
             {
-                methods.Add(variable);
-                methodsName.Add(variable.name);
+                if (!element.isVirtual && !element.isOverride)
+                {
+                    methods.Add(element);
+                    methodsName.Add(element.name);
+                }
+                else
+                {
+                    string name = element.name;
+                    element.name = "__virutal__" + element.name;
+                    methods.Add(element);
+                    methodsName.Add(element.name);
+
+                    Variable var = new Variable(element.name, element.gameName.Replace("/", "").Replace(":", ""), Type.FUNCTION);
+                    var.args = element.args;
+                    var.outputs = element.outputs;
+                    addField(var);
+
+                    initBase.addParsedLine(element.name + "#=" + element.name);
+
+                    File f = new File("f", "");
+                    Function newFunc = element.CopyTo(name, name, f);
+                    string args = "";
+                    for (int i = 0; i < newFunc.args.Count; i++)
+                    {
+                        args += newFunc.args[i].name + ((i == newFunc.args.Count - 1) ? "" : ",");
+                    }
+                    if (element.outputs.Count == 0)
+                        f.parsed.Add(element.name + "(" + args + ")");
+                    else
+                        f.parsed.Add("return " + element.name + "(" + args + ")");
+
+                    methods.Add(newFunc);
+                }
             }
             public void generateFunction(Function fun, Variable varOwner, string v, string cont)
             {
                 string cont2 = context.GetVar();
                 string funcName = fun.name;
-                string contextStruct = structureContext.Replace("__struct__", "");
-                contextStruct = contextStruct.Substring(0, contextStruct.Length - 1);
+                string contextStruct = null;
+                if (isClass)
+                    contextStruct = representative.gameName;
 
                 File fFile = new File(context.GetFile() + funcName);
 
@@ -6300,6 +6501,10 @@ namespace JSharp
                 function.maxArgNeeded = fun.maxArgNeeded;
                 function.package = package;
                 function.structure = contextStruct;
+                function.isOverride = fun.isOverride;
+
+                function.argNeeded = fun.argNeeded;
+                function.maxArgNeeded = fun.maxArgNeeded;
 
                 fFile.isLazy = fun.lazy;
 
@@ -6322,6 +6527,7 @@ namespace JSharp
                     }
                 }
 
+                #region tags
                 if (fun.isLoading)
                 {
                     loadFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
@@ -6337,10 +6543,37 @@ namespace JSharp
                     fFile.use();
                     callTrace += "\"helper\"->\"" + function.gameName + "\"\n";
                 }
-
+                #endregion
+                #region add to dic
                 files.Add(fFile);
                 string key = (context.GetFun() + funcName).Replace(':', '.').Replace('/', '.');
-                if (functions.ContainsKey(key))
+                if (fun.isOverride)
+                {
+                    bool contain = true;
+                    while (contain)
+                    {
+                        contain = false;
+                        for (int j = 0; j < functions[key].Count; j++)
+                        {
+                            Function f = functions[key][j];
+                            if (f.gameName == function.gameName && f != function)
+                            {
+                                contain = true;
+
+                                if (f.args.Count == 0 && fun.args.Count == 0)
+                                {
+                                    fun.gameName = f.gameName;
+                                    fFile.name = f.file.name;
+                                    fun.name = f.name;
+                                    functions[key].Remove(f);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    functions[key].Add(function);
+                }
+                else if (functions.ContainsKey(key))
                 {
                     functions[key].Add(function);
                     bool contain = true;
@@ -6364,7 +6597,7 @@ namespace JSharp
                     lst.Add(function);
                     functions.Add(key, lst);
                 }
-
+                #endregion
                 context.Sub(fun.name, fFile);
 
                 fFile.UnparsedFunctionFile = !fun.lazy && structStack.Count == 0 && !fun.isAbstract;
@@ -6378,7 +6611,6 @@ namespace JSharp
                 }
 
                 fFile.notUsed = !fun.isLoading && !fun.isHelper && !fun.isTicking && fun.tags.Count == 0;
-                //fFile.use();
 
                 int i = 0;
                 foreach (Variable output in fun.outputs)
@@ -6510,6 +6742,13 @@ namespace JSharp
                         fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==" + varOwner.gameName + "){");
                     }
                 }
+                if (fun.name == "__init__")
+                {
+                    foreach (string line in initBase.parsed)
+                    {
+                        fFile.addParsedLine(line);
+                    }
+                }
                 foreach (string line in fun.file.parsed)
                 {
                     if (reg2.Match(line).Success)
@@ -6540,11 +6779,38 @@ namespace JSharp
                     fFile.parsed.Add("}");
                 }
             }
-            public string generate(string v, bool entity, Variable varOwner, string instArg = null)
+            public string generate(string v, bool entity, Variable varOwner, string instArg = null, bool parentClass = false)
             {
                 if (isClass && parent == null && name != "object")
                 {
                     parent = structs["object"];
+                }
+                if (isClass && !parentClass)
+                {
+                    if (representative == null)
+                    {
+                        Context c = context;
+                        context = new Context(Project, new File("",""));
+
+                        string fName = context.GetVar() + name;
+                        representative = new Variable(name, fName, Type.STRUCT, false, "__class_id__");
+                        AddVariable(fName, representative);
+                        representative.SetEnum(name);
+                        generate(name, false, representative, instArg, true);
+
+                        context = c;
+                    }
+                    foreach (Variable strVar in fields)
+                    {
+                        try
+                        {
+                            GetVariableByName(representative.gameName + "." + strVar.name).LinkCopyTo(context.GetVar() + v+"."+ strVar.name);
+                        }
+                        catch
+                        {
+                            
+                        }
+                    }
                 }
 
                 string cont = context.GetVar();
@@ -6554,12 +6820,21 @@ namespace JSharp
                 context.Sub(v, new File("", ""));
                 
                 context.currentFile().notUsed = true;
+                if (!isClass || parentClass){
+                    foreach (Variable strVar in fields)
+                    {
+                        try
+                        {
+                            string varName = context.toInternal(context.GetVar() + strVar.name);
+                            var tmpV = strVar.CopyTo(varName, v, entity || strVar.entity || isClass, varOwner.isPrivate);
+                            tmpV.parent = varOwner;
+                            tmpV.inClass = isClass;
+                        }
+                        catch
+                        {
 
-                foreach (Variable strVar in fields)
-                {
-                    string varName = context.toInternal(context.GetVar() + strVar.name);
-                    var tmpV = strVar.CopyTo(varName, v, entity || strVar.entity || isClass, varOwner.isPrivate);
-                    tmpV.parent = varOwner;
+                        }
+                    }
                 }
                 compVal[compVal.Count - 1].Add("$this", varOwner.uuid);
                 compVal[compVal.Count - 1].Add("$this.lower", varOwner.uuid.ToLower());
@@ -6584,7 +6859,7 @@ namespace JSharp
                 isInStructMethod = false;
                 adjPackage.Push(package);
                 
-                if (instArg != null)
+                if (instArg != null && !parentClass)
                 {
                     structInstCompVar = true;
 
@@ -6655,6 +6930,11 @@ namespace JSharp
             }
             public File GetClassInitBase()
             {
+                if (isClass && parent == null && name != "object")
+                {
+                    parent = structs["object"];
+                }
+
                 if (classInitBase == null)
                 {
                     return parent.GetClassInitBase();
@@ -6675,6 +6955,7 @@ namespace JSharp
             public bool isConst = false;
             public bool wasSet = false;
             public bool isStatic = false;
+            public bool inClass = false;
             public string def;
             public Scoreboard scoreboardObj;
             public bool isPrivate = false;
@@ -6862,6 +7143,44 @@ namespace JSharp
                     }
                 }
                 return variable;
+            }
+            public void LinkCopyTo(string newName)
+            {
+                AddVariable(newName, this);
+
+                if (this.type == Type.ARRAY)
+                {
+                    for (int i = 0; i < arraySize; i++)
+                    {
+                        GetVariableByName(gameName + "." + i.ToString()).LinkCopyTo(newName + "." + i.ToString());
+                    }
+                    GetVariableByName(gameName + ".length").LinkCopyTo(newName + ".length");
+                }
+
+                if (this.type == Type.STRUCT)
+                {
+                    foreach (Variable field in structs[this.enums].fields)
+                    {
+                        GetVariableByName(gameName + "." + field.name).LinkCopyTo(newName + "." + field.name);
+                    }
+                }
+
+                if (this.type == Type.FUNCTION)
+                {
+                    int i = 0;
+                    foreach (Argument s in this.args)
+                    {
+                        GetVariableByName(gameName + "." + i.ToString()).LinkCopyTo(newName + "." + i.ToString());
+                        i++;
+                    }
+
+                    i = 0;
+                    foreach (Variable s in this.outputs)
+                    {
+                        GetVariableByName(gameName + ".ret_" + i.ToString()).LinkCopyTo(newName + ".ret_" + i.ToString());
+                        i++;
+                    }
+                }
             }
             public Variable Select(string entitySelector)
             {
@@ -8081,6 +8400,7 @@ namespace JSharp
                 }
                 adjPackage.Push(function.package);
                 adjPackage.Push(function.structure);
+
                 foreach (string line in parsed)
                 {
                     preparseLine(line);
@@ -8307,18 +8627,8 @@ namespace JSharp
                 }
                 string dir = "";
                 string output = null;
-                
-                foreach (string co in directories)
-                {
-                    dir += co.ToLower() + ".";
-                    if (functions.ContainsKey(dir+func))
-                    {
-                        output = dir+func;
-                    }
-                }
-                if (output != null)
-                    return output;
 
+                
                 if (adjPackage.Count > 0 && !bottleneck)
                 {
                     foreach (string pack in adjPackage)
@@ -8330,6 +8640,18 @@ namespace JSharp
                         }
                     }
                 }
+
+                foreach (string co in directories)
+                {
+                    dir += co.ToLower() + ".";
+                    if (functions.ContainsKey(dir+func))
+                    {
+                        output = dir+func;
+                    }
+                }
+                if (output != null)
+                    return output;
+
                 if (safe)
                     return null;
                 throw new Exception("UNKNOW FUNCTION (" + dir+func+ ")");
@@ -8391,22 +8713,20 @@ namespace JSharp
                 {
                     return GetVariable(getLazyVal(func), safe, bottleneck, recCall+1);
                 }
-                if (func.StartsWith("this.") && variables.ContainsKey(func.Replace("this.", thisDef.Peek())))
-                {
-                    //return func.Replace("this.", thisDef.Peek());
-                }
 
                 if (variables.ContainsKey(func))
                 {
                     return func;
                 }
-
+                
                 string adj = "";
+                
                 if (adjPackage.Count > 0 && !bottleneck)
                 {
                     foreach (string pack in adjPackage)
                     {
                         string var = GetVariable(pack + "." + func, true, true, recCall + 1);
+                        
                         if (var != null)
                         {
                             return var;
@@ -8429,9 +8749,9 @@ namespace JSharp
                 
                 if (output != null)
                     return output;
-                
+
                 if (!safe)
-                    throw new Exception("UNKNOW Variable (" + dir +"/"+ func + ") with package: "+adj);
+                    throw new Exception("UNKNOW Variable (" + dir + "/" + func + ") with package: " + adj);
                 else
                     return null;
             }

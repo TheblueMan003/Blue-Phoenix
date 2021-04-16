@@ -17,12 +17,12 @@ namespace JSharp
         private static string[] blueWord = { "true", "false" };
         private static string[] importWord = { "import", "package", "using","as" };
         private static string[] selector = { "@a", "@e", "@p", "@s", "@r" };
-        private static string[] defWord = { "def", "class", "object", "if", "ifs", "then", "else", "elseif", "elif", "elsif",
+        private static string[] defWord = { "def", "class", "initer", "object", "if", "ifs", "then", "else", "elseif", "elif", "elsif",
             "while", "for", "with", "forgenerate", "interface", "foreach" , "return", "&&", "||", "at",
-            "switch", "case", "const","final","override",
+            "switch", "case", "const","final","override", "virtual",
             "struct", "extends", "static", "positioned", "lazy", "abstract", "this", "align", "alias",
             "ticking", "loading", "helper", "void", "null", "enum", "blocktags", "public", "private",
-            "new", "external", "jsonfile", "require", "indexed", "predicate"};
+            "new", "external", "jsonfile", "require", "indexed", "predicate", };
 
         private static List<string> enums = new List<string>();
         private static List<string> structs = new List<string>();
