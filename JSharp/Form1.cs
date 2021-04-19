@@ -1092,6 +1092,12 @@ namespace JSharp
                     if (textArr[i].Contains("}"))
                         shift += textArr[i].Split('}').Length - textArr[i].Split('{').Length;
 
+                    if (textArr[i].Contains(")"))
+                        shift += textArr[i].Split(')').Length - textArr[i].Split('(').Length;
+
+                    if (textArr[i].Contains("]"))
+                        shift += textArr[i].Split(']').Length - textArr[i].Split('[').Length;
+
                     for (int j = 0; j < chars.Count - shift; j++)
                     {
                         text += "\t";
@@ -1118,11 +1124,28 @@ namespace JSharp
                         {
                             chars.Push(c);
                         }
+                        else if (c == '(' && !inComment && !inString)
+                        {
+                            chars.Push(c);
+                        }
+                        else if (c == '[' && !inComment && !inString)
+                        {
+                            chars.Push(c);
+                        }
                         else if (c == '}' && !inComment && !inString && chars.Pop() != '{')
                         {
                             chars.Pop();
                         }
+                        else if (c == ')' && !inComment && !inString && chars.Pop() != '(')
+                        {
+                            chars.Pop();
+                        }
+                        else if (c == ']' && !inComment && !inString && chars.Pop() != '[')
+                        {
+                            chars.Pop();
+                        }
                     }
+                    /*
                     if (reg.Match(textArr[i]).Success && !textArr[i].Contains("{"))
                     {
                         softCond++;
@@ -1132,7 +1155,7 @@ namespace JSharp
                     {
                         chars.Pop();
                         softCond -= 1;
-                    }
+                    }*/
                 }
                 CodeBox.Text = text;
             }

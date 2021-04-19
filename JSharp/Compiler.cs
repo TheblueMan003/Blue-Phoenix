@@ -462,7 +462,20 @@ namespace JSharp
 
                     string res;
                     if (isInLazyCompile == 0)
-                        res = parseLine(line);
+                    {
+                        res = "";
+                        if (smartContains(line, ';'))
+                        {
+                            foreach (string subline in smartSplit(line, ';'))
+                            {
+                                res += parseLine(subline)+"\n";
+                            }
+                        }
+                        else
+                        {
+                            res = parseLine(line);
+                        }
+                    }
                     else
                     {
                         res = "";
@@ -792,7 +805,7 @@ namespace JSharp
         }
         public static string desugar(string text)
         {
-            text = text.Replace("$projectName", Project.ToLower()).Replace("$projectVersion", projectVersion.ToString());
+            text = desugarParenthis(text).Replace("$projectName", Project.ToLower()).Replace("$projectVersion", projectVersion.ToString());
             Match match;
             text = ifelseDetect(text);
             
@@ -847,6 +860,96 @@ namespace JSharp
             }
             
             return text;
+        }
+        public static string desugarParenthis(string text)
+        {
+            int ind = 0;
+            int parInd = 0;
+            string current = "";
+            bool inString = false;
+            bool ignoreNext = false;
+            bool needSplitter = false;
+            Stack<bool> isFunkyLamba = new Stack<bool>();
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '(' && !inString && !ignoreNext)
+                {
+                    parInd++;
+                    current += text[i];
+                }
+                else if (text[i] == ')' && !inString && !ignoreNext)
+                {
+                    parInd--;
+                    current += text[i];
+                }
+                else if (text[i] == '{' && !inString && !ignoreNext)
+                {
+                    ind++; ;
+                    current += text[i];
+                    isFunkyLamba.Push(true);
+                    needSplitter = false;
+                }
+                else if (text[i] == '}' && !inString && !ignoreNext)
+                {
+                    ind--;
+                    isFunkyLamba.Pop();
+                    current += text[i];
+                }
+                else if (text[i] == ':' && !inString && !ignoreNext && ind > 0)
+                {
+                    isFunkyLamba.Pop();
+                    isFunkyLamba.Push(false);
+                    current += text[i];
+                }
+                else if (text[i] == '\\' && !ignoreNext)
+                {
+                    ignoreNext = true;
+                    current += text[i];
+                }
+                else if (text[i] == '"' && !ignoreNext)
+                {
+                    if (inString)
+                    {
+                        current += text[i];
+                        inString = false;
+                    }
+                    else
+                    {
+                        current += text[i];
+                        inString = true;
+                    }
+                }
+                else if (text[i] == '\n' && parInd > 0)
+                {
+                    if (ind > 0) {
+                        bool funky = true;
+                        foreach(bool b in isFunkyLamba)
+                        {
+                            funky = b && funky;
+                        }
+                        if (funky && needSplitter)
+                        {
+                            current += ";";
+                        }
+                    }
+                }
+                else if (ignoreNext)
+                {
+                    ignoreNext = false;
+                    current += text[i];
+                }
+                else if (text[i] == ' ' || text[i] == '\t' || text[i] == '\n')
+                {
+                    current += text[i];
+                }
+                else
+                {
+                    current += text[i];
+                    needSplitter = true;
+                }
+            }
+            return current;
         }
         public static string evalDesugar(string text)
         {
@@ -1345,6 +1448,10 @@ namespace JSharp
                 if (val.Contains("=>"))
                 {
                     return instLamba(val, variable);
+                }
+                else if (val.StartsWith("{"))
+                {
+                    return instLamba("=>"+val, variable);
                 }
                 else if (op == "#=" && int.TryParse(val, out intVal))
                 {
@@ -4474,7 +4581,8 @@ namespace JSharp
                 if (i < variable.outputs.Count - 1)
                     func += ", ";
             }
-            func += "{";
+            if (!smartContains(para[1],'{'))
+                func += "{";
 
             if (para[1].Contains("return") || variable.outputs.Count==0)
             {
@@ -4484,10 +4592,12 @@ namespace JSharp
             {
                 content += para[1] + ")";
             }
-            
+
             preparseLine(func);
-            preparseLine(content);
+            preparseLine(smartExtract(content));
             preparseLine("}");
+
+            
 
             return eval(lambda, variable, variable.type, "=");
         }
@@ -5851,6 +5961,11 @@ namespace JSharp
                 preparseLine(getCodeBlock(text));
                 preparseLine("}");
                 autoIndented = 0;
+            }
+            if (text.Contains("{") && !smartEndWith(text, "}"))
+            {
+                preparseLine(getCodeBlock(text+"}"));
+                autoIndented = 2;
             }
         }
         public static int getOpenCharIndex(string text, char d)
