@@ -1096,7 +1096,7 @@ namespace JSharp
                     {
                         text += "\t";
                     }
-                    text += textArr[i].Replace("\t", "");
+                    text += Compiler.smartExtract(textArr[i].Replace("\t", ""));
                     if (i < textArr.Length - 1)
                         text += "\n";
 

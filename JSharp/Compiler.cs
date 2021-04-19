@@ -1374,6 +1374,10 @@ namespace JSharp
                 
                 if (getStruct(val.Replace("(", " ")) != null)
                 {
+                    if (stru1.isClass)
+                    {
+                        Structure.DerefObject(variable);
+                    }
                     output += parseLine(variable.gameName + ".__init__" + val.Substring(val.IndexOf('('), val.LastIndexOf(')') - val.IndexOf('(') + 1));
                 }
                 else
@@ -1382,11 +1386,16 @@ namespace JSharp
                     {
                         return Core.VariableOperation(variable, valVar, "=");
                     }
-                    else if (op == "=")
+                    else if (op == "=" && variable != valVar)
                     {
                         if (stru1.isClass)
                         {
                             Structure stru2 = structs[valVar.enums];
+
+                            output = "";
+
+                            Structure.DerefObject(variable);
+                            Structure.RefObject(valVar);
 
                             output += Core.VariableOperation(variable, valVar, "=");
                             if (stru2 != stru1)
@@ -2920,7 +2929,7 @@ namespace JSharp
 
                 if (type == Type.INT || type == Type.FUNCTION || type == Type.FLOAT)
                 {
-                    Variable valVar = GetVariableByName(value);
+                    Variable valVar = GetVariableByName(value, true);
                     if (valVar != null)
                     {
                         compVal[compVal.Count - 1].Add(name + ".enums", valVar.enums);
@@ -6894,6 +6903,8 @@ namespace JSharp
                     structCompVarPointer = compVal[compVal.Count - 1];
 
                     context.Parent();
+                    if (isClass)
+                        Structure.DerefObject(varOwner);
                     output += parseLine(v+".__init__" + instArg);
                     context.Sub(v, new File("", ""));
                     compVal[compVal.Count - 1] = structCompVarPointer;
@@ -6963,6 +6974,30 @@ namespace JSharp
                 {
                     return classInitBase;
                 }
+            }
+            public static void DerefObject(Variable variable)
+            {
+                preparseLine("__class_pointer__ #= " + variable.gameName);
+                preparseLine("with(@e[tag=__class__],false,__CLASS__==__class_pointer__){");
+                preparseLine("__ref--");
+                preparseLine("if (__ref <= 0){");
+                if (IsFunction(variable.gameName.ToLower() + ".__destroy__"))
+                {
+                    preparseLine(variable.gameName + ".__destroy__()");
+                }
+                else
+                {
+                    preparseLine("/kill @s");
+                }
+                preparseLine("}");
+                preparseLine("}");
+            }
+            public static void RefObject(Variable variable)
+            {
+                preparseLine("__class_pointer__ #= " + variable.gameName);
+                preparseLine("with(@e[tag=__class__],false,__CLASS__==__class_pointer__){");
+                preparseLine("__ref++");
+                preparseLine("}");
             }
         }
         public class Variable

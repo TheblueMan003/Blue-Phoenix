@@ -37,7 +37,10 @@ namespace JSharp
             offuscationMap.Clear();
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
-                offuscationMap[row.Cells[0].ToString()] = row.Cells[1].ToString();
+                if (row.Cells[0].Value != null && row.Cells[0].Value.ToString() != "")
+                {
+                    offuscationMap[row.Cells[0].Value.ToString()] = row.Cells[1].Value.ToString();
+                }
             }
             Close();
         }
