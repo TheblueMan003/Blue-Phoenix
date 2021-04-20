@@ -62,7 +62,6 @@ namespace JSharp
         private static int currentLine;
         public delegate void Debug(object o, Color c);
         public static Debug GlobalDebug;
-        public static int subDir = 256;
         public static string Project;
         public static int autoIndented = 0;
         public static bool inGenericStruct;
@@ -135,12 +134,15 @@ namespace JSharp
         private static CompilerSetting compilerSetting;
         private static int maxRecCall = 300;
         private static bool muxAdding;
+        private static bool callStackDisplay;
 
         private Compiler() { }
 
         public static List<File> compile(CompilerCore core,string project, List<File> codes, List<File> resources, Debug debug,
                                             CompilerSetting setting, ProjectVersion version, string pctFolder)
         {
+            DateTime startTime = DateTime.Now;
+
             callTrace = "digraph "+project+" {\nmain\nload\nhelper\n";
             Core = core;
             projectVersion = version;
@@ -224,15 +226,10 @@ namespace JSharp
                 mainFile = new File("main", "");
                 mainFile.AddScoreboardDefLine(Core.MainBase());
                 files.Add(mainFile);
-                /*
-                preparseLine("int __cls_pointer__");
-                preparseLine("INT __ins_pointer__");
-                */
+
                 stringInit();
-                foreach (File f in codes)
-                {
-                    compileFile(f);
-                }
+
+                compileFiles(codes);
 
                 FunctionCreate();
                 ConstCreate();
@@ -283,7 +280,8 @@ namespace JSharp
                 }
                 
                 callTrace += "}";
-                
+
+                GlobalDebug("Total Compile Time: " + (DateTime.Now - startTime).TotalMilliseconds.ToString()+"ms",Color.Aqua);
                 
                 return returnFiles;
             }
@@ -296,11 +294,25 @@ namespace JSharp
         }
         public static string getStackCall(CompilerCore core, string project, List<File> codes, List<File> resources, Debug debug, CompilerSetting setting, ProjectVersion version, string pctFolder)
         {
+            callStackDisplay = true;
             compile(core, project, codes, resources, debug, setting, projectVersion, pctFolder);
+            callStackDisplay = false;
             return callTrace;
         }
 
-        private static void compileFile(File f, bool notUsed = false, bool import = false)
+        private static void compileFiles(List<File> files, bool notUsed = false, bool import = false)
+        {
+            List<Task<string[]>> tasks = new List<Task<string[]>>();
+            foreach(File f in files)
+            {
+                tasks.Add(Task<string[]>.Factory.StartNew(() => desugar(f.content).Split('\n')));
+            }
+            for (int i = 0; i < files.Count; i++)
+            {
+                compileFile(files[i], tasks[i].Result, notUsed, import);
+            }
+        }
+        private static void compileFile(File f, string[] desugaredContent, bool notUsed = false, bool import = false)
         {
             structStack = new Stack<Structure>();
             packageMap = new Dictionary<string, string>();
@@ -346,8 +358,8 @@ namespace JSharp
                 context = new Context(Project, f.name, fFile);
                 callingFunctName = "load";
             }
-            
-            string[] lines = desugar(f.content).Split('\n');
+
+            string[] lines = desugaredContent;
 
             currentPackage = fFile.name;
             adjPackage = new Stack<string>();
@@ -418,7 +430,7 @@ namespace JSharp
         {
             string line = line2;
 
-            if (compVal.Count > 0 && !(dualCompVar.Match(line).Success && structInstCompVar)) {
+            if (compVal.Count > 0 && line.Contains("$") && !(dualCompVar.Match(line).Success && structInstCompVar)) {
                 line = compVarReplace(line);
             }
             if (jsonIndent > 0)
@@ -865,7 +877,7 @@ namespace JSharp
         {
             int ind = 0;
             int parInd = 0;
-            string current = "";
+            StringBuilder stringBuilder = new StringBuilder(text.Length);
             bool inString = false;
             bool ignoreNext = false;
             bool needSplitter = false;
@@ -876,17 +888,17 @@ namespace JSharp
                 if (text[i] == '(' && !inString && !ignoreNext)
                 {
                     parInd++;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == ')' && !inString && !ignoreNext)
                 {
                     parInd--;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '{' && !inString && !ignoreNext)
                 {
                     ind++; ;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                     isFunkyLamba.Push(true);
                     needSplitter = false;
                 }
@@ -894,29 +906,29 @@ namespace JSharp
                 {
                     ind--;
                     isFunkyLamba.Pop();
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == ':' && !inString && !ignoreNext && ind > 0)
                 {
                     isFunkyLamba.Pop();
                     isFunkyLamba.Push(false);
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '\\' && !ignoreNext)
                 {
                     ignoreNext = true;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '"' && !ignoreNext)
                 {
                     if (inString)
                     {
-                        current += text[i];
+                        stringBuilder.Append(text[i]);
                         inString = false;
                     }
                     else
                     {
-                        current += text[i];
+                        stringBuilder.Append(text[i]);
                         inString = true;
                     }
                 }
@@ -930,26 +942,26 @@ namespace JSharp
                         }
                         if (funky && needSplitter)
                         {
-                            current += ";";
+                            stringBuilder.Append(";");
                         }
                     }
                 }
                 else if (ignoreNext)
                 {
                     ignoreNext = false;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == ' ' || text[i] == '\t' || text[i] == '\n')
                 {
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else
                 {
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                     needSplitter = true;
                 }
             }
-            return current;
+            return stringBuilder.ToString();
         }
         public static string evalDesugar(string text)
         {
@@ -1083,10 +1095,12 @@ namespace JSharp
                     }
                 }
 
+                List<File> nFiles = new List<File>();
                 foreach (var file in project.files)
                 {
-                    compileFile(new File(text + "." + file.name, file.content), fu, true);
+                    nFiles.Add(new File(text + "." + file.name, file.content));
                 }
+                compileFiles(nFiles, fu, true);
 
                 imported.Add(text);
                 forcedUnsed = false;
@@ -1360,7 +1374,7 @@ namespace JSharp
                 {
                     foreach (Variable struV in structs[variable.enums].fields)
                     {
-                        output += parseLine(desugar(variable.gameName + "." + struV.name + "= null"));
+                        output += parseLine(variable.gameName + "." + struV.name + "= null");
                     }
                 }
             }
@@ -2503,78 +2517,80 @@ namespace JSharp
         }
         public static Function GetFunction(string funcName, string[] input_args, bool lambda = false)
         {
-            Function funObj = null;
-            bool numericalOnly = true;
-            lambda = false;
-
-            bool debug = false;
-
-            string[] args = new string[input_args.Length + (lambda ? 1 : 0)];
-
-            for (int i = 0; i < input_args.Length; i++)
-            {
-                args[i] = input_args[i];
-            }
-            if (lambda)
-                args[args.Length - 1] = "__lambda__";
-
-            if (args.Length == 1 && isString(args[0]))
-            {
-                foreach (string arg in smartSplitJson(extractString(args[0]), ' '))
-                {
-                    numericalOnly = numericalOnly && (float.TryParse(arg, out float _) || arg.StartsWith("~") || arg.StartsWith("^"));
-                }
-            }
-            else
-            {
-                foreach (string arg in args)
-                {
-                    numericalOnly = numericalOnly && (float.TryParse(arg, out float _) || arg.StartsWith("~") || arg.StartsWith("^"));
-                }
-            }
-
             if (functions[funcName].Count == 1)
             {
-                funObj = functions[funcName][0];
+                return functions[funcName][0];
             }
             else
             {
+                Function funObj = null;
+                bool numericalOnly = true;
+                lambda = false;
+
+                string[] args = new string[input_args.Length + (lambda ? 1 : 0)];
+                for (int i = 0; i < input_args.Length; i++)
+                {
+                    args[i] = input_args[i];
+                }
+                bool argIsString = args.Length > 0 ? isString(args[0]) : false;
+
+
+                if (lambda)
+                    args[args.Length - 1] = "__lambda__";
+
+                if (argIsString)
+                {
+                    foreach (string arg in smartSplitJson(extractString(args[0]), ' '))
+                    {
+                        numericalOnly = numericalOnly && (float.TryParse(arg, out float _) || arg.StartsWith("~") || arg.StartsWith("^"));
+                    }
+                }
+                else
+                {
+                    foreach (string arg in args)
+                    {
+                        numericalOnly = numericalOnly && (float.TryParse(arg, out float _) || arg.StartsWith("~") || arg.StartsWith("^"));
+                    }
+                }
+
+                Type[] argType = new Type[args.Length];
+                for (int i = 0; i < args.Length; i++)
+                {
+                    try
+                    {
+                        argType[i] = getExprType(args[i]);
+                    }
+                    catch {
+                        argType[i] = Type.UNKNOWN;
+                    }
+                }
+
                 foreach (Function f in functions[funcName])
                 {
                     if (funObj == null)
                     {
                         bool isGood = f.argNeeded <= args.Length && f.maxArgNeeded >= args.Length;
 
-                        if (debug)
-                            GlobalDebug(f.gameName + "<1>" + isGood.ToString() + " in " + f.argNeeded.ToString() + ".." + f.maxArgNeeded.ToString(), Color.Yellow);
-
                         if (!numericalOnly && f.lazy && f.tags.Contains("__numerical_only__"))
                             isGood = false;
 
                         for (int i = 0; i < args.Length; i++)
                         {
-                            try
-                            {
-                                if (getExprType(args[i]) != f.args[i].type ||
-                                    (f.lazy && f.args[i].name.StartsWith("$") && !f.tags.Contains("__numerical_only__")))
-                                {
-                                    isGood = false;
-                                }
-                            }
-                            catch (Exception e)
+                            if (i >= f.args.Count || argType[i] != f.args[i].type ||
+                                (f.lazy && f.args[i].isLazy && !f.tags.Contains("__numerical_only__")))
                             {
                                 isGood = false;
                             }
                         }
                         if (isGood)
                         {
-                            if (debug)
-                                GlobalDebug("sel 1)" + f.gameName, Color.Yellow);
                             funObj = f;
                             break;
                         }
                     }
                 }
+                if (funObj != null) { return funObj; }
+
                 foreach (Function f in functions[funcName])
                 {
                     if (funObj == null)
@@ -2586,30 +2602,24 @@ namespace JSharp
 
                         for (int i = 0; i < args.Length; i++)
                         {
-                            try
-                            {
-                                if ((getExprType(args[i]) != f.args[i].type &&
-                                    !((getExprType(args[i]) == Type.INT || getExprType(args[i]) == Type.FLOAT) &&
-                                    (f.args[i].type == Type.INT || f.args[i].type == Type.FLOAT)))
-                                    || (f.lazy && f.args[i].name.StartsWith("$") && !f.tags.Contains("__numerical_only__")))
-                                {
-                                    isGood = false;
-                                }
-                            }
-                            catch (Exception e)
+                            if (i >= f.args.Count ||
+                                (argType[i] != f.args[i].type &&
+                                !((argType[i] == Type.INT || argType[i] == Type.FLOAT) &&
+                                (f.args[i].type == Type.INT || f.args[i].type == Type.FLOAT)))
+                                || (f.lazy && f.args[i].isLazy && !f.tags.Contains("__numerical_only__")))
                             {
                                 isGood = false;
                             }
                         }
                         if (isGood)
                         {
-                            if (debug)
-                                GlobalDebug("sel 2)" + f.gameName + "-", Color.Yellow);
                             funObj = f;
                             break;
                         }
                     }
                 }
+                if (funObj != null) { return funObj; }
+                
                 foreach (Function f in functions[funcName])
                 {
                     if (funObj == null && f.lazy && args.Length == f.args.Count)
@@ -2618,30 +2628,27 @@ namespace JSharp
 
                         for (int i = 0; i < args.Length; i++)
                         {
-                            try
+                            if (argType[i] != Type.UNKNOWN && i < f.args.Count &&
+                                ((argType[i] != f.args[i].type &&
+                                !((argType[i] == Type.INT || argType[i] == Type.FLOAT) &&
+                                (f.args[i].type == Type.INT || f.args[i].type == Type.FLOAT)))
+                                || (f.lazy && f.args[i].isLazy && !f.tags.Contains("__numerical_only__"))))
                             {
-                                if ((getExprType(args[i]) != f.args[i].type &&
-                                    !((getExprType(args[i]) == Type.INT || getExprType(args[i]) == Type.FLOAT) &&
-                                    (f.args[i].type == Type.INT || f.args[i].type == Type.FLOAT)))
-                                    || (f.lazy && f.args[i].name.StartsWith("$") && !f.tags.Contains("__numerical_only__")))
-                                {
-                                    isGood = false;
-                                }
-                            }
-                            catch (Exception e)
-                            {
+                                isGood = false;
                             }
                         }
                         if (isGood)
                         {
-                            if (debug)
-                                GlobalDebug("sel 3)" + f.gameName, Color.Yellow);
                             funObj = f;
                             break;
                         }
                     }
                 }
+                if (funObj != null) { return funObj; }
+
                 bool wasEmpty = (funObj == null);
+
+                int cutOutArgsLength = (args.Length > 0)?smartSplitJson(argIsString?(extractString(args[0])):args[0], ' ').Length:0;
 
                 foreach (Function f in functions[funcName])
                 {
@@ -2659,20 +2666,14 @@ namespace JSharp
                         funObj = f;
                     }
                     if (wasEmpty && f.lazy && args.Length == 1 && f.args.Count > 1
-                        && smartSplitJson(args[0], ' ').Length >= f.args.Count - functionCount
-                        && smartSplitJson(args[0], ' ').Length <= f.args.Count)
+                        && cutOutArgsLength >= f.args.Count - functionCount
+                        && cutOutArgsLength <= f.args.Count)
                     {
                         funObj = f;
-                    }
-                    if (wasEmpty && f.lazy && args.Length == 1 && f.args.Count > 1 && isString(args[0])
-                        && smartSplitJson(extractString(args[0]), ' ').Length >= f.args.Count - functionCount
-                        && smartSplitJson(extractString(args[0]), ' ').Length <= f.args.Count)
-                    {
-                        funObj = f;
-                        if (debug)
-                            GlobalDebug("sel 4)" + f.gameName, Color.Yellow);
                     }
                 }
+                if (funObj != null) { return funObj; }
+
                 if (funObj == null)
                 {
                     string a = "";
@@ -2689,8 +2690,9 @@ namespace JSharp
                     }
                     throw new Exception("No function Found for " + funcName + " with args:" + a);
                 }
+                
+                return funObj;
             }
-            return funObj;
         }
         private static Function GetFunction(string funcName, List<Argument> args)
         {
@@ -2727,7 +2729,8 @@ namespace JSharp
                         bool isGood = true;
                         for (int i = 0; i < args.Count; i++)
                         {
-                            if (args[i].type != f.args[i].type && args[i].type != Type.INT && f.args[i].type != Type.INT && args[i].type != Type.FLOAT && f.args[i].type != Type.FLOAT)
+                            if (args[i].type != f.args[i].type && args[i].type != Type.INT && 
+                                f.args[i].type != Type.INT && args[i].type != Type.FLOAT && f.args[i].type != Type.FLOAT)
                             {
                                 isGood = false;
                             }
@@ -2928,7 +2931,7 @@ namespace JSharp
         }
         public static string CallFunctionGRP(Variable funObj, string func, string grp, string[] args, string[] outVar = null)
         {
-            string output = parseLine(desugar("__mux__" + grp + " = " + func));
+            string output = parseLine("__mux__" + grp + " = " + func);
 
             int i = 0;
             foreach (Argument a in funObj.args)
@@ -3131,44 +3134,18 @@ namespace JSharp
 
             string op = opReg.Match(text).Value;
 
-            if (text.Contains("="))
-            {
-                if (ca == Type.FUNCTION && text.Contains("<"))
-                {
-                    int f = text.IndexOf(" ", text.IndexOf(">"))+1;
-                    vari = smartEmpty(text.Substring(f, text.IndexOf(op) - f));
-                    
-                }
-                else
-                {
-                    vari = smartEmpty(text.Substring(text.IndexOf(" ") + 1,
-                        text.IndexOf(op) - text.IndexOf(" ") - 1).Replace(" ", ""));
-                }
-            }
-            else
-            {
-                if (ca == Type.FUNCTION && text.Contains("<"))
-                {
-                    int f = text.IndexOf(" ", text.IndexOf(">"))+1;
-                    vari = smartEmpty(text.Substring(f, text.Length-f));
-                }
-                else
-                {
-                    vari = smartEmpty(text.Substring(text.IndexOf(" ") + 1,
-                    text.Length - text.IndexOf(" ") - 1).Replace(" ", ""));
-                }
-            }
-
-
             Variable variable;
             string def = "dummy";
 
             string[] splited = op!="" ? 
                                 smartSplit(text.Replace(op,"="), '=', entity?2:1) : 
                                 smartSplit(text, '=', entity ? 2 : 1);
+            string[] left = smartSplit(splited[0], ' ',1);
+            vari = smartEmpty(left[left.Length-1]);
 
-            if (text.Contains("="))
+            if (splited.Length > 1)
                 def = splited[1].Replace(" ", "");
+
             bool entityFormatVar = false;
             if (float.TryParse(def, out float tmp) || ca == Type.STRUCT)
             {
@@ -3182,7 +3159,7 @@ namespace JSharp
             int index = 0;
             string[] defValue = null;
 
-            if (!entity && text.Contains("="))
+            if (!entity && splited.Length > 1)
             {
                 defValue = smartSplit(splited[1], ',');
             }
@@ -3196,7 +3173,7 @@ namespace JSharp
             }
             bool instantiated = false;
             
-            foreach (string v in smartSplit(smartEmpty(vari), ','))
+            foreach (string v in smartSplit(vari, ','))
             {
                 string prefix = context.GetVar();
                 string name = prefix+v;
@@ -3362,7 +3339,7 @@ namespace JSharp
                 }
             }
 
-            if (context.currentFile().type != "struct" && ((!entity && text.Contains("=")) ||
+            if (context.currentFile().type != "struct" && ((!entity && splited.Length > 1) ||
                      (entity && part == 2 && entityFormatVar)) && !instantiated && !isConst)
             {
                 output += modVar(vari + op + splited[1]);
@@ -3764,20 +3741,23 @@ namespace JSharp
                 {
                     loadFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
                     fFile.use();
-                    callTrace += "\"load\"->\"" + function.gameName + "\"\n";
+                    if (callStackDisplay)
+                        callTrace += "\"load\"->\"" + function.gameName + "\"\n";
                 }
 
                 if (isTicking)
                 {
                     mainFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
                     fFile.use();
-                    callTrace += "\"main\"->\"" + function.gameName + "\"\n";
+                    if (callStackDisplay)
+                        callTrace += "\"main\"->\"" + function.gameName + "\"\n";
                 }
 
                 if (isHelper)
                 {
                     fFile.use();
-                    callTrace += "\"helper\"->\"" + function.gameName + "\"\n";
+                    if (callStackDisplay)
+                        callTrace += "\"helper\"->\"" + function.gameName + "\"\n";
                 }
 
                 
@@ -3786,8 +3766,8 @@ namespace JSharp
                     if (!tag.StartsWith("__"))
                     {
                         AddToFunctionTag(function, tag);
-
-                        callTrace += "\"@" + tag.ToLower() + "\"->\"" + function.gameName + "\"\n";
+                        if (callStackDisplay)
+                            callTrace += "\"@" + tag.ToLower() + "\"->\"" + function.gameName + "\"\n";
                     }
                 }
             }
@@ -5114,17 +5094,13 @@ namespace JSharp
 
         public static string functionEval(string text, string[] outVar = null, string op = "=")
         {
-            try
+            string funcVar = smartExtract(text.Substring(0, text.IndexOf('(')));
+            var var = GetVariableByName(funcVar, true);
+            if (var != null && var.type == Type.FUNCTION && !muxAdding)
             {
-                string func = smartExtract(text.Substring(0, text.IndexOf('(')));
-                if (GetVariableByName(func).type == Type.FUNCTION && !muxAdding)
-                {
-                    return functionVarEval(text, outVar, op);
-                }
-                else
-                    throw new Exception();
+                return functionVarEval(text, outVar, op);
             }
-            catch (Exception e)
+            else
             {
                 string arg = getArg(text);
                 string[] args = smartSplitJson(arg, ',');
@@ -5145,7 +5121,7 @@ namespace JSharp
                     func = getLazyVal(func);
 
                 string output = "";
-                if (func.StartsWith("@"))
+                if (func[0]=='@')
                 {
                     string tag = func.Substring(1, func.Length - 1);
                     CreateFunctionTag(tag);
@@ -5156,7 +5132,7 @@ namespace JSharp
                 string funcName = context.GetFunctionName(func);
 
 
-                Function funObj = GetFunction(funcName, args, text.EndsWith("{") || text.EndsWith("}"));
+                Function funObj = GetFunction(funcName, args, smartContains(text,'{'));
                 if (lazyCall.Contains(funObj))
                     throw new Exception("Cannot have recursive Lazy Recursive Function.");
 
@@ -5182,7 +5158,8 @@ namespace JSharp
                         funObj.file.use();
                 }
                 context.currentFile().addChild(funObj.file);
-                callTrace += "\""+callingFunctName+"\"->\"" + funObj.gameName + "\"\n";
+                if (callStackDisplay)
+                    callTrace += "\""+callingFunctName+"\"->\"" + funObj.gameName + "\"\n";
 
                 //short notation
                 if (!funObj.lazy)
@@ -5214,6 +5191,7 @@ namespace JSharp
                 }
 
                 HashSet<string> contextVar = new HashSet<string>();
+                bool endWithAccollade = (smartEmpty(text).EndsWith("{") || smartEmpty(text).EndsWith("}"));
                 if (funObj.lazy)
                 {
                     lazyOutput.Push(new List<Variable>());
@@ -5244,13 +5222,12 @@ namespace JSharp
                     {
                         if (args.Length <= i)
                         {
-                            if (a.defValue == null && !(smartEmpty(text).EndsWith("{") && a.type == Type.FUNCTION)
-                                                    && !(smartEmpty(text).EndsWith("}") && a.type == Type.FUNCTION))
+                            if (a.defValue == null && !endWithAccollade && a.type == Type.FUNCTION)
                             {
                                 string val = context.getImpliciteVar(a);
                                 if (val != null && a.isImplicite)
                                 {
-                                    output += parseLine(desugar(a.gameName + "=" + val));
+                                    output += parseLine(a.gameName + "=" + val);
                                     if (!contextVar.Contains(a.GetTypeString()))
                                     {
                                         contextVar.Add(a.GetTypeString());
@@ -5266,8 +5243,8 @@ namespace JSharp
                                 }
                             }
                             if (a.defValue != null)
-                                output += parseLine(desugar(a.gameName + "=" + a.defValue));
-                            else if ((smartEmpty(text).EndsWith("}") || smartEmpty(text).EndsWith("{")) && a.type == Type.FUNCTION)
+                                output += parseLine(a.gameName + "=" + a.defValue);
+                            else if (endWithAccollade && a.type == Type.FUNCTION)
                             {
                                 anonymusFuncName = "lamba_" + Lambda.GetID(context.GetFun()).ToString();
 
@@ -5430,7 +5407,7 @@ namespace JSharp
                                     if (assignedArg.Contains(a))
                                         throw new Exception(a.name+" already assigned!");
                                     
-                                    output += parseLine(desugar(a.gameName + "=" + part[1]))+"\n";
+                                    output += parseLine(a.gameName + "=" + part[1])+"\n";
                                     assignedArg.Add(a);
                                     found = true;
                                 }
@@ -5440,7 +5417,7 @@ namespace JSharp
                         }
                         else
                         {
-                            output += parseLine(desugar(funObj.args[i].gameName + "=" + args[i])) + "\n";
+                            output += parseLine(funObj.args[i].gameName + "=" + args[i]) + "\n";
                             assignedArg.Add(funObj.args[i]);
                         }
                     }
@@ -5450,13 +5427,12 @@ namespace JSharp
                         {
                             if (!assignedArg.Contains(a))
                             {
-                                if (a.defValue == null && !(smartEmpty(text).EndsWith("{") && a.type == Type.FUNCTION)
-                                                        && !(smartEmpty(text).EndsWith("}") && a.type == Type.FUNCTION))
+                                if (a.defValue == null && !endWithAccollade && a.type == Type.FUNCTION)
                                 {
                                     string val = context.getImpliciteVar(a);
                                     if (val != null && a.isImplicite)
                                     {
-                                        output += parseLine(desugar(a.gameName + "=" + val));
+                                        output += parseLine(a.gameName + "=" + val);
                                         if (!contextVar.Contains(a.GetTypeString()))
                                         {
                                             contextVar.Add(a.GetTypeString());
@@ -5472,12 +5448,12 @@ namespace JSharp
                                     }
                                 }
                                 else if (a.defValue != null)
-                                    output += parseLine(desugar(a.gameName + "=" + a.defValue));
-                                else if ((smartEmpty(text).EndsWith("}") || smartEmpty(text).EndsWith("{")) && a.type == Type.FUNCTION)
+                                    output += parseLine(a.gameName + "=" + a.defValue);
+                                else if (endWithAccollade && a.type == Type.FUNCTION)
                                 {
                                     anonymusFuncName = "lamba_" + Lambda.GetID(context.GetFun()).ToString();
                                     parseLine("def abstract " + anonymusFuncName + "()");
-                                    output += parseLine(desugar(a.gameName + "=" + anonymusFuncName)) + "\n";
+                                    output += parseLine(a.gameName + "=" + anonymusFuncName) + "\n";
                                     anonymusFunc = true;
                                 }
                             }
@@ -5501,14 +5477,14 @@ namespace JSharp
                             for (int j = 0; j < funObj.outputs.Count; j++)
                             {
                                 string v = context.GetVariable(outVar[0]+"."+j.ToString());
-                                output += parseLine(desugar(v + " " + op + " " + funObj.outputs[j].gameName)) + '\n';
+                                output += parseLine(v + " " + op + " " + funObj.outputs[j].gameName) + '\n';
                             }
                         }
                         else
                         {
                             for (int j = 0; j < outVar.Length; j++)
                             {
-                                output += parseLine(desugar(outVar[j] + " " + op + " " + funObj.outputs[j].gameName)) + '\n';
+                                output += parseLine(outVar[j] + " " + op + " " + funObj.outputs[j].gameName) + '\n';
                             }
                         }
                     }
@@ -5539,14 +5515,13 @@ namespace JSharp
 
                 foreach(Variable v in lazyOutput.Peek())
                 {
-                    ouput += parseLine(desugar(v.gameName + "=" + arg[i]));
+                    ouput += parseLine(v.gameName + "=" + arg[i]);
                     i++;
                 }
             }
             else
             {
                 bool hadOutput = context.currentFile().function.outputs.Count > 0;
-                bool changeOutput = false;
                 for (int i = 0; i < arg.Length; i++)
                 {
                     if (context.GetVariable("ret_" + i.ToString(), true) == null)
@@ -5568,19 +5543,9 @@ namespace JSharp
 
                             variables.Add(name, v);
                             context.currentFile().function.outputs.Add(v);
-                            changeOutput = true;
                         }
                     }
-                    ouput += parseLine(desugar("ret_" + i.ToString() + "=" + arg[i]));
-                }
-                if (changeOutput)
-                {
-                    var m = context.currentFile().function.file;
-                    int i = "#=================================================#".Length;
-                    int j = m.content.IndexOf("#=================================================#",
-                            m.content.IndexOf("#=================================================#")+1);
-                    string t = m.content.Substring(j + i, m.content.Length - j - i);
-                    m.content = GenerateInfo(context.currentFile().function) + t;
+                    ouput += parseLine("ret_" + i.ToString() + "=" + arg[i]);
                 }
             }
             return ouput;
@@ -5658,7 +5623,7 @@ namespace JSharp
         {
             List<string> output = new List<string>();
             int ind = 0;
-            string current = "";
+            StringBuilder stringBuilder = new StringBuilder(text.Length);
             bool inString = false;
 
             for (int i = 0; i < text.Length; i++)
@@ -5666,58 +5631,58 @@ namespace JSharp
                 if (text[i] == '(' && !inString)
                 {
                     ind += 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == ')' && !inString)
                 {
                     ind -= 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '[' && !inString)
                 {
                     ind += 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == ']' && !inString)
                 {
                     ind -= 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '<' && c == ',' && !inString)
                 {
                     ind += 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '>' && c == ',' && !inString)
                 {
                     ind -= 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '"')
                 {
                     if (inString)
                     {
                         ind -= 1;
-                        current += text[i];
+                        stringBuilder.Append(text[i]);
                         inString = false;
                     }
                     else
                     {
                         ind += 1;
-                        current += text[i];
+                        stringBuilder.Append(text[i]);
                         inString = true;
                     }
                 }
                 else if (text[i] == c && ind == 0 && max != 0 && !inString)
                 {
-                    output.Add(current);
-                    current = "";
+                    output.Add(stringBuilder.ToString());
+                    stringBuilder = new StringBuilder(text.Length);
                     max--;
                 }
-                else { current += text[i]; }
+                else { stringBuilder.Append(text[i]); }
             }
-            if (current != "")
-                output.Add(current);
+            if (stringBuilder.ToString() != "")
+                output.Add(stringBuilder.ToString());
 
             return output.ToArray();
         }
@@ -5725,7 +5690,7 @@ namespace JSharp
         {
             List<string> output = new List<string>();
             int ind = 0;
-            string current = "";
+            StringBuilder stringBuilder = new StringBuilder(text.Length);
             bool inString = false;
 
             for (int i = 0; i < text.Length; i++)
@@ -5733,76 +5698,74 @@ namespace JSharp
                 if (text[i] == '(' && !inString)
                 {
                     ind += 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == ')' && !inString)
                 {
                     ind -= 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '{' && !inString)
                 {
                     ind += 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '}' && !inString)
                 {
                     ind -= 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '[' && !inString)
                 {
                     ind += 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == ']' && !inString)
                 {
                     ind -= 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '<' && c == ',' && !inString)
                 {
                     ind += 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '>' && c == ',' && !inString)
                 {
                     ind -= 1;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '"')
                 {
                     if (inString)
                     {
                         ind -= 1;
-                        current += text[i];
+                        stringBuilder.Append(text[i]);
                         inString = false;
                     }
                     else
                     {
                         ind += 1;
-                        current += text[i];
+                        stringBuilder.Append(text[i]);
                         inString = true;
                     }
                 }
                 else if (text[i] == c && ind == 0 && max != 0 && !inString)
                 {
-                    output.Add(current);
-                    current = "";
+                    output.Add(stringBuilder.ToString());
+                    stringBuilder = new StringBuilder(text.Length);
                     max--;
                 }
-                else { current += text[i]; }
+                else { stringBuilder.Append(text[i]); }
             }
-            if (current != "")
-                output.Add(current);
+            if (stringBuilder.ToString() != "")
+                output.Add(stringBuilder.ToString());
 
             return output.ToArray();
         }
         public static bool smartContains(string text, char c, int max = -1)
         {
-            List<string> output = new List<string>();
             int ind = 0;
-            string current = "";
             bool inString = false;
 
             while (text.StartsWith(" "))
@@ -5821,46 +5784,36 @@ namespace JSharp
                 if (text[i] == '(')
                 {
                     ind += 1;
-                    current += text[i];
                 }
                 else if (text[i] == ')')
                 {
                     ind -= 1;
-                    current += text[i];
                 }
                 else if (text[i] == '[')
                 {
                     ind += 1;
-                    current += text[i];
                 }
                 else if (text[i] == ']')
                 {
                     ind -= 1;
-                    current += text[i];
                 }
                 else if (text[i] == '"' && c != '"')
                 {
                     inString = !inString;
-                    current += text[i];
                 }
                 else if (text[i] == '<' && c == ',')
                 {
                     ind += 1;
-                    current += text[i];
                 }
                 else if (text[i] == '>' && c == ',')
                 {
                     ind -= 1;
-                    current += text[i];
                 }
                 else if (text[i] == c && ind == 0 && max != 0 && !inString)
                 {
                     return true;
                 }
-                else { current += text[i]; }
             }
-            if (current != "")
-                output.Add(current);
             
             return false;
         }
@@ -5876,22 +5829,22 @@ namespace JSharp
         public static string smartEmpty(string text)
         {
             int ind = 0;
-            string current = "";
+            StringBuilder stringBuilder = new StringBuilder(text.Length);
             for (int i = 0; i < text.Length; i++)
             {
                 if (text[i] == '"')
                 {
                     ind = 1 - ind;
-                    current += text[i];
+                    stringBuilder.Append(text[i]);
                 }
                 else if ((text[i] == ' ' || text[i] == '\t') && ind == 0)
                 {
 
                 }
-                else { current += text[i]; }
+                else { stringBuilder.Append(text[i]); }
             }
 
-            return current;
+            return stringBuilder.ToString();
         }
         public static string smartExtract(string text)
         {
@@ -5952,19 +5905,19 @@ namespace JSharp
         }
         public static void autoIndent(string text)
         {
-            if (!smartEndWith(text, "{"))
-            {
-                autoIndented = 2;
-            }
             if (text.Contains("{") && smartEndWith(text, "}"))
             {
                 preparseLine(getCodeBlock(text));
                 preparseLine("}");
                 autoIndented = 0;
             }
-            if (text.Contains("{") && !smartEndWith(text, "}"))
+            else if (text.Contains("{") && !smartEndWith(text, "{") && !smartEndWith(text, "}"))
             {
                 preparseLine(getCodeBlock(text+"}"));
+                autoIndented = 2;
+            }
+            else if (!smartEndWith(text, "{"))
+            {
                 autoIndented = 2;
             }
         }
@@ -6675,17 +6628,20 @@ namespace JSharp
                 if (fun.isLoading)
                 {
                     loadFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
-                    callTrace += "\"load\"->\"" + function.gameName + "\"\n";
+                    if (callStackDisplay)
+                        callTrace += "\"load\"->\"" + function.gameName + "\"\n";
                 }
                 if (fun.isTicking)
                 {
                     mainFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
-                    callTrace += "\"main\"->\"" + function.gameName + "\"\n";
+                    if (callStackDisplay)
+                        callTrace += "\"main\"->\"" + function.gameName + "\"\n";
                 }
                 if (fun.isHelper)
                 {
                     fFile.use();
-                    callTrace += "\"helper\"->\"" + function.gameName + "\"\n";
+                    if (callStackDisplay)
+                        callTrace += "\"helper\"->\"" + function.gameName + "\"\n";
                 }
                 #endregion
                 #region add to dic
@@ -7370,6 +7326,7 @@ namespace JSharp
                 var.arraySize = arraySize;
                 var.isStructureVar = isStructureVar;
                 var.score = score.Replace("@s",entitySelector);
+                var.scoreboardObj = scoreboardObj;
                 var.args = args;
                 var.outputs = outputs;
 
@@ -8151,14 +8108,17 @@ namespace JSharp
         {
             public string defValue = null;
             public bool isImplicite;
+            public bool isLazy;
             public Argument(string name, string gameName, Type type) : base(name, gameName, type)
             {
-
+                isLazy = name.StartsWith("$");
             }
             public Variable variable;
+            
         }
         public enum Type
         {
+            UNKNOWN,
             INT,
             FLOAT,
             BOOL,
@@ -8182,7 +8142,7 @@ namespace JSharp
             public string abstractContent;
             public string ending;
             public string start = "";
-            public string scoreboardDef = "";
+            public StringBuilder scoreboardDef = new StringBuilder();
             public List<string> parsed = new List<string>();
             public bool isLazy;
             public string type;
@@ -8239,7 +8199,9 @@ namespace JSharp
             }
             public void AddScoreboardDefLine(string cont)
             {
-                scoreboardDef = cont + '\n' + scoreboardDef;
+                scoreboardDef.Append(cont);
+                scoreboardDef.Append('\n');
+                //scoreboardDef = cont + '\n' + scoreboardDef;
                 if (cont.Contains('\n'))
                     lineCount += cont.Split('\n').Length - 1;
                 else
@@ -8283,33 +8245,6 @@ namespace JSharp
                         .Replace(var, value);
 
                     preparseLine(line);
-                    
-                    /*
-                    if (isInLazyCompile > 0)
-                    {
-                        if (smartContains(line, '{'))
-                            isInLazyCompile += 1;
-                        if (smartContains(line, '}'))
-                            isInLazyCompile -= 1;
-                    }
-
-                    if (isInLazyCompile > 0)
-                        context.currentFile().addParsedLine(line);
-
-                    string res;
-                    if (isInLazyCompile == 0)
-                        res = parseLine(line);
-                    else
-                    {
-                        res = "";
-                    }
-
-                    context.currentFile().AddLine(res);
-
-                    if (line == "}" && isInLazyCompile == 0)
-                    {
-                        context.currentFile().Close();
-                    }*/
                 }
 
                 genIndex++;
@@ -8369,7 +8304,7 @@ namespace JSharp
             public virtual void Close(bool debug = false)
             {
                 content = content.Replace("run  execute", "run execute");
-                content = scoreboardDef + start + content + ending;
+                content = scoreboardDef.ToString() + start + content + ending;
                 ending = "";
                 start = "";
 
@@ -8550,18 +8485,7 @@ namespace JSharp
                 isInStaticMethod = false;
                 isInLazyCompile = 0;
                 callingFunctName = function.gameName;
-                try
-                {
-                    ParenthiseError parenthiseError = checkParenthisation(parsed.ToArray());
-                    if (parenthiseError != null)
-                    {
-                        parenthiseError.throwException();
-                    }
-                }
-                catch (Exception e)
-                {
-                    throw e;
-                }
+
                 typeMaps.Push(new Dictionary<string, string>());
 
                 foreach (string key in typeMapContext.Keys)
@@ -8580,7 +8504,6 @@ namespace JSharp
                 adjPackage.Pop();
                 adjPackage.Pop();
                 UnparsedFunctionFile = false;
-                //GobalDebug("Function: "+name+" Compiled ("+ parsed.Count.ToString()+" lines)", Color.LimeGreen);
             }
         }
         public class ParenthiseError
@@ -8746,11 +8669,11 @@ namespace JSharp
             {
                 if (fakeContext != null && fakeContext != "")
                     return fakeContext;
-                string output = directories[0].Substring(0,Math.Min(subDir, directories[0].Length)) + ".";
+                string output = directories[0] + ".";
 
                 for (int i = 1; i < directories.Count; i++)
                 {
-                    output += directories[i].Substring(0, Math.Min(subDir, directories[i].Length)) + ".";
+                    output += directories[i] + ".";
                 }
 
                 return output;
@@ -8765,32 +8688,31 @@ namespace JSharp
             {
                 return files[files.Count - 1];
             }
-            public string toInternal(string value, int maxC = 2)
+            public string toInternal(string value)
             {
-                if (maxC == 2)
-                {
-                    maxC = subDir;
-                }
                 string[] v = smartEmpty(value).Split('.');
-                string output = "";
+                
+                StringBuilder stringBuilder = new StringBuilder(512);
                 for (int i = 0; i < v.Length-1; i++)
                 {
                     if (packageMap.ContainsKey(v[i]))
                     {
-                        output += packageMap[v[i]] + ".";
+                        stringBuilder.Append(packageMap[v[i]]);
+                        stringBuilder.Append(".");
                     }
                     else
                     {
-                        output += v[i].Substring(0, Math.Min(maxC, v[i].Length)) + ".";
+                        stringBuilder.Append(v[i]);
+                        stringBuilder.Append(".");
                     }
                 }
-                output += v[v.Length-1];
-                return output;
+                stringBuilder.Append(v[v.Length-1]);
+                return stringBuilder.ToString();
             }
 
             public string GetFunctionName(string func, bool safe = false, bool bottleneck = false)
             {
-                func = toInternal(smartEmpty(func).ToLower(), 256);
+                func = toInternal(smartEmpty(func).ToLower());
                 if (functions.ContainsKey(func))
                 {
                     return func;
@@ -8829,7 +8751,8 @@ namespace JSharp
 
             public bool IsFunction(string func, bool bottleneck = false)
             {
-                func = toInternal(smartEmpty(func).ToLower());
+                if (!bottleneck)
+                    func = toInternal(smartEmpty(func).ToLower());
                 
                 string var = GetVariable(func, true);
                 if (var != null)
@@ -8873,7 +8796,8 @@ namespace JSharp
 
             public string GetVariable(string func, bool safe = false, bool bottleneck = false, int recCall = 0, bool debug = false)
             {
-                func = toInternal(func.Replace(" ", ""));
+                if (recCall == 0)
+                    func = toInternal(func.Replace(" ", ""));
 
                 if (recCall > maxRecCall)
                 {
@@ -8909,7 +8833,7 @@ namespace JSharp
                 string output = null;
                 foreach (string co in directories)
                 {
-                    dir += co.Substring(0, Math.Min(subDir, co.Length)) + ".";
+                    dir += co + ".";
 
                     if (variables.ContainsKey(dir + func))
                     {
@@ -8947,7 +8871,7 @@ namespace JSharp
                 string output = null;
                 foreach (string co in directories)
                 {
-                    dir += co.Substring(0, Math.Min(subDir, co.Length)).ToLower() + ".";
+                    dir += co.ToLower() + ".";
                     if (predicates.ContainsKey(dir + func))
                     {
                         output = dir + func;
