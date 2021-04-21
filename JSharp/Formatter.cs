@@ -154,38 +154,67 @@ namespace JSharp
             reformating = false;
             }
         }
-        private static List<Word> smartReplace(string t, int start, int length)
+        private static List<List<Word>> smartReplace(string t, int start, int length)
         {
-            List<Word> words = new List<Word>(2000);
-            
+
+            List<List<Word>> words = new List<List<Word>>();
+            words.Add(new List<Word>(2000));
             foreach (ColorCoding colorCoding in colorCodings) {
                 foreach (Match match in colorCoding.r.Matches(t.Substring(start, length)))
                 {
-                    words.Add(new Word(colorCoding.c, start+match.Index, match.Length));
+                    words[0].Add(new Word(colorCoding.c, start+match.Index, match.Length));
                 }
             }
             
             return words;
         }
+        private static List<List<Word>> smartReplaceThreaded(string t, int start, int length)
+        {
+            List<Task<List< Word>>> tasks = new List<Task<List<Word>>> (colorCodings.Count);
+            List<List<Word>> words = new List<List<Word>>();
 
+            foreach (ColorCoding colorCoding in colorCodings)
+            {
+                tasks.Add(Task<List<Word>>.Factory.StartNew(() =>
+                {
+                    List<Word> words2 = new List<Word>(2000);
+                    foreach (Match match in colorCoding.r.Matches(t.Substring(start, length)))
+                    {
+                        words2.Add(new Word(colorCoding.c, start + match.Index, match.Length));
+                    }
+                    return words2;
+                }
+                ));
+            }
+            foreach (Task<List<Word>> task in tasks)
+            {
+                words.Add(task.Result);
+            }
+
+             return words;
+        }
 
         private static void CheckWords(RichTextBox CodeBox, int startIndex, int endIndex)
         {
             try
             {
-                List<Word> words = smartReplace(CodeBox.Text+"\n", startIndex, endIndex-startIndex);
+                List<List<Word>> words = endIndex - startIndex > 1000?
+                    smartReplaceThreaded(CodeBox.Text+"\n", startIndex, endIndex-startIndex):
+                    smartReplace(CodeBox.Text + "\n", startIndex, endIndex - startIndex);
 
                 int selectStart = CodeBox.SelectionStart;
-
-                foreach (Word w in words)
+                foreach (List<Word> lst in words)
                 {
-                    if (w.start >= startIndex && w.end <= endIndex)
+                    foreach (Word w in lst)
                     {
-                        CodeBox.Select(w.start, w.end);
-                        CodeBox.SelectionColor = w.color;
+                        if (w.start >= startIndex && w.end <= endIndex)
+                        {
+                            CodeBox.Select(w.start, w.end);
+                            CodeBox.SelectionColor = w.color;
+                        }
+                        else if (w.end > endIndex)
+                            break;
                     }
-                    else if (w.end > endIndex)
-                        break;
                 }
 
                 CodeBox.Select(selectStart, 0);
@@ -195,14 +224,19 @@ namespace JSharp
         }
         private static void CheckWords(RichTextBox CodeBox)
         {
-            List<Word> words = smartReplace(CodeBox.Text,0,CodeBox.Text.Length);
+            List<List<Word>> words = CodeBox.Text.Length > 1000 ?
+                    smartReplaceThreaded(CodeBox.Text + "\n", 0, CodeBox.Text.Length) :
+                    smartReplace(CodeBox.Text + "\n", 0, CodeBox.Text.Length);
 
             int selectStart = CodeBox.SelectionStart;
 
-            foreach (Word w in words)
+            foreach (List<Word> lst in words)
             {
-                CodeBox.Select(w.start, w.end);
-                CodeBox.SelectionColor = w.color;
+                foreach (Word w in lst)
+                {
+                    CodeBox.Select(w.start, w.end);
+                    CodeBox.SelectionColor = w.color;
+                }
             }
 
             CodeBox.Select(selectStart, 0);

@@ -125,6 +125,8 @@ namespace JSharp
         private static Regex dualCompVar = new Regex(@"^\$[\w\.\$]+\s*=\s*\$?[\w\.\$]+\s*");
         private static Regex requireReg = new Regex(@"^require\s+\$?\w+\s+\w+");
         private static Regex indexedReg = new Regex(@"^indexed\s+\$?\w+\s+\w+");
+        private static Regex functionTypeReg = new Regex(@"^(\([\w\,\s=>]+\)|\w+)\s*=>\s*(\([\w\,\s=>]+\)|\w+)");
+        private static Regex functionTypeRegRelaxed = new Regex(@"(\([\w\,\s=>]+\)|\w+)\s*=>\s*(\([\w\,\s=>]+\)|\w+)");
 
         private static string ConditionAlwayTrue = "=$=TRUE=$=";
         private static string ConditionAlwayFalse = "=$=False=$=";
@@ -717,7 +719,7 @@ namespace JSharp
                     return instCompilerVar(text);
                 }
                 //int set
-                else if (varInstReg.Match(text).Success)
+                else if (varInstReg.Match(text).Success || functionTypeReg.Match(text).Success)
                 {
                     return instVar(text);
                 }
@@ -962,6 +964,22 @@ namespace JSharp
                 }
             }
             return stringBuilder.ToString();
+        }
+        public static string functionDesugar(string text)
+        {
+            Match m = functionTypeReg.Match(text);
+            while (m.Success)
+            {
+                string[] part = smartSplit(m.Value.Replace("=>", "§"),'§',1);
+                part[0] = smartExtract(part[0]).Replace("§","=>");
+                part[1] = smartExtract(part[1]).Replace("§", "=>");
+
+                if (!part[0].StartsWith("(")) { part[0] = "(" + part[0] + ")"; }
+                if (!part[1].StartsWith("(")) { part[1] = "(" + part[1] + ")"; }
+                text = regReplace(text, m, "function<" + part[0] + "," + part[1] + ">");
+                m = functionTypeRegRelaxed.Match(text);
+            }
+            return text;
         }
         public static string evalDesugar(string text)
         {
@@ -1750,7 +1768,7 @@ namespace JSharp
                     }
                     catch (Exception e)
                     {
-                        throw new Exception("Error on var " + variable.gameName + " (" + variable.type.ToString() + "," + variable.enums + ") " + e.ToString());
+                        throw new Exception("Error on var " + variable.gameName + " (" + variable.GetInternalTypeString() + "," + variable.enums + ") " + e.ToString());
                     }
                 }
             }
@@ -1958,7 +1976,7 @@ namespace JSharp
                     }
                     catch (Exception e)
                     {
-                        throw new Exception("Error on var " + variable.gameName + " (" + variable.type.ToString() + "," + variable.enums + ") " + e.ToString());
+                        throw new Exception("Error on var " + variable.gameName + " (" + variable.GetInternalTypeString() + "," + variable.enums + ") " + e.ToString());
                     }
                 }
             }
@@ -2382,7 +2400,7 @@ namespace JSharp
                 else
                 {
                     int idVal3 = If.GetEval(context.GetFun());
-                    string line = parseLine(funObj.outputs[0].type.ToString().ToLower() + " cond_" + idVal3.ToString() + "=" + text);
+                    string line = parseLine(funObj.outputs[0].GetInternalTypeString() + " cond_" + idVal3.ToString() + "=" + text);
                     return appendPreCond(Core.CompareVariable(GetVariableByName("cond_" + idVal3.ToString()), 1, ">="), line);
                 }
             }
@@ -2768,44 +2786,12 @@ namespace JSharp
 
         public static string GetFunctionGRP(Function func)
         {
-            string grp = "m";
-
-            foreach (Argument arg2 in func.args)
-            {
-                if (arg2.enums == null)
-                    grp += arg2.type.ToString().ToLower();
-                else
-                    grp += arg2.enums.ToLower();
-            }
-            grp += ".m";
-            foreach (Variable arg2 in func.outputs)
-            {
-                if (arg2.enums == null)
-                    grp += arg2.type.ToString().ToLower();
-                else
-                    grp += arg2.enums.ToLower();
-            }
+            string grp = func.GetInternalFunctionTypeString();
             return grp;
         }
         public static string GetFunctionGRP(Variable func)
         {
-            string grp = "m";
-
-            foreach (Argument arg2 in func.args)
-            {
-                if (arg2.enums == null)
-                    grp += arg2.type.ToString().ToLower();
-                else
-                    grp += arg2.enums.ToLower();
-            }
-            grp += ".m";
-            foreach (Variable arg2 in func.outputs)
-            {
-                if (arg2.enums == null)
-                    grp += arg2.type.ToString().ToLower();
-                else
-                    grp += arg2.enums.ToLower();
-            }
+            string grp = func.GetInternalFunctionTypeString();
             return grp;
         }
         public static void CreateFunctionGRP(Variable variable,string grp)
@@ -2957,6 +2943,42 @@ namespace JSharp
                 }
             }
             return output;
+        }
+        public static string GetLambdaFunctionArgs(string[] args1, List<Argument> args)
+        {
+            string anonymusFuncNameArg = "(";
+            int i = 0;
+            foreach (Argument v in args)
+            {
+                if (args1 != null && i < args1.Length)
+                {
+                    args1[i] = smartExtract(args1[i]);
+                    string[] s = smartSplit(args1[i], ' ');
+                    anonymusFuncNameArg += v.GetInternalTypeString() + " " + s[s.Length - 1];
+                }
+                else
+                {
+                    anonymusFuncNameArg += v.GetInternalTypeString() + " " + v.name;
+                }
+
+                if (i < args.Count - 1)
+                    anonymusFuncNameArg += ", ";
+                i++;
+            }
+            anonymusFuncNameArg += ")";
+            return anonymusFuncNameArg;
+        }
+        public static string GetLambdaFunctionReturn(List<Variable> outputs)
+        {
+            int i = 0;
+            string func = "";
+            foreach (Variable v in outputs)
+            {
+                func += v.GetInternalTypeString();
+                if (i < outputs.Count - 1)
+                    func += ", ";
+            }
+            return func;
         }
 
         public static File CreateFunctionTag(string tag)
@@ -3126,7 +3148,8 @@ namespace JSharp
                     text = text.Substring(1, text.Length - 1);
                 }
             }
-            
+
+            text = functionDesugar(text);
 
             ca = getType(text);
 
@@ -3236,54 +3259,7 @@ namespace JSharp
 
                     if (ca == Type.FUNCTION && text.Contains(">") && text.Contains("<"))
                     {
-                        string[] typeArg = smartSplit(text.Substring(text.IndexOf("<") + 1, text.IndexOf(" ", text.IndexOf(">"))- text.IndexOf("<") - 1), ',');
-                        if (typeArg.Length > 0)
-                        {
-                            int i = 0;
-                            foreach (string s in getArgs(typeArg[0]))
-                            {
-                                Type type = getType(s + " ");
-                                Argument arg = new Argument(i.ToString(), name + "." + i.ToString(), type);
-                                Variable var2 = new Variable(i.ToString(), name + "." + i.ToString(), type);
-                                AddVariable(name + "." + i.ToString(), var2);
-                                variable.args.Add(arg);
-
-                                if (type == Type.STRUCT)
-                                {
-                                    var2.SetEnum(getStruct(s + " "));
-                                    arg.SetEnum(getStruct(s + " "));
-                                }
-                                if (type == Type.ENUM)
-                                {
-                                    var2.SetEnum(getEnum(s + " "));
-                                    arg.SetEnum(getEnum(s + " "));
-                                }
-
-                                i++;
-                            }
-                        }
-                        if (typeArg.Length > 1)
-                        {
-                            int i = 0;
-                            foreach (string s in getArgs(typeArg[1]))
-                            {
-                                Type type = getType(s + " ");
-                                Variable var2 = new Variable(i.ToString(), name + ".ret_" + i.ToString(), type);
-                                AddVariable(name + ".ret_" + i.ToString(), var2);
-                                variable.outputs.Add(var2);
-
-                                if (type == Type.STRUCT)
-                                {
-                                    var2.SetEnum(getStruct(s + " "));
-                                }
-                                if (type == Type.ENUM)
-                                {
-                                    var2.SetEnum(getEnum(s + " "));
-                                }
-
-                                i++;
-                            }
-                        }
+                        instFunctionVar(variable, splited[0], name);
                     }
                 }
                 else
@@ -3350,6 +3326,73 @@ namespace JSharp
             }
 
             return output;
+        }
+        public static void instFunctionVar(Variable variable, string text, string name)
+        {
+            string[] typeArg = smartSplit(text.Substring(text.IndexOf("<") + 1, text.LastIndexOf(">") - text.IndexOf("<") - 1), ',');
+            if (typeArg.Length > 0)
+            {
+                int i = 0;
+                foreach (string s in getArgs(typeArg[0]))
+                {
+                    Type type = getType(s + " ");
+                    if (type == Type.VOID)
+                    {
+                        break;
+                    }
+                    Argument arg = new Argument(i.ToString(), name + "." + i.ToString(), type);
+                    Variable var2 = new Variable(i.ToString(), name + "." + i.ToString(), type);
+                    if (type == Type.FUNCTION)
+                    {
+                        instFunctionVar(var2, s, name + "." + i.ToString());
+                    }
+                    AddVariable(name + "." + i.ToString(), var2);
+                    variable.args.Add(arg);
+
+                    if (type == Type.STRUCT)
+                    {
+                        var2.SetEnum(getStruct(s + " "));
+                        arg.SetEnum(getStruct(s + " "));
+                    }
+                    if (type == Type.ENUM)
+                    {
+                        var2.SetEnum(getEnum(s + " "));
+                        arg.SetEnum(getEnum(s + " "));
+                    }
+
+                    i++;
+                }
+            }
+            if (typeArg.Length > 1)
+            {
+                int i = 0;
+                foreach (string s in getArgs(typeArg[1]))
+                {
+                    Type type = getType(s + " ");
+                    if (type == Type.VOID)
+                    {
+                        break;
+                    }
+                    Variable var2 = new Variable(i.ToString(), name + ".ret_" + i.ToString(), type);
+                    if (type == Type.FUNCTION)
+                    {
+                        instFunctionVar(var2, s, name + "." + i.ToString());
+                    }
+                    AddVariable(name + ".ret_" + i.ToString(), var2);
+                    variable.outputs.Add(var2);
+
+                    if (type == Type.STRUCT)
+                    {
+                        var2.SetEnum(getStruct(s + " "));
+                    }
+                    if (type == Type.ENUM)
+                    {
+                        var2.SetEnum(getEnum(s + " "));
+                    }
+
+                    i++;
+                }
+            }
         }
         public static string instFuncDesc(string text)
         {
@@ -3628,8 +3671,9 @@ namespace JSharp
                     throw new Exception("Illegal Syntax");
                 string[] ret = tmp[1].Replace(" ", "").Split(',');
                 int i = 0;
-                foreach (string r in ret)
+                foreach (string a in ret)
                 {
+                    string r = functionDesugar(a);
                     Type ca = getType(r + " ");
                     if (ca != Type.VOID)
                     {
@@ -3642,8 +3686,9 @@ namespace JSharp
             if (outputType.Count > 0)
             {
                 int i = 0;
-                foreach (string r in outputType)
+                foreach (string a in outputType)
                 {
+                    string r = functionDesugar(a);
                     Type ca = getType(r + " ");
                     if (ca != Type.VOID)
                     {
@@ -3654,9 +3699,11 @@ namespace JSharp
                 }
             }
 
-            foreach (string a in args)
+            foreach (string z in args)
             {
+                string a = functionDesugar(z);
                 string c = a.Replace("="," ");
+
                 while (c.StartsWith(" "))
                 {
                     c = c.Substring(1, c.Length - 1);
@@ -3676,7 +3723,7 @@ namespace JSharp
                 {
                     string t = smartSplit(c, ' ')[0];
                     string name = smartSplit(c, ' ')[1];
-                    
+
                     Type type = getType(a + " ");
 
                     Argument b = new Argument(name, context.GetInput() + name, type);
@@ -4525,10 +4572,10 @@ namespace JSharp
         {
             string[] para = text.Replace("=>", "\\").Split('\\');
             string lambda = "lamba_" + Lambda.GetID(context.GetFun()).ToString();
-            string func = "def "+lambda + "(";
+            string func = "def "+lambda;
             string content = "return(";
 
-            if (para[0].Contains("("))
+            if (smartEmpty(para[0]).StartsWith("("))
             {
                 para[0] = getArg(para[0]);
             }
@@ -4540,44 +4587,35 @@ namespace JSharp
             {
                 para[0] = para[0].Substring(1, para[0].Length - 1);
             }
-            string[] args = smartSplit(para[0], ' ');
+            string[] args = smartSplit(para[0], ',');
+            if (args.Length > variable.args.Count)
+            {
+                throw new Exception("To Much argument for Lambda");
+            }
 
-            int i = 0;
-            foreach (Argument v in variable.args)
-            {
-                func += v.type.ToString().ToLower() + " " + args[i];
-                if (i < args.Length - 1)
-                    func += ", ";
-            }
-            func += ")";
-            if (variable.outputs.Count > 0)
-            {
-                func += ":";
-            }
-            i = 0;
-            foreach (Variable v in variable.outputs)
-            {
-                func += v.type.ToString().ToLower();
-                if (i < variable.outputs.Count - 1)
-                    func += ", ";
-            }
-            if (!smartContains(para[1],'{'))
-                func += "{";
+            func += GetLambdaFunctionArgs(args,variable.args);
+            if (variable.outputs.Count > 0){func += ":";}
+            func += GetLambdaFunctionReturn(variable.outputs);
+
+            func += "{";
 
             if (para[1].Contains("return") || variable.outputs.Count==0)
             {
-                content = para[1];
+                content = smartExtract(para[1]);
             }
             else
             {
-                content += para[1] + ")";
+                content += smartExtract(para[1]) + ")";
             }
 
             preparseLine(func);
-            preparseLine(smartExtract(content));
+            if (content.StartsWith("{"))
+                preparseLine(getCodeBlock(content));
+            else
+                preparseLine(content);
+
             preparseLine("}");
 
-            
 
             return eval(lambda, variable, variable.type, "=");
         }
@@ -5104,10 +5142,11 @@ namespace JSharp
             {
                 string arg = getArg(text);
                 string[] args = smartSplitJson(arg, ',');
-
+                
                 string func;
                 bool anonymusFunc = false;
                 string anonymusFuncName = "";
+                string anonymusFuncNameArg = "()";
 
                 if (smartContains(text,'='))
                 {
@@ -5248,7 +5287,9 @@ namespace JSharp
                             {
                                 anonymusFuncName = "lamba_" + Lambda.GetID(context.GetFun()).ToString();
 
-                                parseLine("def abstract __lambda__ " + anonymusFuncName + "()");
+                                anonymusFuncNameArg = GetLambdaFunctionArgs(null, a.variable.args);
+
+                                parseLine("def abstract __lambda__ " + anonymusFuncName + anonymusFuncNameArg);
 
                                 compVal[compVal.Count-1].Add(a.name + ".name", functions[context.GetFunctionName(anonymusFuncName)][0].gameName);
                                 if (a.name.StartsWith("$"))
@@ -5452,7 +5493,10 @@ namespace JSharp
                                 else if (endWithAccollade && a.type == Type.FUNCTION)
                                 {
                                     anonymusFuncName = "lamba_" + Lambda.GetID(context.GetFun()).ToString();
-                                    parseLine("def abstract " + anonymusFuncName + "()");
+
+                                    anonymusFuncNameArg = GetLambdaFunctionArgs(null, a.variable.args);
+
+                                    parseLine("def abstract " + anonymusFuncName + anonymusFuncNameArg);
                                     output += parseLine(a.gameName + "=" + anonymusFuncName) + "\n";
                                     anonymusFunc = true;
                                 }
@@ -5491,7 +5535,7 @@ namespace JSharp
                     if (anonymusFunc)
                     {
                         context.currentFile().AddLine(output);
-                        parseLine("def " + anonymusFuncName + "(){");
+                        parseLine("def " + anonymusFuncName + anonymusFuncNameArg+"{");
                         if (smartEmpty(text).EndsWith("}"))
                         {
                             preparseLine(getCodeBlock(text));
@@ -5797,6 +5841,14 @@ namespace JSharp
                 {
                     ind -= 1;
                 }
+                else if (text[i] == '{' && c != '{' && c != '}')
+                {
+                    ind += 1;
+                }
+                else if (text[i] == '}' && c != '}' && c != '{')
+                {
+                    ind -= 1;
+                }
                 else if (text[i] == '"' && c != '"')
                 {
                     inString = !inString;
@@ -5860,7 +5912,22 @@ namespace JSharp
         }
         public static string getArg(string text)
         {
-               return text.Substring(text.IndexOf('(') + 1, getCloseCharIndex(text,')') - text.IndexOf('(') - 1);
+            int opIndex = getOpenCharIndex(text, '(');
+            return text.Substring(opIndex + 1, getCloseCharIndex(text,')') - opIndex - 1);
+        }
+        public static string[] getArgs(string text)
+        {
+            string[] args = smartSplitJson(getArg(text), ',');
+            for (int i = 0; i < args.Length; i++)
+            {
+                args[i] = smartExtract(args[i]);
+            }
+            return args;
+        }
+        public static string getFunctionName(string text)
+        {
+            int opIndex = getOpenCharIndex(text, '(');
+            return text.Substring(0,opIndex - 1);
         }
         public static string getParenthis(string text, int max = -1, int recCall = 0)
         {
@@ -5894,15 +5961,6 @@ namespace JSharp
             
             //return text;
         }
-        public static string[] getArgs(string text)
-        {
-            string[] args = smartSplitJson(getArg(text), ',');
-            for (int i = 0; i < args.Length; i++)
-            {
-                args[i] = smartExtract(args[i]);
-            }
-            return args;
-        }
         public static void autoIndent(string text)
         {
             if (text.Contains("{") && smartEndWith(text, "}"))
@@ -5925,6 +5983,7 @@ namespace JSharp
         {
             int indent = 0;
             int index = 0;
+            int returnVal = -1;
             foreach(char c in text)
             {
                 if (c == '{' && d != c)
@@ -5934,7 +5993,10 @@ namespace JSharp
                 else if (c == '{' && d == c)
                 {
                     if (indent == 0)
-                        return index;
+                    {
+                        returnVal = index;
+                        indent++;
+                    }
                     else
                         indent++;
                 }
@@ -5949,7 +6011,10 @@ namespace JSharp
                 else if (c == '(' && d == c)
                 {
                     if (indent == 0)
-                        return index;
+                    {
+                        returnVal = index;
+                        indent++;
+                    }
                     else
                         indent++;
                 }
@@ -5960,7 +6025,10 @@ namespace JSharp
                 else if (c == '<' && d == c )
                 {
                     if (indent == 0)
-                        return index;
+                    {
+                        returnVal = index;
+                        indent++;
+                    }
                 }
                 else if (c == '>' && d == '<')
                 {
@@ -5973,7 +6041,10 @@ namespace JSharp
                 else if (c == '[' && d == c)
                 {
                     if (indent == 0)
-                        return index;
+                    {
+                        returnVal = index;
+                        indent++;
+                    }
                     else
                         indent++;
                 }
@@ -5984,7 +6055,7 @@ namespace JSharp
 
                 index++;
             }
-            return -1;
+            return returnVal;
         }
         public static int getCloseCharIndex(string text, char d)
         {
@@ -6449,6 +6520,31 @@ namespace JSharp
             public override string ToString()
             {
                 return gameName;
+            }
+
+            public string GetInternalFunctionTypeString()
+            {
+                string args2 = "";
+                int i = 0;
+                foreach (Argument arg in args)
+                {
+                    if (i < args.Count - 1)
+                        args2 += arg.GetInternalFunctionTypeString() + "_and_";
+                    else
+                        args2 += arg.GetInternalFunctionTypeString();
+                    i++;
+                }
+                string outs = "";
+                i = 0;
+                foreach (Variable arg in outputs)
+                {
+                    if (i < outputs.Count - 1)
+                        outs += arg.GetInternalFunctionTypeString() + "_and_";
+                    else
+                        args2 += arg.GetInternalFunctionTypeString();
+                    i++;
+                }
+                return "func_from_" + args2 + "_to_" + outs + "_func";
             }
         }
         public class Structure
@@ -7355,6 +7451,72 @@ namespace JSharp
                 else
                     return type.ToString();
             }
+            public string GetInternalTypeString()
+            {
+                if (type == Type.ENUM || type == Type.STRUCT)
+                {
+                    return enums;
+                }
+                else if (type == Type.FUNCTION)
+                {
+                    string args2 = "";
+                    int i = 0;
+                    foreach (Argument arg in args)
+                    {
+                        if (i < args.Count-1)
+                            args2 += arg.GetInternalTypeString() + ",";
+                        else
+                            args2 += arg.GetInternalTypeString();
+                        i++;
+                    }
+                    string outs = "";
+                    i = 0;
+                    foreach (Variable arg in outputs)
+                    {
+                        if (i < outputs.Count - 1)
+                            outs += arg.GetInternalTypeString() + ",";
+                        else
+                            args2 += arg.GetInternalTypeString();
+                        i++;
+                    }
+                    return type.ToString().ToLower() + "<(" + args2 + "),(" + outs + ")>";
+                }
+                else
+                    return type.ToString().ToLower();
+            }
+            public string GetInternalFunctionTypeString()
+            {
+                if (type == Type.ENUM || type == Type.STRUCT)
+                {
+                    return enums;
+                }
+                else if (type == Type.FUNCTION)
+                {
+                    string args2 = "";
+                    int i = 0;
+                    foreach (Argument arg in args)
+                    {
+                        if (i < args.Count - 1)
+                            args2 += arg.GetInternalFunctionTypeString() + "_and_";
+                        else
+                            args2 += arg.GetInternalFunctionTypeString();
+                        i++;
+                    }
+                    string outs = "";
+                    i = 0;
+                    foreach (Variable arg in outputs)
+                    {
+                        if (i < outputs.Count - 1)
+                            outs += arg.GetInternalFunctionTypeString() + "_and_";
+                        else
+                            args2 += arg.GetInternalFunctionTypeString();
+                        i++;
+                    }
+                    return type.ToString().ToLower() + "_from_" + args2 + "_to_" + outs + "_func";
+                }
+                else
+                    return type.ToString().ToLower();
+            }
 
             public void use(){
                 if (!entity)
@@ -7659,6 +7821,13 @@ namespace JSharp
                 this.text = text;
                 this.id = id;
                 CreateVariable(text);
+                treeBottom = compilerSetting.TreeMaxSize;
+            }
+            public Switch(Variable var, int id)
+            {
+                this.text = var.name;
+                this.id = id;
+                variable = var;
                 treeBottom = compilerSetting.TreeMaxSize;
             }
             public Switch(string text,string[] sizes,int id)
@@ -8495,10 +8664,24 @@ namespace JSharp
                 adjPackage.Push(function.package);
                 adjPackage.Push(function.structure);
 
+                if (function != null && function.args.Count == 1)
+                {
+                    switches.Push(new Switch(function.args[0], -1));
+                }
+                int i = 0;
                 foreach (string line in parsed)
                 {
+                    currentLine = i;
                     preparseLine(line);
+                    i++;
                 }
+
+                if (function != null && function.args.Count == 1)
+                {
+                    Switch s = switches.Pop();
+                    context.currentFile().AddLine(s.Compile());
+                }
+
                 typeMaps.Pop();
                 context.currentFile().Close();
                 adjPackage.Pop();
