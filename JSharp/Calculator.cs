@@ -26,50 +26,35 @@ namespace JSharp
                     if (part.Length > 1)
                     {
                         float a = 0, b = 0;
-                        Task<bool> task1 = Task<bool>.Factory.StartNew(() => TryCalculate(part[0],out a));
-                        Task<bool> task2 = Task<bool>.Factory.StartNew(() => TryCalculate(part[1],out b));
+                        a = Calculate(part[0]);
+                        b = Calculate(part[1]);
 
                         if (xop == "*")
                         {
-                            if (task1.Result && task2.Result)
-                                return a * b;
-                            else
-                                throw new Exception("Calculation Error: " + val);
+                            return a * b;
                         }
                         if (xop == "/")
                         {
-                            if (task1.Result && task2.Result)
-                                return a / b;
-                            else
-                                throw new Exception("Calculation Error: " + val);
+                            return a / b;
                         }
                         if (xop == "-")
                         {
-                            if (task1.Result && task2.Result)
-                                return a - b;
-                            else
-                                throw new Exception("Calculation Error: " + val);
+                            return a - b;
                         }
                         if (xop == "+")
                         {
-                            if (task1.Result && task2.Result)
-                                return a + b;
-                            else
-                                throw new Exception("Calculation Error: " + val);
+                            return a + b;
                         }
                         if (xop == "%")
                         {
-                            if (task1.Result && task2.Result)
-                                return a % b;
-                            else
-                                throw new Exception("Calculation Error: " + val);
+                            return a % b;
                         }
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
-                throw new Exception("Calculation Error: " + val);
+                throw new Exception("Calculation Error: " + val+e.ToString());
             }
             throw new Exception("Calculation Error: "+val);
         }
@@ -80,7 +65,7 @@ namespace JSharp
                 a = Calculate(val);
                 return true;
             }
-            catch(Exception e)
+            catch
             {
                 a = 0;
                 return false;

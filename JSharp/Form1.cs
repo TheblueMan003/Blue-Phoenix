@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BluePhoenix;
 
 namespace JSharp
 {
@@ -27,6 +28,7 @@ namespace JSharp
         public Dictionary<string, string> structures = new Dictionary<string, string>();
         public ProjectVersion projectVersion = new ProjectVersion();
         public Compiler.CompilerSetting compilerSetting = new Compiler.CompilerSetting();
+        public ResourcesPackEditor ResourcesPackEditor;
         public string projectDescription;
         
         private string previous = "load";
@@ -841,6 +843,11 @@ namespace JSharp
                 SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/blocks/" + key + ".json",
                         JsonConvert.SerializeObject(Compiler.blockTags[key]));
             }
+            foreach (string key in Compiler.entityTags.Keys)
+            {
+                SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/entity_types/" + key + ".json",
+                        JsonConvert.SerializeObject(Compiler.entityTags[key]));
+            }
         }
         public void ExportReadMe(string path)
         {
@@ -1578,6 +1585,14 @@ namespace JSharp
         {
             FunctionPreview fp = new FunctionPreview(Compiler.blockTags);
             fp.Show();
+        }
+
+        private void resourcesPackEditorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!Directory.Exists(Path.GetDirectoryName(projectPath) + "/resourcespack"))
+                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack");
+            ResourcesPackEditor = new ResourcesPackEditor(Path.GetDirectoryName(projectPath) + "/resourcespack");
+            ResourcesPackEditor.Show();
         }
     }
 }

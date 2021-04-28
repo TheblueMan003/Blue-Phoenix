@@ -83,6 +83,7 @@
             this.button12 = new System.Windows.Forms.Button();
             this.button13 = new System.Windows.Forms.Button();
             this.button14 = new System.Windows.Forms.Button();
+            this.resourcesPackEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -285,6 +286,7 @@
             // 
             this.projectToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newFileToolStripMenuItem,
+            this.resourcesPackEditorToolStripMenuItem,
             this.compileOrderToolStripMenuItem,
             this.tagsToolStripMenuItem,
             this.structuresToolStripMenuItem,
@@ -360,7 +362,7 @@
             // getCallStackTraceToolStripMenuItem
             // 
             this.getCallStackTraceToolStripMenuItem.Name = "getCallStackTraceToolStripMenuItem";
-            this.getCallStackTraceToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.getCallStackTraceToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.getCallStackTraceToolStripMenuItem.Text = "Get Call Stack Trace";
             this.getCallStackTraceToolStripMenuItem.Click += new System.EventHandler(this.getCallStackTraceToolStripMenuItem_Click);
             // 
@@ -643,6 +645,13 @@
             this.button14.UseVisualStyleBackColor = false;
             this.button14.Click += new System.EventHandler(this.button14_Click);
             // 
+            // resourcesPackEditorToolStripMenuItem
+            // 
+            this.resourcesPackEditorToolStripMenuItem.Name = "resourcesPackEditorToolStripMenuItem";
+            this.resourcesPackEditorToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.resourcesPackEditorToolStripMenuItem.Text = "Resources Pack Editor";
+            this.resourcesPackEditorToolStripMenuItem.Click += new System.EventHandler(this.resourcesPackEditorToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -742,6 +751,7 @@
         private System.Windows.Forms.Button button12;
         private System.Windows.Forms.Button button13;
         private System.Windows.Forms.Button button14;
+        private System.Windows.Forms.ToolStripMenuItem resourcesPackEditorToolStripMenuItem;
     }
 }
 
