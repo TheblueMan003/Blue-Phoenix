@@ -16,10 +16,11 @@ namespace JSharp
 
         private static void loadDict()
         {
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             if (!dicLoaded)
             {
                 dicLoaded = true;
-                foreach (string l in File.ReadAllLines("nbt_map.txt"))
+                foreach (string l in File.ReadAllLines(path+"nbt_map.txt"))
                 {
                     if (l.Contains("="))
                     {

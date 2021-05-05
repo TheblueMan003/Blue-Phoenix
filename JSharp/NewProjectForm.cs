@@ -29,9 +29,10 @@ namespace JSharp
 
         private void NewProjectForm_Load(object sender, EventArgs e)
         {
-            if (File.Exists("project.old"))
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            if (File.Exists(path+"project.old"))
             {
-                foreach (string s in File.ReadAllLines("project.old")) listBox1.Items.Add(s);
+                foreach (string s in File.ReadAllLines(path + "project.old")) listBox1.Items.Add(s);
             }
         }
 

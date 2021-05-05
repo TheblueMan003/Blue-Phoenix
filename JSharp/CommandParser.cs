@@ -29,15 +29,16 @@ namespace JSharp
             if (!loaded)
             {
                 loaded = true;
-                difficulties = File.ReadAllLines("cmd_data/difficulty.txt");
-                effects = File.ReadAllLines("cmd_data/effect.txt");
-                gamemodes = File.ReadAllLines("cmd_data/gamemode.txt");
-                names = File.ReadAllLines("cmd_data/names.txt");
-                scoreboards = File.ReadAllLines("cmd_data/scoreboard.txt");
-                sounds = File.ReadAllLines("cmd_data/sounds.txt");
-                cmds = File.ReadAllLines("cmd_data/colors/grp_1.txt");
-                grp2 = File.ReadAllLines("cmd_data/colors/grp_2.txt");
-                foreach (string gr in File.ReadAllLines("cmd_data/gamerule.txt"))
+                string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)+"/";
+                difficulties = File.ReadAllLines(path+"cmd_data/difficulty.txt");
+                effects = File.ReadAllLines(path + "cmd_data/effect.txt");
+                gamemodes = File.ReadAllLines(path + "cmd_data/gamemode.txt");
+                names = File.ReadAllLines(path + "cmd_data/names.txt");
+                scoreboards = File.ReadAllLines(path + "cmd_data/scoreboard.txt");
+                sounds = File.ReadAllLines(path + "cmd_data/sounds.txt");
+                cmds = File.ReadAllLines(path + "cmd_data/colors/grp_1.txt");
+                grp2 = File.ReadAllLines(path + "cmd_data/colors/grp_2.txt");
+                foreach (string gr in File.ReadAllLines(path + "cmd_data/gamerule.txt"))
                 {
                     string[] c = gr.Split('	');
                     if (c.Length > 3 && c[4] == "Yes")

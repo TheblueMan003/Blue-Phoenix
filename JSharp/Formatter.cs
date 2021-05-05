@@ -13,7 +13,7 @@ namespace JSharp
     {
         private static string[] funKeyword = { "debug" ,"print"};
         private static string[] typKeyword = { "int", "float", "entity", "string", "bool", "function", "selector"};
-        private static string[] compKeyword = { "json", "params", "implicite"};
+        private static string[] compKeyword = { "json", "params", "implicite", "define"};
         private static string[] blueWord = { "true", "false" };
         private static string[] importWord = { "import", "package", "using","as" };
         private static string[] selector = { "@a", "@e", "@p", "@s", "@r" };
@@ -33,7 +33,7 @@ namespace JSharp
         private static List<string> defWordMore2 = new List<string>();
 
         private static Regex numberRegex = new Regex(@"(-?\b)(\d+\.\d+|\d+)\b");
-        private static Regex wordRegex = new Regex("(\"[^\\n\"]+\"|\"\")");
+        private static Regex wordRegex = new Regex("(\"(([^\\n\"]*(\\\")*)*)+\"|\"\")");
         private static Regex commentRegex = new Regex(@"(?s)(//[^\n]*|/\*[^*]*\*/)");
         private static Regex funcDocRegex = new Regex("(?s)\"\"\"[^\"\"\"]*\"\"\"");
         private static List<ColorCoding> colorCodings = new List<ColorCoding>();
@@ -70,7 +70,7 @@ namespace JSharp
 
             colorCodings.Add(ColorCoding.GetSelector(selector, Color.LightBlue));
             colorCodings.Add(new ColorCoding(Color.Gray, commentRegex));
-            colorCodings.Add(new ColorCoding(Color.FromArgb(0, 128, 14), wordRegex));
+            //colorCodings.Add(new ColorCoding(Color.FromArgb(0, 128, 14), wordRegex));
             colorCodings.Add(new ColorCoding(Color.LightYellow, funcDocRegex));
         }
         public static void setEnum(List<string> keys)

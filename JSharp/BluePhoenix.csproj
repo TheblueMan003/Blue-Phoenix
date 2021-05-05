@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Calculator.cs" />
+    <Compile Include="CMD_Compile.cs" />
     <Compile Include="ColorTextBox.cs">
       <SubType>Component</SubType>
     </Compile>

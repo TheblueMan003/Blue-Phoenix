@@ -11,7 +11,7 @@ namespace JSharp
         public static float Calculate(string val)
         {
             string[] part;
-            string[] operations = new string[] { "+", "-", "%", "/", "*" };
+            string[] operations = new string[] { "+", "-", "%", "/", "*", "^" };
 
             string val2 = Compiler.getParenthis(val, 1);
 
@@ -21,7 +21,7 @@ namespace JSharp
             {
                 foreach (string xop in operations)
                 {
-                    part = Compiler.smartSplit(val2, xop[0], 2);
+                    part = Compiler.smartSplit(val2, xop[0], 1);
 
                     if (part.Length > 1)
                     {
@@ -29,6 +29,10 @@ namespace JSharp
                         a = Calculate(part[0]);
                         b = Calculate(part[1]);
 
+                        if (xop == "^")
+                        {
+                            return (float)Math.Pow(a,b);
+                        }
                         if (xop == "*")
                         {
                             return a * b;

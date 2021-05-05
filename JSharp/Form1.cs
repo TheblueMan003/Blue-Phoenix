@@ -313,8 +313,8 @@ namespace JSharp
         {
             try
             {
-                Open(name, File.ReadAllText(name));
                 projectPath = name;
+                Open(name, File.ReadAllText(name));
                 Text = projectName + " - TBMScript";
             }
             catch (Exception error)
