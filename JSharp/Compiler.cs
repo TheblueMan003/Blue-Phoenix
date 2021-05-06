@@ -133,7 +133,7 @@ namespace JSharp
         private static Regex regEval2 = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.\(\)\s]*\)eval\$");
         private static Regex forgenInLineReg = new Regex(@"forgenerate\([^\(\)]*\)\{[^\{\}]*\}");
         private static Regex dualCompVar = new Regex(@"^\$[\w\.\$]+\s*=\s*\$?[\w\.\$]+\s*");
-        private static Regex requireReg = new Regex(@"^require\s+\$?\w+\s+\w+");
+        private static Regex requireReg = new Regex(@"^require\s+\$?\w+\s+[\w\=\<\>]+");
         private static Regex indexedReg = new Regex(@"^indexed\s+\$?\w+\s+\w+");
         private static Regex functionTypeReg = new Regex(@"^(\([\w\,\s=>]+\)|\w+)\s*=>\s*(\([\w\,\s=>]+\)|\w+)");
         private static Regex functionTypeRegRelaxed = new Regex(@"(\([\w\,\s=>]+\)|\w+)\s*=>\s*(\([\w\,\s=>]+\)|\w+)");
@@ -4982,6 +4982,7 @@ namespace JSharp
             {
                 string comVar = args[1];
                 string value = compVarReplace(comVar);
+                string msg = args.Length > 4?args[4]:"";
                 
                 if (args[2] == "in")
                 {
@@ -4995,7 +4996,23 @@ namespace JSharp
                     }
                     else if (!enums[getEnum(args[3])].valuesName.Contains(value.ToLower()))
                     {
-                        throw new Exception("Fail requirement: " + value + " must be in enum " + args[3]);
+                        throw new Exception("Fail requirement: " + value + " must be in enum " + args[3]+" Message: "+ msg);
+                    }
+                }
+                else if (args[2] == "<" || args[2] == "<=" || args[2] == ">=" || args[2] == ">" || args[2] == "==")
+                {
+                    float valRight = float.Parse(smartExtract(evalDesugar(compVarReplace(args[3]))));
+                    float valLeft = float.Parse(smartExtract(evalDesugar(value)));
+                    bool valid = false;
+                    if (args[2] == "<" && valLeft < valRight) { valid = true; }
+                    if (args[2] == "<=" && valLeft <= valRight) { valid = true; }
+                    if (args[2] == ">" && valLeft > valRight) { valid = true; }
+                    if (args[2] == ">=" && valLeft >= valRight) { valid = true; }
+                    if (args[2] == "==" && valLeft == valRight) { valid = true; }
+                    
+                    if (!valid)
+                    {
+                        throw new Exception("Fail requirement: " + value + " "+args[2]+" " + args[3] + " Message: " + msg);
                     }
                 }
                 else
