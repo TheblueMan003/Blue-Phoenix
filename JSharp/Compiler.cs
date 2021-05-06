@@ -99,6 +99,9 @@ namespace JSharp
         private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9\- ,_=:/\\\.""'!\[\]]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9/\\\- ,_=:\.""'!:\[\]\(\)]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9/\\\- ,_=""'\[\]!:\(\)]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9/\\\- ,_=:\.""'\[\]!\(\)]*\))?,?\s*)*\})");
         private static Regex blocktagsDesugarReg = new Regex(@"(?s)(blocktags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|blocktags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex entitytagsDesugarReg = new Regex(@"(?s)(entitytags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|entitytags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
+        private static Regex itemtagsDesugarReg = new Regex(@"(?s)(itemtags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|itemtags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
+        private static Regex entitytagsReplaceReg = new Regex(@"type=#\w+");
+        private static Regex entitytagsReplaceReg2 = new Regex(@"type=!#\w+");
         private static Regex ifsDesugarReg = new Regex(@"(?s)^(if\s*\(.*\)\{.*\}\s*else)|(if\s*\(.*\).*\s*else)");
         private static Regex funArgTypeReg = new Regex(@"^([@\w\.]*\s*(<\(?\w*\)?,?\(?\w*\)?>)?(\[\d+\])?)*\(");
         private static Regex arraySizeReg = new Regex(@"(?:\[)\d+(?:\])");
@@ -473,10 +476,6 @@ namespace JSharp
                 {
                     if (!lazyEval)
                     {
-                        /*
-                        if (isInStructMethod)
-                            structMethodFile.addParsedLine(line);*/
-
                         if (inGenericStruct)
                             structStack.Peek().genericFile.addParsedLine(line);
                     }
@@ -931,6 +930,15 @@ namespace JSharp
                     match.Value.Replace("{", "=").Replace("\n", "").Replace("}", ""));
 
                 match = entitytagsDesugarReg.Match(text);
+            }
+
+            match = itemtagsDesugarReg.Match(text);
+            while (match != null && match.Value != "")
+            {
+                text = regReplace(text, match,
+                    match.Value.Replace("{", "=").Replace("\n", "").Replace("}", ""));
+
+                match = itemtagsDesugarReg.Match(text);
             }
 
             return text;
@@ -9468,6 +9476,16 @@ namespace JSharp
                 {
                     if (!Core.isValidSelector(value))
                         throw new Exception("Invalid Selctor "+value);
+                    Match m = entitytagsReplaceReg.Match(value);
+                    if (m.Success)
+                    {
+                        value = regReplace(value, m, m.Value.Replace("=#", "=#" + Project));
+                    }
+                    m = entitytagsReplaceReg2.Match(value);
+                    if (m.Success)
+                    {
+                        value = regReplace(value, m, m.Value.Replace("=!#", "=!#" + Project));
+                    }
                     return smartEmpty(value);
                 }
                 else if (single)

@@ -32,8 +32,8 @@ namespace JSharp
         private static List<string> defWordMore1 = new List<string>();
         private static List<string> defWordMore2 = new List<string>();
 
-        private static Regex numberRegex = new Regex(@"(-?\b)(\d+\.\d+|\d+)\b");
-        private static Regex wordRegex = new Regex("(\"(([^\\n\"]*(\\\")*)*)+\"|\"\")");
+        private static Regex numberRegex = new Regex(@"(-?\b)(\d+\.\d+|\d+)[bldsf]?\b");
+        private static Regex wordRegex = new Regex("\"(([^\\n\"]+)*(\\\\\")*)*\"");
         private static Regex commentRegex = new Regex(@"(?s)(//[^\n]*|/\*[^*]*\*/)");
         private static Regex funcDocRegex = new Regex("(?s)\"\"\"[^\"\"\"]*\"\"\"");
         private static List<ColorCoding> colorCodings = new List<ColorCoding>();
@@ -42,7 +42,13 @@ namespace JSharp
 
         public static void loadDict()
         {
+            Color cClass = Color.FromArgb(68,201,162);
+            Color cFunction = Color.FromArgb(124, 220, 240);
+            Color cString = Color.FromArgb(218, 105, 26);
+            Color cKeyword = Color.FromArgb(255, 255, 200);
+
             colorCodings = new List<ColorCoding>();
+            colorCodings.Add(ColorCoding.GetSelector(selector, Color.LightBlue));
             colorCodings.Add(ColorCoding.Get(blueWord, Color.Aqua));
             colorCodings.Add(ColorCoding.Get(importWord, Color.FromArgb(74, 156, 199)));
             colorCodings.Add(ColorCoding.Get(CommandParser.funcName, Color.FromArgb(0, 185, 255)));
@@ -54,23 +60,22 @@ namespace JSharp
             colorCodings.Add(ColorCoding.GetSelector(tags.ToArray(), Color.Magenta));
 
             
-            colorCodings.Add(ColorCoding.Get(CommandParser.names, Color.Orange));
-            colorCodings.Add(ColorCoding.Get(CommandParser.scoreboards, Color.Orange));
-            colorCodings.Add(ColorCoding.Get(CommandParser.effects, Color.Orange));
-            colorCodings.Add(ColorCoding.Get(CommandParser.gamerules.ToArray(), Color.Orange));
-            colorCodings.Add(ColorCoding.Get(CommandParser.sounds, Color.Orange));
+            colorCodings.Add(ColorCoding.Get(CommandParser.names, cKeyword));
+            colorCodings.Add(ColorCoding.Get(CommandParser.scoreboards, cKeyword));
+            colorCodings.Add(ColorCoding.Get(CommandParser.effects, cKeyword));
+            colorCodings.Add(ColorCoding.Get(CommandParser.gamerules.ToArray(), cKeyword));
+            colorCodings.Add(ColorCoding.Get(CommandParser.sounds, cKeyword));
             
 
             colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex));
-            colorCodings.Add(ColorCoding.Get(structs.ToArray(), Color.LimeGreen));
-            colorCodings.Add(ColorCoding.Get(defWordMore2.ToArray(), Color.LightSteelBlue));
+            colorCodings.Add(ColorCoding.Get(structs.ToArray(), cClass));
+            colorCodings.Add(ColorCoding.Get(defWordMore2.ToArray(), cFunction));
             colorCodings.Add(ColorCoding.GetPackage(package.ToArray(), Color.LightSteelBlue));
-            colorCodings.Add(ColorCoding.Get(enums.ToArray(), Color.LimeGreen));
+            colorCodings.Add(ColorCoding.Get(enums.ToArray(), cClass));
             colorCodings.Add(ColorCoding.Get(enumsValue.ToArray(), Color.LightGreen));
 
-            colorCodings.Add(ColorCoding.GetSelector(selector, Color.LightBlue));
             colorCodings.Add(new ColorCoding(Color.Gray, commentRegex));
-            //colorCodings.Add(new ColorCoding(Color.FromArgb(0, 128, 14), wordRegex));
+            colorCodings.Add(new ColorCoding(cString, wordRegex));
             colorCodings.Add(new ColorCoding(Color.LightYellow, funcDocRegex));
         }
         public static void setEnum(List<string> keys)
