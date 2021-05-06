@@ -848,6 +848,11 @@ namespace JSharp
                 SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/entity_types/" + key + ".json",
                         JsonConvert.SerializeObject(Compiler.entityTags[key]));
             }
+            foreach (string key in Compiler.itemTags.Keys)
+            {
+                SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/items/" + key + ".json",
+                        JsonConvert.SerializeObject(Compiler.itemTags[key]));
+            }
         }
         public void ExportReadMe(string path)
         {

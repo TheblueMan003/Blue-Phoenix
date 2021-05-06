@@ -22,6 +22,7 @@ namespace JSharp
         public static Dictionary<string, Structure> structs;
         public static Dictionary<string, TagsList> blockTags;
         public static Dictionary<string, TagsList> entityTags;
+        public static Dictionary<string, TagsList> itemTags;
         public static Dictionary<string, List<Predicate>> predicates;
         public static Dictionary<string, List<string>> functionTags;
 
@@ -121,6 +122,7 @@ namespace JSharp
         private static Regex enumFileReg = new Regex(@"^(\w+\s+)*enum\s*(\([a-zA-Z0-9\. ,_=" + "\"" + @"]*\))\s*");
         private static Regex blocktagReg = new Regex(@"^blocktags\s+\w+\s*=");
         private static Regex entitytagReg = new Regex(@"^entitytags\s+\w+\s*=");
+        private static Regex itemtagReg = new Regex(@"^itemtags\s+\w+\s*=");
         private static Regex varInstReg = new Regex(@"^[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+[\w\$\.]+\s*");
         private static Regex compVarInstReg = new Regex(@"^[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+\$[\w\$\.]+\s*=");
         private static Regex elseReg = new Regex(@"^else\s*");
@@ -160,6 +162,14 @@ namespace JSharp
             for (int i = 0; i < 11; i++)
             {
                 pow64[i] = IntPow(alphabet.Length, i);
+            }
+            foreach(File f in resources)
+            {
+                f.content = f.content.Replace("\r", "");
+            }
+            foreach (File f in codes)
+            {
+                f.content = f.content.Replace("\r", "");
             }
             dirVar = project.Substring(0, Math.Min(4, project.Length));
 
@@ -211,6 +221,7 @@ namespace JSharp
                 structStack = new Stack<Structure>();
                 blockTags = new Dictionary<string, TagsList>();
                 entityTags = new Dictionary<string, TagsList>();
+                itemTags = new Dictionary<string, TagsList>();
                 resourceFiles = new Dictionary<string, string>();
                 compVal = new List<Dictionary<string, string>>();
                 ExtensionClassStack = new Stack<string>();
@@ -738,6 +749,11 @@ namespace JSharp
                 else if (entitytagReg.Match(text).Success)
                 {
                     return instEntityTag(text);
+                }
+                //itemTag set
+                else if (itemtagReg.Match(text).Success)
+                {
+                    return instItemTag(text);
                 }
                 //comp int set
                 else if (compVarInstReg.Match(text).Success || dualCompVar.Match(text).Success)
@@ -4414,12 +4430,18 @@ namespace JSharp
                         if (value.StartsWith("-"))
                         {
                             if (blockTags[name].values.Contains(value.Substring(1, value.Length - 1)))
-                               blockTags[name].values.Remove(value.Substring(1, value.Length - 1));
+                                blockTags[name].values.Remove(value.Substring(1, value.Length - 1));
                         }
                         else if (value.StartsWith("+"))
-                            blockTags[name].values.Add(value.Substring(1, value.Length - 1));
+                        {
+                            if (!blockTags[name].values.Contains(value.Substring(1, value.Length - 1)))
+                                blockTags[name].values.Add(value.Substring(1, value.Length - 1));
+                        }
                         else
-                            blockTags[name].values.Add(value);
+                        {
+                            if (!blockTags[name].values.Contains(value))
+                                blockTags[name].values.Add(value);
+                        }
                     }
                 }
                 else
@@ -4437,7 +4459,7 @@ namespace JSharp
         {
             string[] field = smartSplit(smartEmpty(text), '=');
 
-            string name = smartEmpty(field[0].ToLower().Replace("entitytag", ""));
+            string name = smartEmpty(field[0].ToLower().Replace("entitytags", ""));
             if (field.Length > 1)
             {
                 if (entityTags.ContainsKey(name))
@@ -4450,9 +4472,15 @@ namespace JSharp
                                 entityTags[name].values.Remove(value.Substring(1, value.Length - 1));
                         }
                         else if (value.StartsWith("+"))
-                            entityTags[name].values.Add(value.Substring(1, value.Length - 1));
+                        {
+                            if (!entityTags[name].values.Contains(value.Substring(1, value.Length - 1)))
+                                entityTags[name].values.Add(value.Substring(1, value.Length - 1));
+                        }
                         else
-                            entityTags[name].values.Add(value);
+                        {
+                            if (!entityTags[name].values.Contains(value))
+                                entityTags[name].values.Add(value);
+                        }
                     }
                 }
                 else
@@ -4463,6 +4491,45 @@ namespace JSharp
             else if (!entityTags.ContainsKey(name))
             {
                 entityTags.Add(name, new TagsList(new List<string>()));
+            }
+            return "";
+        }
+        public static string instItemTag(string text)
+        {
+            string[] field = smartSplit(smartEmpty(text), '=');
+
+            string name = smartEmpty(field[0].ToLower().Replace("itemtags", ""));
+            if (field.Length > 1)
+            {
+                if (itemTags.ContainsKey(name))
+                {
+                    foreach (string value in smartSplit(field[1].ToLower(), ','))
+                    {
+                        if (value.StartsWith("-"))
+                        {
+                            if (itemTags[name].values.Contains(value.Substring(1, value.Length - 1)))
+                                itemTags[name].values.Remove(value.Substring(1, value.Length - 1));
+                        }
+                        else if (value.StartsWith("+"))
+                        {
+                            if (!itemTags[name].values.Contains(value.Substring(1, value.Length - 1)))
+                                itemTags[name].values.Add(value.Substring(1, value.Length - 1));
+                        }
+                        else
+                        {
+                            if (!itemTags[name].values.Contains(value))
+                                itemTags[name].values.Add(value);
+                        }
+                    }
+                }
+                else
+                {
+                    itemTags.Add(name, new TagsList(new List<string>(smartSplit(field[1].ToLower(), ','))));
+                }
+            }
+            else if (!itemTags.ContainsKey(name))
+            {
+                itemTags.Add(name, new TagsList(new List<string>()));
             }
             return "";
         }
