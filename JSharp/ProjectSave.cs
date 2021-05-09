@@ -10,6 +10,7 @@ namespace JSharp
     {
         public string projectName;
         public string datapackDirectory;
+        public string resourcesPackDirectory;
         public bool offuscate;
         public bool isLibrary;
         public string description = "Made With BluePhoenix";

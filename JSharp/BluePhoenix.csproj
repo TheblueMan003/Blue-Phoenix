@@ -47,6 +47,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -120,12 +121,19 @@
     <Compile Include="GameruleForm.Designer.cs">
       <DependentUpon>GameruleForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ImageGenerator.cs" />
     <Compile Include="NBT_Data.cs" />
     <Compile Include="NewFile.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="NewFile.Designer.cs">
       <DependentUpon>NewFile.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NewItem.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NewItem.Designer.cs">
+      <DependentUpon>NewItem.cs</DependentUpon>
     </Compile>
     <Compile Include="NewProjectForm.cs">
       <SubType>Form</SubType>
@@ -205,6 +213,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="NewFile.resx">
       <DependentUpon>NewFile.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NewItem.resx">
+      <DependentUpon>NewItem.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="NewProjectForm.resx">
       <DependentUpon>NewProjectForm.cs</DependentUpon>

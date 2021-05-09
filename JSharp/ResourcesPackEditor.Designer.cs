@@ -31,8 +31,6 @@
             this.components = new System.ComponentModel.Container();
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.label2 = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.CodeListBox = new System.Windows.Forms.ListBox();
             this.CodeBox = new System.Windows.Forms.RichTextBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.vScrollBar1 = new System.Windows.Forms.VScrollBar();
@@ -42,6 +40,8 @@
             this.DirectoryMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.ImagePreview = new System.Windows.Forms.PictureBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ImagePreview)).BeginInit();
@@ -54,41 +54,20 @@
             this.treeView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.treeView1.ForeColor = System.Drawing.Color.White;
             this.treeView1.Indent = 19;
-            this.treeView1.Location = new System.Drawing.Point(12, 25);
+            this.treeView1.Location = new System.Drawing.Point(12, 69);
             this.treeView1.Name = "treeView1";
-            this.treeView1.Size = new System.Drawing.Size(272, 372);
+            this.treeView1.Size = new System.Drawing.Size(272, 481);
             this.treeView1.TabIndex = 0;
             this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 9);
+            this.label2.Location = new System.Drawing.Point(12, 53);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(31, 13);
             this.label2.TabIndex = 22;
             this.label2.Text = "Files:";
-            // 
-            // label1
-            // 
-            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(9, 400);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(72, 13);
-            this.label1.TabIndex = 24;
-            this.label1.Text = "Source Code:";
-            // 
-            // CodeListBox
-            // 
-            this.CodeListBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.CodeListBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.CodeListBox.ForeColor = System.Drawing.Color.White;
-            this.CodeListBox.FormattingEnabled = true;
-            this.CodeListBox.Location = new System.Drawing.Point(12, 416);
-            this.CodeListBox.Name = "CodeListBox";
-            this.CodeListBox.Size = new System.Drawing.Size(272, 134);
-            this.CodeListBox.TabIndex = 23;
             // 
             // CodeBox
             // 
@@ -110,6 +89,7 @@
             this.CodeBox.Text = "package main";
             this.CodeBox.WordWrap = false;
             this.CodeBox.ZoomFactor = 1.75F;
+            this.CodeBox.TextChanged += new System.EventHandler(this.CodeBox_TextChanged);
             // 
             // panel1
             // 
@@ -184,19 +164,43 @@
             this.timer1.Interval = 10;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
+            // button2
+            // 
+            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button2.Location = new System.Drawing.Point(12, 12);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(103, 23);
+            this.button2.TabIndex = 30;
+            this.button2.Text = "New Folder";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // button3
+            // 
+            this.button3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button3.Location = new System.Drawing.Point(121, 12);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(102, 23);
+            this.button3.TabIndex = 31;
+            this.button3.Text = "New File";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
             // ResourcesPackEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(1235, 562);
+            this.Controls.Add(this.button3);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.ImagePreview);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.CodeBox);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.CodeListBox);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.treeView1);
             this.ForeColor = System.Drawing.Color.White;
@@ -216,8 +220,6 @@
 
         private System.Windows.Forms.TreeView treeView1;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.ListBox CodeListBox;
         private System.Windows.Forms.RichTextBox CodeBox;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.PictureBox pictureBox1;
@@ -227,5 +229,7 @@
         private System.Windows.Forms.VScrollBar vScrollBar1;
         private System.Windows.Forms.PictureBox ImagePreview;
         private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button3;
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -31,10 +32,10 @@ namespace BluePhoenix
         }
         public string Export()
         {
-            ExportDataPack(path);
+            ExportDataPack(path, path+"rp.zip");
             return consoleText.ToString();
         }
-        public void ExportDataPack(string path)
+        public void ExportDataPack(string path, string rpPath)
         {
             if (File.Exists(path + "/pack.mcmeta"))
             {
@@ -45,7 +46,7 @@ namespace BluePhoenix
             ExportTags(path);
             ExportStructures(path);
             ExportReadMe(path);
-
+            ExportResourcePack(rpPath);
             SafeWriteFile(path + "/pack.mcmeta",
                         JsonConvert.SerializeObject(new DataPackMeta(project.projectName + " - " + project.description)));
                 
@@ -56,6 +57,7 @@ namespace BluePhoenix
             if (text != null)
             {
                 consoleText.Append(text);
+                consoleText.Append("\n");
             }
         }
         public void ExportFiles(string path)
@@ -64,6 +66,16 @@ namespace BluePhoenix
             foreach (string f in code.Keys)
             {
                 files.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
+            }
+            string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+            if (Directory.Exists(rpdir))
+            {
+                foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
+                {
+                    var f = new Compiler.File(file, File.ReadAllText(file).Replace('\t' + "", ""));
+                    f.resourcespack = true;
+                    files.Add(f);
+                }
             }
 
             List<Compiler.File> resourcesfiles = new List<Compiler.File>();
@@ -91,6 +103,43 @@ namespace BluePhoenix
                 catch (Exception e)
                 {
                     throw new Exception(fileName + " " + e.ToString());
+                }
+            }
+
+            if (Directory.Exists(rpdir))
+            {
+
+                string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
+                if (Directory.Exists(rpPath))
+                {
+                    Directory.Delete(rpPath, true);
+                    Directory.CreateDirectory(rpPath);
+                }
+                else
+                {
+                    Directory.CreateDirectory(rpPath);
+                }
+
+                foreach (Compiler.File f in Compiler.resourcespackFiles)
+                {
+                    string fileName = rpPath + "/" + f.name + ".json";
+                    try
+                    {
+                        SafeWriteFile(fileName, f.content);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception(fileName + " " + e.ToString());
+                    }
+                }
+
+                foreach (var file in Directory.GetFiles(rpdir, "*.*", SearchOption.AllDirectories))
+                {
+                    if (!file.EndsWith(".bps"))
+                    {
+                        string fileName = file.Replace(rpdir, rpPath);
+                        SafeCopy(file, fileName);
+                    }
                 }
             }
         }
@@ -168,6 +217,27 @@ namespace BluePhoenix
                     File.Copy(file, path + "/data/" + project.projectName.ToLower() + "/structures/" + Path.GetFileName(file));
                 }
             }
+        }
+        public void ExportResourcePack(string path)
+        {
+            string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
+            SafeWriteFile(rpPath + "/pack.mcmeta",
+                            JsonConvert.SerializeObject(new ResourcePackMeta(project.projectName + " - " + project.description)));
+
+            if (Directory.Exists(rpPath))
+            {
+                if (File.Exists(path)) { File.Delete(path); }
+                ZipFile.CreateFromDirectory(rpPath, path);
+            }
+        }
+        public static void SafeCopy(string src, string dest)
+        {
+            string filePath = Path.GetDirectoryName(dest);
+            if (!Directory.Exists(filePath))
+            {
+                Directory.CreateDirectory(filePath);
+            }
+            File.Copy(src, dest, true);
         }
         public static void SafeWriteFile(string fileName, string content)
         {

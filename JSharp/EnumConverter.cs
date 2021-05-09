@@ -89,29 +89,32 @@ namespace JSharp
             int i = 0;
             foreach (string line in text.Split('\n'))
             {
-                string[] cells = Compiler.smartSplit(line, ';');
-                if (i == 0)
+                string[] cells = Compiler.smartSplitJson(line, ';');
+                if (cells.Length > 0)
                 {
-                    for (int j = 1; j < cells.Length; j++)
+                    if (i == 0)
                     {
-                        fields.Add(cells[j].ToLower());
-                        types.Add("");
+                        for (int j = 1; j < cells.Length; j++)
+                        {
+                            fields.Add(cells[j].ToLower());
+                            types.Add("");
+                        }
                     }
-                }
-                else
-                {
-                    string value = cells[0]+"(";
-                    for (int j = 1; j < cells.Length; j++)
+                    else
                     {
-                        value += cells[j]+",";
-                        types[j-1] = GetType(fields[1], types[j-1]);
+                        string value = cells[0] + "(";
+                        for (int j = 1; j < cells.Length; j++)
+                        {
+                            value += cells[j] + ",";
+                            types[j - 1] = GetType(fields[1], types[j - 1]);
+                        }
+                        if (cells.Length > 1)
+                            value = value.Substring(0, value.Length - 1) + ")";
+
+                        values.Add(value);
                     }
-                    if (cells.Length > 1)
-                        value = value.Substring(0, value.Length - 1)+")";
-                    
-                    values.Add(value);
+                    i++;
                 }
-                i++;
             }
             for (int j = 0; j < fields.Count; j++)
             {

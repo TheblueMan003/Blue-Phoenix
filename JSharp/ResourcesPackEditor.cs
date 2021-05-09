@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JSharp;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -62,6 +63,11 @@ namespace BluePhoenix
             panel1.Visible = false;
             panel1.Enabled = false;
 
+            if (currentFileType == FileType.Text)
+            {
+                File.WriteAllText(currentFile, CodeBox.Text);
+            }
+
             currentFile = path;
             currentFileType = type;
 
@@ -77,6 +83,10 @@ namespace BluePhoenix
                 {
                     CodeBox.Text = "Unreadable Shit";
                     CodeBox.Enabled = false;
+                }
+                if (!Formatter.reformating)
+                {
+                    Formatter.reformat(CodeBox, this, false);
                 }
             }
             if (type == FileType.Image)
@@ -109,7 +119,7 @@ namespace BluePhoenix
             {
                 Select(FileType.Sound, fName);
             }
-            else if (fName.EndsWith(".txt") || fName.EndsWith(".json") || fName.EndsWith(".mcmeta"))
+            else if (fName.EndsWith(".txt") || fName.EndsWith(".json") || fName.EndsWith(".mcmeta") || fName.EndsWith(".bps"))
             {
                 Select(FileType.Text, fName);
             }
@@ -149,6 +159,46 @@ namespace BluePhoenix
         {
             if (folderDisplay != null)
                 folderDisplay.Draw(panel1);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            NewItem newItem = new NewItem();
+            if (newItem.ShowDialog() == DialogResult.OK)
+            {
+                if (File.Exists(currentFile))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(currentFile) + "/" + newItem.FileName);
+                }
+                else
+                {
+                    Directory.CreateDirectory(currentFile + "/" + newItem.FileName);
+                }
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            NewItem newItem = new NewItem();
+            if (newItem.ShowDialog() == DialogResult.OK)
+            {
+                if (File.Exists(currentFile))
+                {
+                    CMD_Compile.SafeWriteFile(Path.GetDirectoryName(currentFile) + "/" + newItem.FileName, "");
+                }
+                else
+                {
+                    CMD_Compile.SafeWriteFile(currentFile + "/" + newItem.FileName, "");
+                }
+            }
+        }
+
+        private void CodeBox_TextChanged(object sender, EventArgs e)
+        {
+            if (!Formatter.reformating)
+            {
+                Formatter.reformat(CodeBox, this, true);
+            }
         }
     }
 

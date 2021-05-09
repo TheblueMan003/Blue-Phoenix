@@ -6,6 +6,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Media;
 using System.Text;
@@ -34,6 +35,7 @@ namespace JSharp
         private string previous = "load";
         private string projectName = "default";
         private string currentDataPack;
+        private string currentResourcesPack;
         public string projectPath;
         public bool ignorNextListboxUpdate = false;
         public bool ignorNextKey = false;
@@ -267,6 +269,7 @@ namespace JSharp
             List<ProjectSave.FileSave> lstRes = new List<ProjectSave.FileSave>();
             save.compileOrder = new List<string>();
             save.datapackDirectory = currentDataPack;
+            save.resourcesPackDirectory = currentResourcesPack;
             string dir = Path.GetDirectoryName(projectPath)+"/scripts/";
             string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
 
@@ -337,6 +340,7 @@ namespace JSharp
 
             projectName = project.projectName;
             currentDataPack = project.datapackDirectory;
+            currentResourcesPack = project.resourcesPackDirectory;
             isLibraryCheckbox.Checked = project.isLibrary;
             compilerSetting = project.compilationSetting;
 
@@ -733,6 +737,15 @@ namespace JSharp
         {
             Formatter.reformat(CodeBox, this, false);
         }
+        public static void SafeCopy(string src, string dest)
+        {
+            string filePath = Path.GetDirectoryName(dest);
+            if (!Directory.Exists(filePath))
+            {
+                Directory.CreateDirectory(filePath);
+            }
+            File.Copy(src, dest, true);
+        }
         public static void SafeWriteFile(string fileName, string content)
         {
             Task.Factory.StartNew(() =>
@@ -749,10 +762,10 @@ namespace JSharp
         public void ExportDataPackThread()
         {
             isCompiling = 1;
-            ExportDataPack(currentDataPack);
+            ExportDataPack(currentDataPack, currentResourcesPack);
             isCompiling = 1000;
         }
-        public void ExportDataPack(string path)
+        public void ExportDataPack(string path, string rpPath)
         {
             try
             {
@@ -769,6 +782,7 @@ namespace JSharp
                 SafeWriteFile(path + "/pack.mcmeta",
                             JsonConvert.SerializeObject(new DataPackMeta(projectName +" - "+ projectDescription)));
 
+                ExportResourcePack(rpPath);
                 DebugThread("Datapack successfully exported!", Color.Aqua);
             }
             catch (Exception er)
@@ -784,6 +798,17 @@ namespace JSharp
                 files.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
             }
 
+            string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+            if (Directory.Exists(rpdir))
+            {
+                foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
+                {
+                    var f = new Compiler.File(file.Replace(rpdir,""), File.ReadAllText(file).Replace('\t' + "", ""));
+                    f.resourcespack = true;
+                    files.Add(f);
+                }
+            }
+
             List<Compiler.File> resourcesfiles = new List<Compiler.File>();
             foreach (string f in ResourceListBox.Items)
             {
@@ -791,8 +816,9 @@ namespace JSharp
             }
 
             List<Compiler.File> cFiles = Compiler.compile(new CompilerCoreJava(), projectName, files, resourcesfiles,
-                                        DebugThread, compilerSetting, projectVersion, 
+                                        DebugThread, compilerSetting, projectVersion,
                                         Path.GetDirectoryName(projectPath));
+            
             foreach (Compiler.File f in cFiles)
             {
                 string fileName;
@@ -806,9 +832,45 @@ namespace JSharp
                 {
                     SafeWriteFile(fileName, f.content);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
-                    throw new Exception(fileName + " "+e.ToString());
+                    throw new Exception(fileName + " " + e.ToString());
+                }
+            }
+            if (Directory.Exists(rpdir))
+            {
+
+                string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
+                if (Directory.Exists(rpPath))
+                {
+                    Directory.Delete(rpPath, true);
+                    Directory.CreateDirectory(rpPath);
+                }
+                else
+                {
+                    Directory.CreateDirectory(rpPath);
+                }
+
+                foreach (Compiler.File f in Compiler.resourcespackFiles)
+                {
+                    string fileName = rpPath + "/" + f.name + ".json";
+                    try
+                    {
+                        SafeWriteFile(fileName, f.content);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception(fileName + " " + e.ToString());
+                    }
+                }
+
+                foreach (var file in Directory.GetFiles(rpdir, "*.*", SearchOption.AllDirectories))
+                {
+                    if (!file.EndsWith(".bps"))
+                    {
+                        string fileName = file.Replace(rpdir, rpPath);
+                        SafeCopy(file, fileName);
+                    }
                 }
             }
         }
@@ -895,6 +957,18 @@ namespace JSharp
                 }
             });
         }
+        public void ExportResourcePack(string path)
+        {
+            string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
+            SafeWriteFile(rpPath + "/pack.mcmeta",
+                            JsonConvert.SerializeObject(new ResourcePackMeta(projectName + " - " + projectDescription)));
+
+            if (Directory.Exists(rpPath))
+            {
+                if (File.Exists(path)) { File.Delete(path); }
+                ZipFile.CreateFromDirectory(rpPath, path);
+            }
+        }
         public void ChangeCompileOrder()
         {
             CompileOrder form = new CompileOrder(CodeListBox.Items, CodeListBox.Items.Contains("import")?1:0);
@@ -924,6 +998,16 @@ namespace JSharp
                 foreach (string f in CodeListBox.Items)
                 {
                     compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
+                }
+                string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+                if (Directory.Exists(rpdir))
+                {
+                    foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
+                    {
+                        var f = new Compiler.File(file.Replace(rpdir, ""), File.ReadAllText(file).Replace('\t' + "", ""));
+                        f.resourcespack = true;
+                        compileFile.Add(f);
+                    }
                 }
 
                 compileResource = new List<Compiler.File>();
@@ -1214,11 +1298,26 @@ namespace JSharp
             {
                 string path = (currentDataPack == null) ? ExportSave.FileName : currentDataPack;
                 currentDataPack = path;
-                if (isCompiling == 0)
+
+                string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+                Debug(rpdir, Color.Yellow);
+                if (!Directory.Exists(rpdir))
                 {
-                    Thread t = new Thread(new ThreadStart(ExportDataPackThread));
-                    t.Start();
-                    //ExportDataPack(path);
+                    if (isCompiling == 0)
+                    {
+                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
+                        t.Start();
+                    }
+                }
+                else if (currentResourcesPack!=null || ExportRP.ShowDialog() == DialogResult.OK)
+                {
+                    string rpPath = currentResourcesPack==null ? ExportRP.FileName: currentResourcesPack;
+                    currentResourcesPack = rpPath;
+                    if (isCompiling == 0)
+                    {
+                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
+                        t.Start();
+                    }
                 }
             }
         }
@@ -1275,8 +1374,28 @@ namespace JSharp
             if (ExportSave.ShowDialog() == DialogResult.OK)
             {
                 string path = ExportSave.FileName;
-                currentDataPack = path;
-                ExportDataPack(path);
+                
+                string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+                if (!Directory.Exists(rpdir))
+                {
+                    currentDataPack = path;
+                    if (isCompiling == 0)
+                    {
+                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
+                        t.Start();
+                    }
+                }
+                else if (ExportRP.ShowDialog() == DialogResult.OK)
+                {
+                    string rpPath = ExportRP.FileName;
+                    currentDataPack = path;
+                    currentResourcesPack = rpPath;
+                    if (isCompiling == 0)
+                    {
+                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
+                        t.Start();
+                    }
+                }
             }
         }
 
@@ -1595,7 +1714,13 @@ namespace JSharp
         private void resourcesPackEditorToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!Directory.Exists(Path.GetDirectoryName(projectPath) + "/resourcespack"))
-                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack");
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/textures/block");
+                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/textures/item");
+                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/sounds");
+                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/models");
+                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/font");
+            }
             ResourcesPackEditor = new ResourcesPackEditor(Path.GetDirectoryName(projectPath) + "/resourcespack");
             ResourcesPackEditor.Show();
         }
