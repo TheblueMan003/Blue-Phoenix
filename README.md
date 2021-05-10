@@ -155,6 +155,11 @@ Types are infered by the compiler. If not type is found json is choosen.
   function<(int,float),(int,int)> func2 = name
   a,b = func2(0,0)
  ```
+A sort notation also exist:
+```
+int=>void func2 = name
+```
+
  Private Functions can only be used in the same namespace. By default all function are public.
  ```
  def private example(){
@@ -213,6 +218,11 @@ Types are infered by the compiler. If not type is found json is choosen.
     /say body
  }
  ```
+Another way of defining anonymous functions is:
+```
+ decorator(=>/say body)
+```
+ 
  ### Functions tags
  Functions can have tags define as bellow. Tags create a new function that contains all function that have the same tags.
  ```
@@ -226,6 +236,36 @@ Types are infered by the compiler. If not type is found json is choosen.
   ticking function will be executed each tick.
   loading function will be executed when the datapack is reload
   helper function will be always be present inside the datapack even if note used. (Useful for library.)
+
+ ## Jsonfile
+ Json files like craft file can be created with this construction:
+ ```
+   jsonfile recipes/custom_craft{
+		<json_content>
+   }
+ ```
+Forgenerating loop and lazy function can be used inside and outside of jsonfile.
+
+## Predicates
+Predicate can be create like:
+```
+predicate overworld(){
+	"condition": "minecraft:location_check",
+	"predicate": {
+		"dimension": "minecraft:overworld"
+	}
+}
+```
+Argument can put inside the parenthis:
+```
+predicate inDimension($name){
+	"condition": "minecraft:location_check",
+	"predicate": {
+		"dimension": "$name"
+	}
+}
+```
+Calling a predication in a condition can be done like a function.
  
  
  ## Package
@@ -266,11 +306,11 @@ Types are infered by the compiler. If not type is found json is choosen.
  ```
  Note: Parameters in enums will also be replaced.
  
- ## Blocktags
- Minecraft Blocks tags can be define the same as an enums but with the name blocktags instead of enums.
+ ## Blocktags/Itemtags/Entitytags
+ Minecraft Blocks/Entity/Item tags can be define the same as an enums but with the name blocktags instead of enums.
  ```
  blocktags cool_wool = white_wool, black_wool
- setblock(~ ~ ~ #cool_wool)
+ if (block(~ ~ ~ #cool_wool)){...}
  ```
  
  ## Struct
@@ -309,3 +349,72 @@ Types are infered by the compiler. If not type is found json is choosen.
  }
  ```
  Note: inside a struct function can also be static.
+
+ ## Class
+ Class are another way to create new types. Class can have variable and function inside of them.
+ ```
+ class vector{
+   int x,y,z
+   def __init__(int x, int y, int z){
+      this.x = x
+      this.y = y
+      this.z = z
+   }
+   int sum(){
+      return(x,y,z)
+   }
+ }
+ ```
+ The constructor of a class is the function call __init__.
+ Class also support operator overrloading with the function: __add__, __mult__, __div__, __sub__, __mod__, __set__
+ __set__ can only be overloader with other type then the current.
+ Class can also have lazy function.
+ To instantiate a class:
+ ```
+ vector vec = vector(0,0,0)
+ ```
+ ### Function Overriding
+ Function inside a class can be marker as virtual. So class can then be override by function marked with override.
+```
+class example{
+   ...
+   def virutal function(){
+      ...
+   }
+   ...
+}
+class example2 extends example{
+   ...
+   def override function(){
+      ...
+   }
+   ...
+}
+```
+### Inniter
+Class are associated with an entity. By defaut all class extends the default object class and are thus area effect cloud. Inniter are function that will init the class by creatign the entity.
+```
+def armor_stand_initer(){
+	/summon armor_stand ~ ~ ~ {Tags:["__class__","cls_trg"]}
+	with(@e[tag=cls_trg]){
+		untag(cls_trg)
+		__CLASS__ = __class__
+		__ref++
+	}
+}
+class example inniter armor_stand_initer{
+   ...
+}
+```
+
+## Compiler Variable
+Every variable that start with '$' will be treated as compiler variable. Each of it occurence will litteraly be replaced by it.
+```
+int $i = 0
+print("$i")
+```
+Compiler variable can fetch from enum et const.
+```
+int $i = fromenum(enum, elem1)
+int $j = fromconst(con)
+```

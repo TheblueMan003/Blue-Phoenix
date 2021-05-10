@@ -159,6 +159,11 @@ namespace JSharp
                 FilePreview filePreview = new FilePreview(compileFiled);
                 filePreview.Show();
                 isCompiling = 0;
+                if (Compiler.resourcespackFiles.Count > 0)
+                {
+                    FilePreview rpfilePreview = new FilePreview(Compiler.resourcespackFiles);
+                    filePreview.Show();
+                }
             }
             if (isCompiling == 1000)
             {

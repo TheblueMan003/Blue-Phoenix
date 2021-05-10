@@ -28,6 +28,7 @@ namespace JSharp
 
 
         public static Dictionary<string, string> offuscationMap;
+        public static Dictionary<string, string> classOffuscationMap;
         private static Dictionary<string, string> packageMap;
         private static List<Dictionary<string, string>> lazyEvalVar;
         private static List<Dictionary<string,string>> compVal;
@@ -37,6 +38,7 @@ namespace JSharp
         private static Dictionary<string, Regex> compRegexCache = new Dictionary<string, Regex>();
         public static List<string> packages;
         private static HashSet<string> offuscationSet;
+        private static HashSet<string> classOffuscationSet;
         private static HashSet<string> imported;
 
         private static Stack<Switch> switches;
@@ -182,8 +184,9 @@ namespace JSharp
 
             
             offuscationMap = new Dictionary<string, string>();
+            classOffuscationMap = new Dictionary<string, string>();
 
-            foreach(string key in setting.forcedOffuscation.Keys)
+            foreach (string key in setting.forcedOffuscation.Keys)
             {
                 offuscationMapAdd(key, setting.forcedOffuscation[key]);
             }
@@ -216,6 +219,7 @@ namespace JSharp
                 functDelegated = new Dictionary<string, List<Function>>();
                 functDelegatedFile = new Dictionary<string, List<File>>();
                 offuscationSet = new HashSet<string>();
+                classOffuscationSet = new HashSet<string>();
                 imported = new HashSet<string>();
                 thisDef = new Stack<string>();
                 files = new List<File>();
@@ -406,10 +410,8 @@ namespace JSharp
 
             foreach (string line2 in lines)
             {
-                if (!f.resourcespack)
-                {
-                    preparseLine((isMcFunction ? "/" : "") + line2);
-                }
+                preparseLine((isMcFunction ? "/" : "") + line2);
+                
                 currentLine += 1;
             }
             if (isMcFunction)
@@ -427,15 +429,18 @@ namespace JSharp
             }
             else
             {
-                if (fFile.name != "load" && fFile.name != "main" && !import)
+                if (!f.resourcespack)
                 {
-                    loadFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
-                }
-                else
-                {
-                    if (import)
+                    if (fFile.name != "load" && fFile.name != "main" && !import)
                     {
                         loadFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
+                    }
+                    else
+                    {
+                        if (import)
+                        {
+                            loadFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
+                        }
                     }
                 }
             }
@@ -1181,12 +1186,14 @@ namespace JSharp
         {
             if (System.IO.File.Exists(folder + text + ".tbms"))
             {
+                Context c = context;
+                context = new Context(Project, new File("", ""));
+
                 forcedUnsed = fu;
                 string data = System.IO.File.ReadAllText(folder + text + ".tbms");
                 ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
                 msg = "#Using TBMS Library: " + text + " v." + project.version.ToString()+"\n";
 
-                context.GoRoot();
                 if (project.resources != null)
                 {
                     foreach (var f in project.resources)
@@ -1205,6 +1212,9 @@ namespace JSharp
 
                 imported.Add(text);
                 forcedUnsed = false;
+
+                context = c;
+
                 return true;
             }
             else
@@ -1623,7 +1633,7 @@ namespace JSharp
                     }
                     else if (op == "=" && variable != valVar)
                     {
-                        if (stru1.isClass)
+                        if (stru1.isClass && valVar != null)
                         {
                             Structure stru2 = structs[valVar.enums];
 
@@ -1634,7 +1644,8 @@ namespace JSharp
 
                             output += Core.VariableOperation(variable, valVar, "=");
                         }
-                        else if (stru1.methodsName.Contains("__set__"))
+                        else if (stru1.methodsName.Contains("__set__") && 
+                            (valVar == null || valVar.type != Type.STRUCT || valVar.enums != stru1.name))
                         {
                             output += parseLine(variable.gameName + ".__set__(" + val + ")");
                         }
@@ -3095,12 +3106,20 @@ namespace JSharp
                 return GetFunction(context.GetFunctionName("__tags__." + tag.ToLower()), new string[] { }).file;
             }
         }
-        public static void AddToFunctionTag(Function func, string tag)
+        public static void AddToFunctionTag(Function func, string tag, string className = null)
         {
             bool wasUsed = func.file.notUsed;
 
-            File f = CreateFunctionTag(tag)
-                .AddLine(parseLine(func.gameName.Replace(":", ".").Replace("/", ".") + "()"));
+            File f = CreateFunctionTag(tag);
+            if (className == null)
+            {
+                f.AddLine(parseLine(func.gameName.Replace(":", ".").Replace("/", ".") + "()"));
+            }
+            else
+            {
+                f.AddLine(Core.As("@e[tag="+className+"]") + "function "+func.gameName+ "/w_0");
+            }
+
             functionTags[tag.ToLower()].Add(func.gameName.Replace(":", ".").Replace("/", "."));
             func.file.notUsed = wasUsed;
             f.addChild(func.file);
@@ -4943,7 +4962,7 @@ namespace JSharp
             }
             else
             {
-                if (enums != null)
+                if (enums != null && getEnum(arg[1])!=null)
                 {
                     var en = enums[getEnum(arg[1])];
                     foreach (var value in en.Values())
@@ -4953,6 +4972,28 @@ namespace JSharp
                         {
                             line = line.Replace(var + "." + field, en.GetFieldOf(value, field));
                         }
+                        line = line.Replace(var, value);
+                        output += line;
+                    }
+                }
+                else if (enums != null && arg[1].StartsWith("("))
+                {
+                    string[] values = getArgs(arg[1]);
+                    foreach (var value in values)
+                    {
+                        string line = block;
+
+                        if (value.StartsWith("("))
+                        {
+                            string[] splitted = getArgs(value);
+                            for (int i = splitted.Length-1; i >= 0; i--)
+                            {
+                                line = line.Replace(var + "." + i.ToString(),
+                                    splitted[i]);
+                            }
+                        }
+
+                        line = line.Replace(var, value);
                         output += line;
                     }
                 }
@@ -4971,9 +5012,10 @@ namespace JSharp
             }
             if (currentParsedFile != null && currentParsedFile.resourcespack)
             {
-                if (currentParsedFile.name.Contains("/"))
+                string nFn = currentParsedFile.name.Replace("\\", "/");
+                if (nFn.Contains("/"))
                 {
-                    name = currentParsedFile.name.Substring(0, currentParsedFile.name.LastIndexOf("/") + 1) + name;
+                    name = nFn.Substring(0, nFn.LastIndexOf("/") + 1) + name;
                 }
                 resourcespackFiles.Add(new File(name, "", "json"));
                 if (text.Contains("{"))
@@ -6656,6 +6698,51 @@ namespace JSharp
             return s.ToString();
         }
 
+        public static string classOffuscationMapAdd(string text)
+        {
+            if (!compilerSetting.offuscate)
+                return text;
+
+            if (classOffuscationMap.ContainsKey(text))
+                return classOffuscationMap[text];
+
+            string rText = "";
+            foreach (char ch in text.Reverse())
+            {
+                rText += ch;
+            }
+            long hash = text.GetHashCode() + rText.GetHashCode() * (long)(int.MaxValue);
+            long c = Math.Abs(hash % pow64[10]);
+
+            string map = getMap(c);
+
+            if (classOffuscationSet.Contains(map))
+            {
+                return classOffuscationMapAdd(text + "'");
+            }
+
+            classOffuscationSet.Add(map);
+            classOffuscationMap.Add(text, map);
+            return map;
+        }
+        public static string classOffuscationMapAdd(string text, string forced)
+        {
+            if (!compilerSetting.offuscate)
+                return text;
+
+            if (classOffuscationMap.ContainsKey(text))
+                return classOffuscationMap[text];
+
+            if (classOffuscationSet.Contains(forced))
+            {
+                return classOffuscationMapAdd(text + "_");
+            }
+
+            classOffuscationSet.Add(forced);
+            classOffuscationMap.Add(text, forced);
+            return forced;
+        }
+
         public static void ConstCreate()
         {
             bool change = true;
@@ -6851,11 +6938,19 @@ namespace JSharp
                 {
                     foreach (Variable var in args)
                     {
-                        var.LinkCopyTo(v);
+                        try
+                        {
+                            var.LinkCopyTo(v);
+                        }
+                        catch { }
                     }
                     foreach (Variable var in outputs)
                     {
-                        var.LinkCopyTo(v);
+                        try
+                        {
+                            var.LinkCopyTo(v);
+                        }
+                        catch { }
                     }
                 }
             }
@@ -7058,311 +7153,362 @@ namespace JSharp
                     methods.Add(newFunc);
                 }
             }
-            public void generateFunction(Function fun, Variable varOwner, string v, string cont)
+            public void generateFunction(Function fun, Variable varOwner, string v, string cont, bool parentClass)
             {
-                string cont2 = context.GetVar();
-                string funcName = fun.name;
-                string contextStruct = null;
-                if (isClass)
-                    contextStruct = representative.gameName;
-
-                File fFile = new File(context.GetFile() + funcName);
-
-                Function function = new Function(fun.name, context.GetFun() + funcName, fFile);
-                fFile.function = function;
-                function.desc = fun.desc;
-                function.lazy = fun.lazy;
-                function.isAbstract = fun.isAbstract;
-                function.varOwner = varOwner;
-                function.isTicking = fun.isTicking;
-                function.isLoading = fun.isLoading;
-                function.isHelper = fun.isHelper;
-                function.isPrivate = fun.isPrivate;
-                function.privateContext = context.GetVar();
-                function.variableStruct = varOwner.gameName;
-                function.argNeeded = fun.argNeeded;
-                function.maxArgNeeded = fun.maxArgNeeded;
-                function.package = package;
-                function.structure = contextStruct;
-                function.isOverride = fun.isOverride;
-
-                function.argNeeded = fun.argNeeded;
-                function.maxArgNeeded = fun.maxArgNeeded;
-
-                fFile.isLazy = fun.lazy;
-
-                if (structStack.Count > 0)
-                    function.isStructMethod = true;
-
-                if (fun.name == "__init__" && isClass)
+                if (!parentClass || fun.tags.Count > 0 || fun.isTicking || fun.isLoading)
                 {
-                    fFile.parsed.Add("__class__++");
-                    fFile.parsed.Add(varOwner.gameName + " #= __class__");
-                    foreach (string line in GetClassInitBase().parsed)
+                    string cont2 = context.GetVar();
+                    string funcName = fun.name;
+                    string contextStruct = null;
+                    if (isClass)
+                        contextStruct = representative.gameName;
+
+                    File fFile = new File(context.GetFile() + funcName);
+
+                    Function function = new Function(fun.name, context.GetFun() + funcName, fFile);
+                    fFile.function = function;
+                    function.desc = fun.desc;
+                    function.lazy = fun.lazy;
+                    function.isAbstract = fun.isAbstract;
+                    function.varOwner = varOwner;
+                    function.isTicking = fun.isTicking;
+                    function.isLoading = fun.isLoading;
+                    function.isHelper = fun.isHelper;
+                    function.isPrivate = fun.isPrivate;
+                    function.privateContext = context.GetVar();
+                    function.variableStruct = varOwner.gameName;
+                    function.argNeeded = fun.argNeeded;
+                    function.maxArgNeeded = fun.maxArgNeeded;
+                    function.package = package;
+                    function.structure = contextStruct;
+                    function.isOverride = fun.isOverride;
+
+                    varOwner.associatedFunction.Add(function);
+
+                    function.argNeeded = fun.argNeeded;
+                    function.maxArgNeeded = fun.maxArgNeeded;
+
+                    fFile.isLazy = fun.lazy;
+
+                    if (structStack.Count > 0)
+                        function.isStructMethod = true;
+
+                    if (fun.name == "__init__" && isClass)
                     {
-                        fFile.addParsedLine(line);
-                    }
-                    if (varOwner.entity)
-                    {
-                        fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==__class__){");
+                        fFile.parsed.Add("__class__++");
                         fFile.parsed.Add(varOwner.gameName + " #= __class__");
-                        fFile.parsed.Add("}");
-                    }
-                }
-
-                #region tags
-                if (fun.isLoading)
-                {
-                    loadFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
-                    if (callStackDisplay)
-                        callTrace += "\"load\"->\"" + function.gameName + "\"\n";
-                }
-                if (fun.isTicking)
-                {
-                    mainFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
-                    if (callStackDisplay)
-                        callTrace += "\"main\"->\"" + function.gameName + "\"\n";
-                }
-                if (fun.isHelper)
-                {
-                    fFile.use();
-                    if (callStackDisplay)
-                        callTrace += "\"helper\"->\"" + function.gameName + "\"\n";
-                }
-                #endregion
-                #region add to dic
-                files.Add(fFile);
-                string key = (context.GetFun() + funcName).Replace(':', '.').Replace('/', '.');
-                if (fun.isOverride)
-                {
-                    bool contain = true;
-                    while (contain)
-                    {
-                        contain = false;
-                        for (int j = 0; j < functions[key].Count; j++)
+                        foreach (string line in GetClassInitBase().parsed)
                         {
-                            Function f = functions[key][j];
-                            if (f.gameName == function.gameName && f != function)
-                            {
-                                contain = true;
+                            fFile.addParsedLine(line);
+                        }
+                        if (varOwner.entity)
+                        {
+                            fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==__class__){");
+                            fFile.parsed.Add(varOwner.gameName + " #= __class__");
+                            fFile.parsed.Add("}");
+                        }
+                    }
 
-                                if (f.args.Count == 0 && fun.args.Count == 0)
+                    #region tags
+                    if (fun.isLoading)
+                    {
+                        if (isClass && parentClass)
+                        {
+                            string map = classOffuscationMapAdd(name);
+                            loadFile.AddLine(Core.As("@e[tag=" + map + "]") + "function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower() + "/w_0");
+                        }
+                        else if (!isClass)
+                        {
+                            loadFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
+                        }
+                        if (callStackDisplay)
+                            callTrace += "\"load\"->\"" + function.gameName + "\"\n";
+                    }
+                    if (fun.isTicking)
+                    {
+                        if (isClass && parentClass)
+                        {
+                            string map = classOffuscationMapAdd(name);
+                            mainFile.AddLine(Core.As("@e[tag=" + map + "]") + "function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower() + "/w_0");
+                        }
+                        else if (!isClass)
+                        {
+                            mainFile.AddLine("function " + Project.ToLower() + ":" + fFile.name.Replace(".", "/").ToLower());
+                        }
+                        if (callStackDisplay)
+                            callTrace += "\"main\"->\"" + function.gameName + "\"\n";
+                    }
+                    if (fun.isHelper)
+                    {
+                        fFile.use();
+                        if (callStackDisplay)
+                            callTrace += "\"helper\"->\"" + function.gameName + "\"\n";
+                    }
+                    #endregion
+                    #region add to dic
+                    files.Add(fFile);
+                    string key = (context.GetFun() + funcName).Replace(':', '.').Replace('/', '.');
+                    if (fun.isOverride)
+                    {
+                        bool contain = true;
+                        while (contain)
+                        {
+                            contain = false;
+                            for (int j = 0; j < functions[key].Count; j++)
+                            {
+                                Function f = functions[key][j];
+                                if (f.gameName == function.gameName && f != function)
                                 {
-                                    fun.gameName = f.gameName;
-                                    fFile.name = f.file.name;
-                                    fun.name = f.name;
-                                    functions[key].Remove(f);
-                                    break;
+                                    contain = true;
+
+                                    if (f.args.Count == 0 && fun.args.Count == 0)
+                                    {
+                                        fun.gameName = f.gameName;
+                                        fFile.name = f.file.name;
+                                        fun.name = f.name;
+                                        functions[key].Remove(f);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        functions[key].Add(function);
+                    }
+                    else if (functions.ContainsKey(key))
+                    {
+                        functions[key].Add(function);
+                        bool contain = true;
+                        while (contain)
+                        {
+                            function.gameName = function.gameName + "_";
+                            function.file.name = function.file.name + "_";
+                            contain = false;
+                            foreach (Function f in functions[key])
+                            {
+                                if (f.gameName == function.gameName && f != function)
+                                {
+                                    contain = true;
                                 }
                             }
                         }
                     }
-                    functions[key].Add(function);
-                }
-                else if (functions.ContainsKey(key))
-                {
-                    functions[key].Add(function);
-                    bool contain = true;
-                    while (contain)
+                    else
                     {
-                        function.gameName = function.gameName + "_";
-                        function.file.name = function.file.name + "_";
-                        contain = false;
-                        foreach (Function f in functions[key])
+                        List<Function> lst = new List<Function>();
+                        lst.Add(function);
+                        functions.Add(key, lst);
+                    }
+                    #endregion
+                    context.Sub(fun.name, fFile);
+
+                    fFile.UnparsedFunctionFile = !fun.lazy && structStack.Count == 0 && !fun.isAbstract;
+                    fFile.UnparsedFunctionFileContext = context.GetVar();
+
+
+                    foreach (string tag in fun.tags)
+                    {
+                        function.tags.Add(tag);
+                        if (isClass && parentClass)
                         {
-                            if (f.gameName == function.gameName && f != function)
+                            string map = classOffuscationMapAdd(name);
+                            AddToFunctionTag(function, tag, map);
+                        }
+                        else if (!isClass)
+                        {
+                            AddToFunctionTag(function, tag);
+                        }
+
+                    }
+
+                    fFile.notUsed = !fun.isLoading && !fun.isHelper && !fun.isTicking && fun.tags.Count == 0;
+
+                    int i = 0;
+                    foreach (Variable output in fun.outputs)
+                    {
+                        string varName = context.GetVar() + "ret_" + i.ToString();
+                        Variable variable = new Variable(output.name, varName, output.type, output.entity, output.def);
+                        variable.isConst = output.isConst;
+                        if (variables.ContainsKey(varName))
+                        {
+                            variables.Remove(varName);
+                        }
+                        AddVariable(varName, variable);
+                        if (output.type == Type.ENUM)
+                            variable.SetEnum(output.enums);
+                        if (output.type == Type.STRUCT)
+                            variable.SetEnum(output.enums);
+                        if (output.type == Type.STRUCT)
+                        {
+                            if (variable.enums != varOwner.enums)
                             {
-                                contain = true;
+                                structs[variable.enums].generate(variable.name, false, variable);
+                            }
+                            else
+                            {
+                                foreach (Variable strVar in structs[output.enums].fields)
+                                {
+                                    string varName2 = context.toInternal(context.GetInput() + output.name + "." + strVar.name);
+                                    Variable variable2 = new Variable(strVar.name, varName2, strVar.type, false, strVar.def);
+                                    variable2.isConst = strVar.isConst;
+                                    AddVariable(varName2, variable2);
+                                    if (strVar.type == Type.ENUM)
+                                        variable2.SetEnum(strVar.enums);
+                                }
+                            }
+                        }
+
+                        if (output.type == Type.FUNCTION)
+                        {
+                            int j = 0;
+                            foreach (Argument s in output.args)
+                            {
+                                Type type = s.type;
+                                Argument arg = new Argument(i.ToString(), context.GetVar() + v + "." + j.ToString(), type);
+                                arg.defValue = s.defValue;
+                                Variable var2 = new Variable(i.ToString(), context.GetVar() + v + "." + j.ToString(), type);
+                                AddVariable(context.GetVar() + v + "." + j.ToString(), var2);
+                                variable.args.Add(arg);
+                                j++;
+                            }
+
+                            j = 0;
+                            foreach (Variable s in output.outputs)
+                            {
+                                Type type = s.type;
+                                Variable var2 = new Variable(i.ToString(), context.GetVar() + v + ".ret_" + j.ToString(), type);
+                                AddVariable(context.GetVar() + v + ".ret_" + j.ToString(), var2);
+                                variable.outputs.Add(var2);
+                                j++;
+                            }
+                        }
+
+                        function.outputs.Add(variable);
+                        i++;
+                    }
+                    foreach (Argument arg in fun.args)
+                    {
+                        Argument variable = new Argument(arg.name, context.GetInput() + arg.name, arg.type);
+                        variable.enums = arg.enums;
+                        variable.defValue = arg.defValue;
+                        variable.variable = variable;
+                        if (variables.ContainsKey(context.GetInput() + arg.name))
+                        {
+                            variables.Remove(context.GetInput() + arg.name);
+                        }
+                        AddVariable(context.GetInput() + arg.name, variable);
+
+                        if (arg.type == Type.ENUM)
+                        {
+                            variable.SetEnum(getEnum(arg.enums));
+                        }
+
+                        if (arg.type == Type.STRUCT)
+                            variable.SetEnum(arg.enums);
+
+                        if (arg.type == Type.STRUCT)
+                        {
+                            if (variable.enums != varOwner.enums)
+                            {
+                                structs[variable.enums].generate(variable.name, false, variable);
+                            }
+                            else
+                            {
+                                foreach (Variable strVar in structs[arg.enums].fields)
+                                {
+                                    string varName = context.toInternal(context.GetInput() + arg.name + "." + strVar.name);
+                                    Variable variable2 = new Variable(strVar.name, varName, strVar.type, false, strVar.def);
+                                    variable2.isConst = strVar.isConst;
+                                    AddVariable(varName, variable2);
+                                    if (strVar.type == Type.ENUM)
+                                        variable2.SetEnum(strVar.enums);
+                                }
+                            }
+                        }
+                        if (arg.type == Type.FUNCTION)
+                        {
+                            int j = 0;
+                            foreach (Argument s in arg.args)
+                            {
+                                Type type = s.type;
+                                Argument arg2 = new Argument(i.ToString(), context.GetVar() + v + "." + j.ToString(), type);
+                                arg2.defValue = s.defValue;
+                                Variable var2 = new Variable(i.ToString(), context.GetVar() + v + "." + j.ToString(), type);
+                                AddVariable(context.GetVar() + v + "." + j.ToString(), var2);
+                                variable.args.Add(arg2);
+                                j++;
+                            }
+
+                            j = 0;
+                            foreach (Variable s in arg.outputs)
+                            {
+                                Type type = s.type;
+                                Variable var2 = new Variable(i.ToString(), context.GetVar() + v + ".ret_" + j.ToString(), type);
+                                AddVariable(context.GetVar() + v + ".ret_" + j.ToString(), var2);
+                                variable.outputs.Add(var2);
+                                j++;
+                            }
+                        }
+
+                        function.args.Add(variable);
+                    }
+
+                    context.Parent();
+
+                    if (isClass)
+                    {
+                        if (varOwner.entity)
+                        {
+                            fFile.parsed.Add("__class_pointer__ #= " + varOwner.gameName);
+                            fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==__class_pointer__){");
+                        }
+                        else
+                        {
+                            fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==" + varOwner.gameName + "){");
+                        }
+                    }
+                    if (fun.name == "__init__")
+                    {
+                        foreach (string line in initBase.parsed)
+                        {
+                            fFile.addParsedLine(line);
+                        }
+                        Structure tagGiver = this;
+                        while (tagGiver != null)
+                        {
+                            string map = classOffuscationMapAdd(tagGiver.name);
+                            fFile.addParsedLine("tag(" + map + ")");
+                            tagGiver = tagGiver.parent;
+                        }
+                    }
+                    foreach (string line in fun.file.parsed)
+                    {
+                        if (thisReg2.Match(line).Success)
+                        {
+                            if (compVal.Count > 0 && !(dualCompVar.Match(line).Success && structInstCompVar))
+                            {
+                                fFile.parsed.Add(compVarReplace(line));
+                            }
+                            else
+                            {
+                                fFile.parsed.Add(line);
+                            }
+                        }
+                        else
+                        {
+                            if (compVal.Count > 0 && !(dualCompVar.Match(line).Success && structInstCompVar))
+                            {
+                                fFile.parsed.Add(compVarReplace(thisReg.Replace(line, context.GetVar())));
+                            }
+                            else
+                            {
+                                fFile.parsed.Add(thisReg.Replace(line, context.GetVar()));
                             }
                         }
                     }
-                }
-                else
-                {
-                    List<Function> lst = new List<Function>();
-                    lst.Add(function);
-                    functions.Add(key, lst);
-                }
-                #endregion
-                context.Sub(fun.name, fFile);
-
-                fFile.UnparsedFunctionFile = !fun.lazy && structStack.Count == 0 && !fun.isAbstract;
-                fFile.UnparsedFunctionFileContext = context.GetVar();
-
-
-                foreach (string tag in fun.tags)
-                {
-                    function.tags.Add(tag);
-                    AddToFunctionTag(function, tag);
-                }
-
-                fFile.notUsed = !fun.isLoading && !fun.isHelper && !fun.isTicking && fun.tags.Count == 0;
-
-                int i = 0;
-                foreach (Variable output in fun.outputs)
-                {
-                    string varName = context.GetVar() + "ret_" + i.ToString();
-                    Variable variable = new Variable(output.name, varName, output.type, output.entity, output.def);
-                    variable.isConst = output.isConst;
-                    if (variables.ContainsKey(varName))
+                    if (isClass)
                     {
-                        variables.Remove(varName);
+                        fFile.parsed.Add("}");
                     }
-                    AddVariable(varName, variable);
-                    if (output.type == Type.ENUM)
-                        variable.SetEnum(output.enums);
-                    if (output.type == Type.STRUCT)
-                        variable.SetEnum(output.enums);
-                    if (output.type == Type.STRUCT)
-                    {
-                        foreach (Variable strVar in structs[output.enums].fields)
-                        {
-                            string varName2 = context.toInternal(context.GetInput() + output.name + "." + strVar.name);
-                            Variable variable2 = new Variable(strVar.name, varName2, strVar.type, false, strVar.def);
-                            variable2.isConst = strVar.isConst;
-                            AddVariable(varName2, variable2);
-                            if (strVar.type == Type.ENUM)
-                                variable2.SetEnum(strVar.enums);
-                        }
-                    }
-
-                    if (output.type == Type.FUNCTION)
-                    {
-                        int j = 0;
-                        foreach (Argument s in output.args)
-                        {
-                            Type type = s.type;
-                            Argument arg = new Argument(i.ToString(), context.GetVar() + v + "." + j.ToString(), type);
-                            arg.defValue = s.defValue;
-                            Variable var2 = new Variable(i.ToString(), context.GetVar() + v + "." + j.ToString(), type);
-                            AddVariable(context.GetVar() + v + "." + j.ToString(), var2);
-                            variable.args.Add(arg);
-                            j++;
-                        }
-
-                        j = 0;
-                        foreach (Variable s in output.outputs)
-                        {
-                            Type type = s.type;
-                            Variable var2 = new Variable(i.ToString(), context.GetVar() + v + ".ret_" + j.ToString(), type);
-                            AddVariable(context.GetVar() + v + ".ret_" + j.ToString(), var2);
-                            variable.outputs.Add(var2);
-                            j++;
-                        }
-                    }
-
-                    function.outputs.Add(variable);
-                    i++;
-                }
-                foreach (Argument arg in fun.args)
-                {
-                    Argument variable = new Argument(arg.name, context.GetInput() + arg.name, arg.type);
-                    variable.enums = arg.enums;
-                    variable.defValue = arg.defValue;
-                    variable.variable = variable;
-                    if (variables.ContainsKey(context.GetInput() + arg.name))
-                    {
-                        variables.Remove(context.GetInput() + arg.name);
-                    }
-                    AddVariable(context.GetInput() + arg.name, variable);
-
-                    if (arg.type == Type.ENUM)
-                    {
-                        variable.SetEnum(getEnum(arg.enums));
-                    }
-
-                    if (arg.type == Type.STRUCT)
-                        variable.SetEnum(arg.enums);
-
-                    if (arg.type == Type.STRUCT)
-                    {
-                        foreach (Variable strVar in structs[arg.enums].fields)
-                        {
-                            string varName = context.toInternal(context.GetInput() + arg.name + "." + strVar.name);
-                            Variable variable2 = new Variable(strVar.name, varName, strVar.type, false, strVar.def);
-                            variable2.isConst = strVar.isConst;
-                            AddVariable(varName, variable2);
-                            if (strVar.type == Type.ENUM)
-                                variable2.SetEnum(strVar.enums);
-                        }
-                    }
-                    if (arg.type == Type.FUNCTION)
-                    {
-                        int j = 0;
-                        foreach (Argument s in arg.args)
-                        {
-                            Type type = s.type;
-                            Argument arg2 = new Argument(i.ToString(), context.GetVar() + v + "." + j.ToString(), type);
-                            arg2.defValue = s.defValue;
-                            Variable var2 = new Variable(i.ToString(), context.GetVar() + v + "." + j.ToString(), type);
-                            AddVariable(context.GetVar() + v + "." + j.ToString(), var2);
-                            variable.args.Add(arg2);
-                            j++;
-                        }
-
-                        j = 0;
-                        foreach (Variable s in arg.outputs)
-                        {
-                            Type type = s.type;
-                            Variable var2 = new Variable(i.ToString(), context.GetVar() + v + ".ret_" + j.ToString(), type);
-                            AddVariable(context.GetVar() + v + ".ret_" + j.ToString(), var2);
-                            variable.outputs.Add(var2);
-                            j++;
-                        }
-                    }
-
-                    function.args.Add(variable);
-                }
-                
-                context.Parent();
-                
-                if (isClass)
-                {
-                    if (varOwner.entity)
-                    {
-                        fFile.parsed.Add("__class_pointer__ #= "+ varOwner.gameName);
-                        fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==__class_pointer__){");
-                    }
-                    else
-                    {
-                        fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==" + varOwner.gameName + "){");
-                    }
-                }
-                if (fun.name == "__init__")
-                {
-                    foreach (string line in initBase.parsed)
-                    {
-                        fFile.addParsedLine(line);
-                    }
-                }
-                foreach (string line in fun.file.parsed)
-                {
-                    if (thisReg2.Match(line).Success)
-                    {
-                        if (compVal.Count > 0 && !(dualCompVar.Match(line).Success && structInstCompVar))
-                        {
-                            fFile.parsed.Add(compVarReplace(line));
-                        }
-                        else
-                        {
-                            fFile.parsed.Add(line);
-                        }
-                    }
-                    else
-                    {
-                        if (compVal.Count > 0 && !(dualCompVar.Match(line).Success && structInstCompVar))
-                        {
-                            fFile.parsed.Add(compVarReplace(thisReg.Replace(line, context.GetVar())));
-                        }
-                        else
-                        {
-                            fFile.parsed.Add(thisReg.Replace(line, context.GetVar()));
-                        }
-                    }
-                }
-                if (isClass)
-                {
-                    fFile.parsed.Add("}");
                 }
             }
             public string generate(string v, bool entity, Variable varOwner, string instArg = null, bool parentClass = false)
@@ -7426,14 +7572,18 @@ namespace JSharp
                         }
                     }
                 }
-                compVal[compVal.Count - 1].Add("$this", varOwner.uuid);
-                compVal[compVal.Count - 1].Add("$this.lower", varOwner.uuid.ToLower());
-                compVal[compVal.Count - 1].Add("$this.upper", varOwner.uuid.ToUpper());
-                compVal[compVal.Count - 1].Add("$this.enums", varOwner.enums);
-                compVal[compVal.Count - 1].Add("$this.type", varOwner.GetTypeString());
-                compVal[compVal.Count - 1].Add("$this.name", varOwner.gameName);
-                compVal[compVal.Count - 1].Add("$this.scoreboard", varOwner.scoreboard());
-                compVal[compVal.Count - 1].Add("$this.scoreboardname", varOwner.scoreboard().Split(' ')[1]);
+                if (parentClass)
+                {
+                    context.Sub(name.Replace(".","_"), new File("", ""));
+                }
+                compVal[compVal.Count - 1]["$this"] = varOwner.uuid;
+                compVal[compVal.Count - 1]["$this.lower"] = varOwner.uuid.ToLower();
+                compVal[compVal.Count - 1]["$this.upper"] = varOwner.uuid.ToUpper();
+                compVal[compVal.Count - 1]["$this.enums"] = varOwner.enums;
+                compVal[compVal.Count - 1]["$this.type"] = varOwner.GetTypeString();
+                compVal[compVal.Count - 1]["$this.name"] = varOwner.gameName;
+                compVal[compVal.Count - 1]["$this.scoreboard"] = varOwner.scoreboard();
+                compVal[compVal.Count - 1]["$this.scoreboardname"] = varOwner.scoreboard().Split(' ')[1];
 
                 typeMaps.Push(new Dictionary<string, string>());
                 foreach (string key in typeMapContext.Keys)
@@ -7457,7 +7607,7 @@ namespace JSharp
                     {
                         if (fun.name == "__init__")
                         {
-                            generateFunction(fun, varOwner, v, cont);
+                            generateFunction(fun, varOwner, v, cont, parentClass);
                         }
                     }
 
@@ -7477,12 +7627,15 @@ namespace JSharp
                 {
                     if (fun.name != "__init__" || instArg == null)
                     {
-                        generateFunction(fun, varOwner, v, cont);
+                        generateFunction(fun, varOwner, v, cont, parentClass);
                     }
                 }
                 isInStructMethod = prev;
                 int ci=0;
-                
+                if (parentClass)
+                {
+                    context.Parent();
+                }
                 if (cont != context.GetVar())
                 {
                     context.Parent();
@@ -7590,6 +7743,7 @@ namespace JSharp
 
             public List<Argument> args = new List<Argument>();
             public List<Variable> outputs = new List<Variable>();
+            public List<Function> associatedFunction = new List<Function>();
 
             private Variable() { }
 
@@ -7806,6 +7960,10 @@ namespace JSharp
                         GetVariableByName(gameName + ".ret_" + i.ToString()).LinkCopyTo(newName + ".ret_" + i.ToString());
                         i++;
                     }
+                }
+                foreach(Function f in associatedFunction)
+                {
+                    f.LinkCopyTo(newName + "." + name);
                 }
             }
             public Variable Select(string entitySelector)
