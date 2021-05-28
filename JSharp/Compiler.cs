@@ -8,6 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace JSharp
 {
@@ -153,7 +154,7 @@ namespace JSharp
 
         private static int isInLazyCompile;
         private static CompilerSetting compilerSetting;
-        private static int maxRecCall = 300;
+        private static int maxRecCall = 100;
         private static bool muxAdding;
         private static bool callStackDisplay;
         private static File currentParsedFile;
@@ -288,11 +289,11 @@ namespace JSharp
                 
                 foreach(File f in files)
                 {
-                    if (!compilerSetting.removeUselessFile)
+                    if (!compilerSetting.removeUselessFile && f.valid)
                     {
                         returnFiles.Add(f);
                     }
-                    else if (!f.notUsed && !f.isLazy && f.lineCount > 0)
+                    else if (!f.notUsed && !f.isLazy && f.lineCount > 0 && f.valid)
                     {
                         returnFiles.Add(f);
                         foreach(string line in f.content.Split('\n'))
@@ -349,12 +350,15 @@ namespace JSharp
             List<Task<string[]>> tasks = new List<Task<string[]>>();
             foreach(File f in files)
             {
-                tasks.Add(Task<string[]>.Factory.StartNew(() => desugar(f.content).Split('\n')));
+                tasks.Add(Task<string[]>.Factory.StartNew(() => (f.valid)?desugar(f.content).Split('\n'):null));
             }
             for (int i = 0; i < files.Count; i++)
             {
-                currentParsedFile = files[i];
-                compileFile(files[i], tasks[i].Result, notUsed, import);
+                if (files[i].valid)
+                {
+                    currentParsedFile = files[i];
+                    compileFile(files[i], tasks[i].Result, notUsed, import);
+                }
             }
             currentParsedFile = null;
         }
@@ -1200,46 +1204,58 @@ namespace JSharp
             
             return "";
         }
-        public static bool tryImport(string folder, string text, bool fu, out string msg)
+        public static bool tryImport(string folder, string lib, bool fu, out string msg)
         {
-            if (System.IO.File.Exists(folder + text + ".tbms"))
+            string[] split = lib.Split('.');
+            List<string> paths = new List<string>();
+            paths.Add(split[0]);
+            for (int i = 1; i < lib.Length; i++)
             {
-                Context c = context;
-                context = new Context(Project, new File("", ""));
-
-                forcedUnsed = fu;
-                string data = System.IO.File.ReadAllText(folder + text + ".tbms");
-                ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
-                msg = "#Using TBMS Library: " + text + " v." + project.version.ToString()+"\n";
-
-                if (project.resources != null)
+                paths.Add(paths[paths.Count - 1] + "." + lib[i]);
+            }
+            paths.Reverse();
+            foreach (string text in paths) {
+                if (System.IO.File.Exists(folder + text + ".tbms"))
                 {
-                    foreach (var f in project.resources)
+                    string fileName = lib.Replace(text, "");
+                    Context c = context;
+                    context = new Context(Project, new File("", ""));
+
+                    forcedUnsed = fu;
+                    string data = System.IO.File.ReadAllText(folder + text + ".tbms");
+                    ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
+                    msg = "#Using TBMS Library: " + text + " v." + project.version.ToString() + "\n";
+
+                    if (project.resources != null)
                     {
-                        if (!resourceFiles.ContainsKey(f.name))
-                            resourceFiles.Add(f.name, f.content);
+                        foreach (var f in project.resources)
+                        {
+                            if (!resourceFiles.ContainsKey(f.name))
+                                resourceFiles.Add(f.name, f.content);
+                        }
                     }
+
+                    List<File> nFiles = new List<File>();
+                    foreach (var file in project.files)
+                    {
+                        if (fileName == "" || fileName == file.name)
+                        {
+                            nFiles.Add(new File(text + "." + file.name, file.content));
+                        }
+                    }
+                    compileFiles(nFiles, fu, true);
+
+                    imported.Add(text);
+                    forcedUnsed = false;
+
+                    context = c;
+
+                    return true;
                 }
-
-                List<File> nFiles = new List<File>();
-                foreach (var file in project.files)
-                {
-                    nFiles.Add(new File(text + "." + file.name, file.content));
-                }
-                compileFiles(nFiles, fu, true);
-
-                imported.Add(text);
-                forcedUnsed = false;
-
-                context = c;
-
-                return true;
             }
-            else
-            {
-                msg = "";
-                return false;
-            }
+
+            msg = "";
+            return false;
         }
         public static string instUsing(string text)
         {
@@ -1414,7 +1430,8 @@ namespace JSharp
             
             if (right[0].Contains("(") && context.IsFunction(right[0].Substring(0, right[0].IndexOf('(')))
                 && !smartContains(right[0], '+') && !smartContains(right[0], '-') && !smartContains(right[0], '*')
-                && !smartContains(right[0], '%') && !smartContains(right[0], '/'))
+                && !smartContains(right[0], '%') && !smartContains(right[0], '/') && !smartContains(right[0], '|')
+                && !smartContains(right[0], '&') && !smartContains(right[0], '^'))
             {
                 if (curriedReg.Match(right[0]).Success)
                 {
@@ -3195,7 +3212,7 @@ namespace JSharp
                 compVal[compVal.Count - 1].Add(name, var.constValue);
                 return "";
             }
-            else if (value.StartsWith("("))
+            else if (value.StartsWith("(") && field[0] != "json")
             {
                 string[] argget = getArgs(value);
                 for (int i = 0; i < argget.Length; i++)
@@ -5785,30 +5802,38 @@ namespace JSharp
                 if (callStackDisplay)
                     callTrace += "\""+callingFunctName+"\"->\"" + funObj.gameName + "\"\n";
 
+                int functionCount = 0;
+                foreach (var a in funObj.args)
+                {
+                    if (a.type == Type.FUNCTION)
+                    {
+                        functionCount++;
+                    }
+                }
+
                 //short notation
                 if (!funObj.lazy)
                 {
-                    if (args.Length == 1 && funObj.args.Count == smartSplit(args[0],' ').Length)
+                    if (args.Length == 1)
                     {
-                        args = smartSplit(args[0], ' ');
+                        string[] spt = smartSplit(args[0], ' ');
+                        if ((spt.Length >= funObj.args.Count - functionCount ||
+                            spt.Length >= funObj.argNeeded)&& spt.Length <= funObj.maxArgNeeded)
+                        {
+
+                            args = spt;
+                        }
                     }
                 }
                 else
                 {
-                    int functionCount = 0;
-                    foreach (var a in funObj.args)
-                    {
-                        if (a.type == Type.FUNCTION)
-                        {
-                            functionCount++;
-                        }
-                    }
                     if (args.Length == 1 && funObj.args.Count > 1 && isString(args[0]) 
                         && smartSplit(extractString(args[0]), ' ').Length >= funObj.args.Count - functionCount)
                     {
                         args = smartSplit(extractString(args[0]), ' ');
                     }
-                    else if (args.Length == 1 && funObj.args.Count > 1 && smartSplit(args[0], ' ').Length >= funObj.args.Count - functionCount)
+                    else if (args.Length == 1 && funObj.args.Count > 1 &&
+                        smartSplit(args[0], ' ').Length >= funObj.args.Count - functionCount)
                     {
                         args = smartSplit(args[0], ' ');
                     }
@@ -9028,7 +9053,7 @@ namespace JSharp
             public string scoreboardTmp = "tbms.tmp";
             public bool tagsFolder = true;
             public Dictionary<string, string> forcedOffuscation = new Dictionary<string, string>();
-            public List<string> libraryFolder = new List<string>() { "./lib/1_16_5/" };
+            public List<string> libraryFolder = new List<string>() { "./lib/1_16_5/", "./lib/shared/" };
             public string MCVersion = "1.16.5";
 
             public CompilerSetting()
@@ -9089,6 +9114,7 @@ namespace JSharp
             public string abstractContent;
             public string ending;
             public string start = "";
+            public bool valid = true;
             public StringBuilder scoreboardDef = new StringBuilder();
             public List<string> parsed = new List<string>();
             public bool isLazy;
@@ -9330,21 +9356,21 @@ namespace JSharp
                     File f = context.currentFile();
                     string tmp = f.content.Replace("function "+function.gameName, content);
                     f.content = tmp;
-                    files.Remove(this);
+                    valid = false;
                 }
                 if (type == "if" && LastCond.wasAlwayTrue && lineCount > 1)
                 {
                     File f = context.currentFile();
                     string tmp = f.content + content;
                     f.content = tmp;
-                    files.Remove(this);
+                    valid = false;
                 }
                 if (type == "lazyfunctioncall")
                 {
                     File f = context.currentFile();
                     string tmp = f.content + content;
                     f.content = tmp;
-                    files.Remove(this);
+                    valid = false;
                 }
                 if ((type == "if" || (type == "with" && !cantMergeWith) || type == "at") && lineCount == 1 && !content.StartsWith("#"))
                 {
@@ -9353,7 +9379,7 @@ namespace JSharp
                         File f = context.currentFile();
                         string tmp = f.content + content;
                         f.content = tmp;
-                        files.Remove(this);
+                        valid = false;
                     }
                     else
                     {
@@ -9362,13 +9388,13 @@ namespace JSharp
                         tmp = tmp.Substring(0, tmp.LastIndexOf(' '));
                         tmp += " " + content;
                         f.content = tmp;
-                        files.Remove(this);
+                        valid = false;
                     }
                 }
                 if (type == "case" && lineCount == 1 && !content.StartsWith("#"))
                 {
                     switchcase.cmd = content;
-                    files.Remove(this);
+                    valid = false;
                 }
                 if (type == "switch")
                 {
@@ -9380,13 +9406,13 @@ namespace JSharp
                     }
                     f.AddLine(tmp);
 
-                    files.Remove(this);
+                    valid = false;
                 }
                 if (type == "forgenerate")
                 {
                     File f = context.currentFile();
                     f.AddLine(content);
-                    files.Remove(this);
+                    valid = false;
                 }
                 if (type == "withContext")
                 {
@@ -9394,7 +9420,7 @@ namespace JSharp
                     string tmp = f.content;
                     tmp += content;
                     f.content = tmp;
-                    files.Remove(this);
+                    valid = false;
                     context.popImpliciteVar();
                 }
                 

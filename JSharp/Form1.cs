@@ -575,10 +575,12 @@ namespace JSharp
         }
         public void UpdateProjectList()
         {
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+
             List<string> lst = new List<string>();
-            if (File.Exists("project.old"))
+            if (File.Exists(path+"project.old"))
             {
-                foreach (string s in File.ReadAllLines("project.old")) lst.Add(s);
+                foreach (string s in File.ReadAllLines(path+"project.old")) lst.Add(s);
             }
 
             if (lst.Contains(projectPath))
@@ -586,12 +588,12 @@ namespace JSharp
 
             lst.Insert(0, projectPath);
 
-            if (lst.Count > 10)
+            if (lst.Count > 20)
             {
-                lst.RemoveAt(10);
+                lst.RemoveAt(20);
             }
 
-            File.WriteAllLines("project.old", lst.ToArray());
+            File.WriteAllLines(path+"project.old", lst.ToArray());
         }
         public string GenerateDatapackLink(string path)
         {
@@ -659,6 +661,22 @@ namespace JSharp
         {
             NewProjectForm form = new NewProjectForm();
             var res = form.ShowDialog();
+            if (res == DialogResult.OK || res == DialogResult.Yes)
+            {
+                CodeListBox.Items.Clear();
+                code.Clear();
+                resources.Clear();
+                ResourceListBox.Items.Clear();
+                projectVersion = new ProjectVersion();
+                projectDescription = "";
+                moddificationFileTime.Clear();
+                moddificationResTime.Clear();
+                compilerSetting = new Compiler.CompilerSetting();
+                structures.Clear();
+                MCTagsList.Clear();
+                TagsList.Clear();
+                CodeBox.Text = "";
+            }
             if (res == DialogResult.OK)
             {
                 projectName = form.ProjectName;
@@ -669,8 +687,10 @@ namespace JSharp
 
                 code.Clear();
                 code.Add("import", "import standard.java\nimport standard.entity_id\nimport standard.object\n");
-                code.Add("load", "package main\n");
-                code.Add("main", "package main\n");
+                code.Add(projectName.ToLower(), "package "+ projectName.ToLower()+"\n");
+
+                CodeListBox.Items.Add("import");
+                CodeListBox.Items.Add(projectName.ToLower());
 
                 MCTagsList.Clear();
                 MCTagsList.Add("blocks", new Dictionary<string, TagsList>());
@@ -1739,6 +1759,13 @@ namespace JSharp
         {
             FunctionPreview fp = new FunctionPreview(Compiler.entityTags);
             fp.Show();
+        }
+
+        private void compileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            exporting = false;
+            CompileJava(true);
+            UpdateCodeBox();
         }
     }
 }
