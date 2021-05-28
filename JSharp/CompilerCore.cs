@@ -22,6 +22,7 @@ namespace JSharp
         public abstract string[] ConditionBlocks(string val);
         public abstract string Condition(string val);
         public abstract string VariableSetNull(Compiler.Variable var, string selector = "");
+        public abstract string FormatTagsPath(string path);
 
         public abstract string AsAt(string entity, string cond = "");
         public abstract string As(string entity, string cond = "");

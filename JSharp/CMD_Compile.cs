@@ -220,14 +220,17 @@ namespace BluePhoenix
         }
         public void ExportResourcePack(string path)
         {
-            string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
-            SafeWriteFile(rpPath + "/pack.mcmeta",
-                            JsonConvert.SerializeObject(new ResourcePackMeta(project.projectName + " - " + project.description)));
-
-            if (Directory.Exists(rpPath))
+            if (path != null && path != "")
             {
-                if (File.Exists(path)) { File.Delete(path); }
-                ZipFile.CreateFromDirectory(rpPath, path);
+                string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
+                SafeWriteFile(rpPath + "/pack.mcmeta",
+                                JsonConvert.SerializeObject(new ResourcePackMeta(project.projectName + " - " + project.description)));
+
+                if (Directory.Exists(rpPath))
+                {
+                    if (File.Exists(path)) { File.Delete(path); }
+                    ZipFile.CreateFromDirectory(rpPath, path);
+                }
             }
         }
         public static void SafeCopy(string src, string dest)

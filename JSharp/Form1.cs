@@ -256,7 +256,6 @@ namespace JSharp
             NewFile();
         }
 
-
         public void Save(string projectPath)
         {
             recallFile();
@@ -663,6 +662,9 @@ namespace JSharp
             if (res == DialogResult.OK)
             {
                 projectName = form.ProjectName;
+                compilerSetting.MCVersion = form.MCVersion;
+                compilerSetting.libraryFolder.Insert(0, "./lib/1_17/");
+
                 Text = projectName + " - TBMScript";
 
                 code.Clear();
@@ -964,14 +966,17 @@ namespace JSharp
         }
         public void ExportResourcePack(string path)
         {
-            string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
-            SafeWriteFile(rpPath + "/pack.mcmeta",
-                            JsonConvert.SerializeObject(new ResourcePackMeta(projectName + " - " + projectDescription)));
-
-            if (Directory.Exists(rpPath))
+            if (path != null && path != "")
             {
-                if (File.Exists(path)) { File.Delete(path); }
-                ZipFile.CreateFromDirectory(rpPath, path);
+                string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
+                SafeWriteFile(rpPath + "/pack.mcmeta",
+                                JsonConvert.SerializeObject(new ResourcePackMeta(projectName + " - " + projectDescription)));
+
+                if (Directory.Exists(rpPath))
+                {
+                    if (File.Exists(path)) { File.Delete(path); }
+                    ZipFile.CreateFromDirectory(rpPath, path);
+                }
             }
         }
         public void ChangeCompileOrder()
@@ -1728,6 +1733,12 @@ namespace JSharp
             }
             ResourcesPackEditor = new ResourcesPackEditor(Path.GetDirectoryName(projectPath) + "/resourcespack");
             ResourcesPackEditor.Show();
+        }
+
+        private void button15_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(Compiler.entityTags);
+            fp.Show();
         }
     }
 }

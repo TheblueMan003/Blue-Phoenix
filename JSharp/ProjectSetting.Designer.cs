@@ -40,6 +40,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.FloatPrecBox = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.button5 = new System.Windows.Forms.Button();
             this.TempScoreboardBox = new System.Windows.Forms.TextBox();
             this.ConstScoreboardBox = new System.Windows.Forms.TextBox();
             this.ValueScoreboardBox = new System.Windows.Forms.TextBox();
@@ -50,7 +51,9 @@
             this.label6 = new System.Windows.Forms.Label();
             this.TreeSizeBox = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.button5 = new System.Windows.Forms.Button();
+            this.PathTags = new System.Windows.Forms.CheckBox();
+            this.LibPaths = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -97,7 +100,7 @@
             // button1
             // 
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button1.Location = new System.Drawing.Point(151, 183);
+            this.button1.Location = new System.Drawing.Point(153, 234);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 5;
@@ -169,6 +172,9 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
+            this.groupBox1.Controls.Add(this.LibPaths);
+            this.groupBox1.Controls.Add(this.label10);
+            this.groupBox1.Controls.Add(this.PathTags);
             this.groupBox1.Controls.Add(this.button5);
             this.groupBox1.Controls.Add(this.TempScoreboardBox);
             this.groupBox1.Controls.Add(this.ConstScoreboardBox);
@@ -184,10 +190,21 @@
             this.groupBox1.ForeColor = System.Drawing.Color.White;
             this.groupBox1.Location = new System.Drawing.Point(376, 9);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(314, 197);
+            this.groupBox1.Size = new System.Drawing.Size(314, 248);
             this.groupBox1.TabIndex = 12;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Compiler Setting";
+            // 
+            // button5
+            // 
+            this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button5.Location = new System.Drawing.Point(207, 218);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(101, 23);
+            this.button5.TabIndex = 13;
+            this.button5.Text = "Force Offuscation";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // TempScoreboardBox
             // 
@@ -249,7 +266,7 @@
             // RMFileBox
             // 
             this.RMFileBox.AutoSize = true;
-            this.RMFileBox.Location = new System.Drawing.Point(10, 174);
+            this.RMFileBox.Location = new System.Drawing.Point(10, 222);
             this.RMFileBox.Name = "RMFileBox";
             this.RMFileBox.Size = new System.Drawing.Size(130, 17);
             this.RMFileBox.TabIndex = 16;
@@ -284,23 +301,42 @@
             this.label5.TabIndex = 12;
             this.label5.Text = "Float Precision:";
             // 
-            // button5
+            // PathTags
             // 
-            this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button5.Location = new System.Drawing.Point(207, 168);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(101, 23);
-            this.button5.TabIndex = 13;
-            this.button5.Text = "Force Offuscation";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
+            this.PathTags.AutoSize = true;
+            this.PathTags.Location = new System.Drawing.Point(10, 199);
+            this.PathTags.Name = "PathTags";
+            this.PathTags.Size = new System.Drawing.Size(87, 17);
+            this.PathTags.TabIndex = 23;
+            this.PathTags.Text = "Pathed Tags";
+            this.PathTags.UseVisualStyleBackColor = true;
+            this.PathTags.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
+            // 
+            // LibPaths
+            // 
+            this.LibPaths.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.LibPaths.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.LibPaths.ForeColor = System.Drawing.Color.White;
+            this.LibPaths.Location = new System.Drawing.Point(92, 149);
+            this.LibPaths.Name = "LibPaths";
+            this.LibPaths.Size = new System.Drawing.Size(176, 20);
+            this.LibPaths.TabIndex = 25;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(7, 151);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(49, 13);
+            this.label10.TabIndex = 24;
+            this.label10.Text = "Lib Path:";
             // 
             // ProjectSetting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
-            this.ClientSize = new System.Drawing.Size(696, 218);
+            this.ClientSize = new System.Drawing.Size(696, 262);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.textBox2);
@@ -349,5 +385,8 @@
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.CheckBox PathTags;
+        private System.Windows.Forms.TextBox LibPaths;
+        private System.Windows.Forms.Label label10;
     }
 }

@@ -14,6 +14,7 @@ namespace JSharp
     public partial class NewProjectForm : Form
     {
         public string ProjectName;
+        public string MCVersion;
 
         public NewProjectForm()
         {
@@ -23,6 +24,7 @@ namespace JSharp
         private void button1_Click(object sender, EventArgs e)
         {
             ProjectName = textBox1.Text;
+            MCVersion = textBox2.Text;
             DialogResult = DialogResult.OK;
             Close();
         }

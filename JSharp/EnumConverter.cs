@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -102,16 +103,29 @@ namespace JSharp
                     }
                     else
                     {
-                        string value = cells[0] + "(";
-                        for (int j = 1; j < cells.Length; j++)
-                        {
-                            value += cells[j] + ",";
-                            types[j - 1] = GetType(fields[1], types[j - 1]);
-                        }
                         if (cells.Length > 1)
+                        {
+                            string value = cells[0] + "(";
+                            for (int j = 1; j < cells.Length; j++)
+                            {
+                                if (j > types.Count)
+                                {
+                                    Compiler.GlobalDebug("CSV Error at line " + i.ToString() + " index: " + j.ToString() + "/" + types.Count.ToString(), Color.Red);
+                                }
+                                else
+                                {
+                                    value += cells[j] + ",";
+                                    types[j - 1] = GetType(cells[j], types[j - 1]);
+                                }
+                            }
                             value = value.Substring(0, value.Length - 1) + ")";
 
-                        values.Add(value);
+                            values.Add(value);
+                        }
+                        else
+                        {
+                            values.Add(cells[0]);
+                        }
                     }
                     i++;
                 }
@@ -120,7 +134,14 @@ namespace JSharp
             {
                 fields[j] = types[j] + " " + fields[j];
             }
-            return new Compiler.Enum(name, fields.ToArray(), values.ToArray(), final);
+            if (fields.Count > 0)
+            {
+                return new Compiler.Enum(name, fields.ToArray(), values.ToArray(), final);
+            }
+            else
+            {
+                return new Compiler.Enum(name, values.ToArray(), final);
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ namespace JSharp
             "while", "for", "with", "forgenerate", "interface", "foreach" , "return", "&&", "||", "at",
             "switch", "case", "const", "final", "override", "virtual",
             "struct", "extends", "static", "positioned", "lazy", "abstract", "this", "align", "alias",
-            "ticking", "loading", "helper", "void", "null", "enum", "blocktags", "public", "private",
+            "ticking", "loading", "helper", "void", "null", "enum", "blocktags","entitytags","itemtags", "public", "private",
             "new", "external", "jsonfile", "require", "indexed", "predicate", "let", "var", "val", "extension"};
 
         private static List<string> enums = new List<string>();
@@ -33,7 +33,7 @@ namespace JSharp
         private static List<string> defWordMore2 = new List<string>();
 
         private static Regex numberRegex = new Regex(@"(-?\b)(\d+\.\d+|\d+)[bldsf]?\b");
-        private static Regex wordRegex = new Regex("\"(([^\\n\"]+)*(\\\\\")*)*\"");
+        private static Regex wordRegex = new Regex("\"[^\"]*\"");//= new Regex("\"(([^\\n\"]+)*(\\\\\")*)*\"");
         private static Regex commentRegex = new Regex(@"(?s)(//[^\n]*|/\*[^*]*\*/)");
         private static Regex funcDocRegex = new Regex("(?s)\"\"\"[^\"\"\"]*\"\"\"");
         private static List<ColorCoding> colorCodings = new List<ColorCoding>();

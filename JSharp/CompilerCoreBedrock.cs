@@ -244,5 +244,10 @@ namespace JSharp
         }
 
         public override string getLibraryFolder() { return "bedrock";}
+
+        public override string FormatTagsPath(string path)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

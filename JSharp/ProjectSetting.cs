@@ -36,10 +36,12 @@ namespace JSharp
             TreeSizeBox.Text = compilerSetting.TreeMaxSize.ToString();
             FloatPrecBox.Text = compilerSetting.FloatPrecision.ToString();
             RMFileBox.Checked = compilerSetting.removeUselessFile;
+            PathTags.Checked = compilerSetting.tagsFolder;
 
             ValueScoreboardBox.Text = compilerSetting.scoreboardValue;
             ConstScoreboardBox.Text = compilerSetting.scoreboardConst;
             TempScoreboardBox.Text = compilerSetting.scoreboardTmp;
+            LibPaths.Text = compilerSetting.libraryFolder.Aggregate((s1, s2) => (s1 +";"+ s2));
         }
 
         private void ProjectSetting_Load(object sender, EventArgs e)
@@ -72,10 +74,13 @@ namespace JSharp
                 compilerSetting.TreeMaxSize = int.Parse(TreeSizeBox.Text);
                 compilerSetting.FloatPrecision = int.Parse(FloatPrecBox.Text);
                 compilerSetting.removeUselessFile = RMFileBox.Checked;
+                compilerSetting.tagsFolder = PathTags.Checked;
 
                 compilerSetting.scoreboardValue = ValueScoreboardBox.Text.Replace(" ","").Replace("\t", "");
                 compilerSetting.scoreboardConst = ConstScoreboardBox.Text.Replace(" ", "").Replace("\t", "");
                 compilerSetting.scoreboardTmp = TempScoreboardBox.Text.Replace(" ", "").Replace("\t", "");
+
+                compilerSetting.libraryFolder = LibPaths.Text.Split(';').ToList();
             }
             catch(Exception exc)
             {
@@ -99,6 +104,11 @@ namespace JSharp
         {
             ForceOffuscation form = new ForceOffuscation(variables, compilerSetting.forcedOffuscation);
             form.ShowDialog();
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }
