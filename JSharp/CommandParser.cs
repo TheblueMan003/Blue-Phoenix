@@ -115,7 +115,7 @@ namespace JSharp
         public static string parseTellraw(string[] args, Compiler.Context context, string text)
         {
             string output = "tellraw " + context.GetEntitySelector(args[0]) + " ";
-            string[] json = jsonFormat(args, context, 1);
+            string[] json = Compiler.Core.FormatJson(args, context, 1);
             output = json[1]+ output+ json[0]+"\n"+ json[2];
  
             return output + '\n';
@@ -127,7 +127,7 @@ namespace JSharp
                 throw new Exception("Invalid Title type: " + titleType);
             
             string output = "title " + context.GetEntitySelector(args[0]) + " " + titleType + " ";
-            string[] json = jsonFormat(args, context, 2);
+            string[] json = Compiler.Core.FormatJson(args, context, 2);
             output = json[1] + output + json[0] + "\n" + json[2];
             return output + '\n';
         }
@@ -184,7 +184,7 @@ namespace JSharp
                             json[i - 3 - argIndex] += "," + subargs[k];
                         }
                         json[i - 3 - argIndex] += ")";
-                        string[] jsonParsed = jsonFormat(json, context, 0);
+                        string[] jsonParsed = Compiler.Core.FormatJson(json, context, 0);
                         output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + " run " + titleLine + jsonParsed[0] + "\n";
                         time++;
                     }
@@ -197,12 +197,12 @@ namespace JSharp
                         json[k - 3 - argIndex] = args[k];
                     }
                     
-                    string[] jsonParsed = jsonFormat(json, context, 0);
+                    string[] jsonParsed = Compiler.Core.FormatJson(json, context, 0);
                     output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + " run " + titleLine + jsonParsed[0] + "\n";
                     time++;
                 }
             }
-            string[] jsonParsedGlobal = jsonFormat(args, context, 3 +argIndex);
+            string[] jsonParsedGlobal = Compiler.Core.FormatJson(args, context, 3 +argIndex);
             output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + ".. run " +titleLine + jsonParsedGlobal[0] + "\n";
             if (maxTime > -1)
             {
@@ -473,176 +473,7 @@ namespace JSharp
             return link;
         }
 
-        public static string[] jsonFormat(string[] args, Compiler.Context context, int start = 0)
-        {
-            string output = "[";
-            string output2 = "";
-            string output3 = "";
-            int strTag = 0;
-
-            for (int i = start; i < args.Length; i++)
-            {
-                string arg = Compiler.smartEmpty(args[i]).StartsWith("(") ? Compiler.smartEmpty(args[i].Substring(args[i].IndexOf('(') + 1, args[i].LastIndexOf(')') - args[i].IndexOf('(') - 1)) : args[i];
-                string[] subargs = Compiler.smartSplit(arg, ',');
-                bool array = false;
-                if (subargs[0].Contains("\""))
-                {
-                    string ext = Compiler.smartExtract(subargs[0]);
-                    if (ext.StartsWith("\"") && ext.EndsWith("\""))
-                    {
-                        output += ",{\"text\":" + subargs[0];
-                    }
-                    else
-                    {
-                        throw new Exception("JSON Syntaxe Error");
-                    }
-                }
-                else if (subargs[0].Contains("@"))
-                {
-                    output += ",{\"selector\":\"" + subargs[0] + "\"";
-                }
-                else if (Compiler.isStringVar(subargs[0]))
-                {
-                    string tmp = Compiler.getString(subargs[0]);
-                    tmp += "tag @e[tag=__str__,tag=!__str__tag__] add __str_" + strTag.ToString() + "\n";
-                    tmp += "tag @e[tag=__str__,tag=!__str__tag__] add __str__tag__" + "\n";
-                    output += ",{\"selector\":\"" + "@e[tag=__str_" + strTag.ToString() + "]" + "\"";
-                    strTag++;
-                    output2 += tmp;
-                }
-                else if (context.GetVarType(subargs[0]) == Compiler.Type.ENTITY)
-                {
-                    output += ",{\"selector\":\"" + context.GetEntitySelector(subargs[0]) + "\"";
-                }
-                else if (context.GetVarType(subargs[0]) == Compiler.Type.ARRAY)
-                {
-                    int nb = Compiler.GetVariable(context.GetVariable(subargs[0])).arraySize;
-                    array = true;
-                    for (int j = 0; j < Compiler.GetVariable(context.GetVariable(subargs[0])).arraySize; j++)
-                    {
-                        var va = Compiler.GetVariable(context.GetVariable(subargs[0] + "." + j.ToString()));
-                        if (va.type == Compiler.Type.STRING)
-                        {
-                            string tmp = Compiler.getString(subargs[0]);
-                            tmp += "tag @e[tag=__str__,tag=!__str__tag__] add __str_" + strTag.ToString() + "\n";
-                            tmp += "tag @e[tag=__str__,tag=!__str__tag__] add __str__tag__" +  "\n";
-                            output += ",{\"selector\":\"" + "@e[tag=__str_" + strTag.ToString() + "]" + "\"";
-                            output += jsonSubArg(subargs, context);
-                            output += "}";
-                            strTag++;
-                            output2 += tmp;
-                        }
-                        else
-                        {
-                            if (j == 0)
-                            {
-                                output += ",{\"text\":" + "\"[\"";
-                                output += jsonSubArg(subargs, context);
-                                output += "}";
-                            }
-                            string[] v = Compiler.GetVariableByName(subargs[0]+"."+j.ToString()).scoreboard().Split(' ');
-                            output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
-                            output += jsonSubArg(subargs, context);
-                            output += "}";
-                            output += ",{\"text\":" + "\", \"";
-                            output += jsonSubArg(subargs, context);
-                            output += "}";
-                            if (j == nb - 1)
-                            {
-                                output += ",{\"text\":" + "\"]\"";
-                                output += jsonSubArg(subargs, context);
-                            }
-                        }
-                    }
-                }
-                else if (context.GetVarType(subargs[0]) == Compiler.Type.STRUCT)
-                {
-                    Compiler.Structure s = Compiler.structs[Compiler.GetVariableByName(subargs[0]).enums];
-                    output += ",{\"text\":\"" + s.name+"(" + "\"";
-                    output += jsonSubArg(subargs, context);
-                    output += "}";
-                    foreach (var v in s.fields)
-                    {
-                        output += ",{\"text\":\"" + v.name + " = " + "\"";
-                        output += jsonSubArg(subargs, context);
-                        output += "}";
-
-                        string tmp = jsonFormat(new string[] { subargs[0]+"."+v.name }, context, 0)[0];
-                        output += "," + tmp.Substring(1, tmp.Length - 2);
-
-                        output += ",{\"text\":\"" + ", " + "\"";
-                        output += jsonSubArg(subargs, context);
-                        output += "}";
-                    }
-                    output += ",{\"text\":\"" + ")" + "\"";
-                }
-                else if (float.TryParse(subargs[0], out float _))
-                {
-                    output += ",{\"text\":\"" + subargs[0]+"\"";
-                }
-                else
-                {
-                    string[] v = Compiler.GetVariableByName(subargs[0]).scoreboard().Split(' ');
-                    output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
-                }
-                if (!array)
-                    output += jsonSubArg(subargs, context);
-
-                output += "}";
-            }
-
-            output += "]";
-
-            if (strTag > 0)
-            {
-                output3 += "\nkill @e[tag=__str__]";
-            }
-            output = "["+output.Substring(2, output.Length - 2);
-            return new string[] { output, output2, output3};
-        }
-        public static string jsonSubArg(string[] subargs, Compiler.Context context)
-        {
-            string output = "";
-            for (int j = 1; j < subargs.Length; j++)
-            {
-                if (context.IsFunction(subargs[j]))
-                {
-                    output += ",\"clickEvent\":{ \"action\":\"run_command\",\"value\":\"function " +
-                        Compiler.GetFunction(context.GetFunctionName(subargs[j]), new string[] { }).gameName + "\"}";
-                }
-                else if (subargs[j].StartsWith("\"http"))
-                {
-                    output += ",\"clickEvent\":{ \"action\":\"open_url\",\"value\":" + subargs[j] + "}";
-                }
-                else if (subargs[j].StartsWith("action="))
-                {
-                    output += ",\"clickEvent\":{ \"action\":\"run_command\",\"value\":\"/function " +
-                        Compiler.GetFunction(context.GetFunctionName(subargs[j].Split('=')[1]), new string[] { }).gameName + "\"}";
-                }
-                else if (subargs[j].StartsWith("link"))
-                {
-                    output += ",\"clickEvent\":{ \"action\":\"open_url\",\"value\":" + Compiler.smartSplit(subargs[j], '=', 1)[1] + "}";
-                }
-                else if (subargs[j] == "bold")
-                    output += ",\"bold\":true";
-
-                else if (subargs[j] == "italic")
-                    output += ",\"italic\":true";
-
-                else if (subargs[j] == "strikethrough")
-                    output += ",\"strikethrough\":true";
-
-                else if (subargs[j] == "obfuscated")
-                    output += ",\"obfuscated\":true";
-
-                else if (subargs[j] == "underlined")
-                    output += ",\"underlined\":true";
-
-                else
-                    output += ",\"color\":\"" + subargs[j] + "\"";
-            }
-            return output;
-        }
+        
 
         public class Gamerule
         {

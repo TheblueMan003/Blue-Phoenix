@@ -249,5 +249,193 @@ namespace JSharp
         {
             throw new NotImplementedException();
         }
+
+        public override string FormatFunctionPath(string path)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string[] FormatJson(string[] args, Compiler.Context context, int start = 0)
+        {
+            string[] outs = FormatJsonInternal(args, context, start);
+            return new string[] { "{ \"rawtext\" :"+outs[0]+"}", outs[1], outs[2] };
+        }
+        public string[] FormatJsonInternal(string[] args, Compiler.Context context, int start = 0)
+        {
+            string output = "[";
+            string output2 = "";
+            string output3 = "";
+            int strTag = 0;
+            HashSet<string> unpackedFloat = new HashSet<string>();
+
+            for (int i = start; i < args.Length; i++)
+            {
+                string arg = Compiler.smartEmpty(args[i]).StartsWith("(") ? Compiler.smartEmpty(args[i].Substring(args[i].IndexOf('(') + 1, args[i].LastIndexOf(')') - args[i].IndexOf('(') - 1)) : args[i];
+                string[] subargs = Compiler.smartSplit(arg, ',');
+                bool ignoreFormat = false;
+                if (subargs[0].Contains("\""))
+                {
+                    string ext = Compiler.smartExtract(subargs[0]);
+                    if (ext.StartsWith("\"") && ext.EndsWith("\""))
+                    {
+                        output += ",{\"text\":" + subargs[0];
+                    }
+                    else if (ext.StartsWith("f\"") && ext.EndsWith("\""))
+                    {
+                        string[] part = Compiler.extractString(ext.Substring(1, ext.Length - 1)).Replace("{", "}").Split('}');
+
+                        var a2 = Enumerable.Range(0, part.Length);
+                        var recArg = (subargs.Length > 1) ? subargs.Skip(1).Aggregate((x, y) => x + "," + y) : "";
+                        var part2 = part.Zip(a2, (first, second) => second % 2 == 0 ? "\"" + first + "\"" : first)
+                                        .Where(x => x != "\"\"")
+                                        .Select(x => "(" + x + "," + recArg + ")")
+                                        .Aggregate((x, y) => x + "," + y);
+
+
+                        string[] outs = FormatJsonInternal(Compiler.smartSplit(part2, ','), context);
+                        output += "," + outs[0].Substring(1, outs[0].Length - 2);
+                        output2 += outs[1];
+                        output3 += outs[2];
+
+
+                        ignoreFormat = true;
+                    }
+                    else
+                    {
+                        throw new Exception("JSON Syntaxe Error");
+                    }
+                }
+                else if (subargs[0].Contains("@"))
+                {
+                    output += ",{\"selector\":\"" + subargs[0] + "\"";
+                }
+                else if (float.TryParse(subargs[0], out float _))
+                {
+                    output += ",{\"text\":\"" + subargs[0] + "\"";
+                }
+                else if (Compiler.isStringVar(subargs[0]))
+                {
+                    string tmp = Compiler.getString(subargs[0]);
+                    tmp += "tag @e[tag=__str__,tag=!__str__tag__] add __str_" + strTag.ToString() + "\n";
+                    tmp += "tag @e[tag=__str__,tag=!__str__tag__] add __str__tag__" + "\n";
+                    output += ",{\"selector\":\"" + "@e[tag=__str_" + strTag.ToString() + "]" + "\"";
+                    strTag++;
+                    output2 += tmp;
+                }
+                else if (context.GetVarType(subargs[0]) == Compiler.Type.ENTITY)
+                {
+                    output += ",{\"selector\":\"" + context.GetEntitySelector(subargs[0]) + "\"";
+                }
+                else if (context.GetVarType(subargs[0]) == Compiler.Type.ARRAY)
+                {
+                    int nb = Compiler.GetVariable(context.GetVariable(subargs[0])).arraySize;
+                    ignoreFormat = true;
+                    for (int j = 0; j < Compiler.GetVariable(context.GetVariable(subargs[0])).arraySize; j++)
+                    {
+                        var va = Compiler.GetVariable(context.GetVariable(subargs[0] + "." + j.ToString()));
+                        if (va.type == Compiler.Type.STRING)
+                        {
+                            string tmp = Compiler.getString(subargs[0]);
+                            tmp += "tag @e[tag=__str__,tag=!__str__tag__] add __str_" + strTag.ToString() + "\n";
+                            tmp += "tag @e[tag=__str__,tag=!__str__tag__] add __str__tag__" + "\n";
+                            output += ",{\"selector\":\"" + "@e[tag=__str_" + strTag.ToString() + "]" + "\"";
+                            output += jsonSubArg(subargs, context);
+                            output += "}";
+                            strTag++;
+                            output2 += tmp;
+                        }
+                        else
+                        {
+                            if (j == 0)
+                            {
+                                output += ",{\"text\":" + "\"[\"";
+                                output += jsonSubArg(subargs, context);
+                                output += "}";
+                            }
+                            string[] v = Compiler.GetVariableByName(subargs[0] + "." + j.ToString()).scoreboard().Split(' ');
+                            output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
+                            output += jsonSubArg(subargs, context);
+                            output += "}";
+                            output += ",{\"text\":" + "\", \"";
+                            output += jsonSubArg(subargs, context);
+                            output += "}";
+                            if (j == nb - 1)
+                            {
+                                output += ",{\"text\":" + "\"]\"";
+                                output += jsonSubArg(subargs, context);
+                            }
+                        }
+                    }
+                }
+                else if (context.GetVarType(subargs[0]) == Compiler.Type.STRUCT)
+                {
+                    Compiler.Structure s = Compiler.structs[Compiler.GetVariableByName(subargs[0]).enums];
+                    output += ",{\"text\":\"" + s.name + "(" + "\"";
+                    output += jsonSubArg(subargs, context);
+                    output += "}";
+                    foreach (var v in s.fields)
+                    {
+                        output += ",{\"text\":\"" + v.name + " = " + "\"";
+                        output += jsonSubArg(subargs, context);
+                        output += "}";
+
+                        string tmp = FormatJsonInternal(new string[] { subargs[0] + "." + v.name }, context, 0)[0];
+                        output += "," + tmp.Substring(1, tmp.Length - 2);
+
+                        output += ",{\"text\":\"" + ", " + "\"";
+                        output += jsonSubArg(subargs, context);
+                        output += "}";
+                    }
+                    output += ",{\"text\":\"" + ")" + "\"";
+                }
+                else if (context.GetVarType(subargs[0]) == Compiler.Type.FLOAT)
+                {
+                    var v = Compiler.GetVariableByName(subargs[0]);
+                    if (!unpackedFloat.Contains(v.gameName))
+                    {
+                        output2 += Compiler.parseLine($"int {v.gameName}.u #= {v.gameName}") + "\n";
+                        output2 += Compiler.parseLine($"{v.gameName}.u /={Compiler.compilerSetting.FloatPrecision}") + "\n";
+                        output2 += Compiler.parseLine($"int {v.gameName}.l #= {v.gameName}") + "\n";
+                        output2 += Compiler.parseLine($"{v.gameName}.l %={Compiler.compilerSetting.FloatPrecision}") + "\n";
+
+                        unpackedFloat.Add(v.gameName);
+                    }
+                    var vu = Compiler.GetVariableByName($"{v.gameName}.u").scoreboard().Split(' ');
+                    var vl = Compiler.GetVariableByName($"{v.gameName}.l").scoreboard().Split(' ');
+                    output += ",{ \"score\":{ \"name\":\"" + vu[0] + "\",\"objective\":\"" + vu[1] + "\"}";
+                    output += jsonSubArg(subargs, context) + "}";
+                    output += ",{\"text\":\".\"";
+                    output += jsonSubArg(subargs, context) + "}";
+                    output += ",{ \"score\":{ \"name\":\"" + vl[0] + "\",\"objective\":\"" + vl[1] + "\"}";
+                }
+                else
+                {
+                    string[] v = Compiler.GetVariableByName(subargs[0]).scoreboard().Split(' ');
+                    output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
+                }
+                if (!ignoreFormat)
+                    output += jsonSubArg(subargs, context);
+
+                output += "}";
+            }
+
+            output += "]";
+
+            if (strTag > 0)
+            {
+                output3 += "\nkill @e[tag=__str__]";
+            }
+            output = "[" + output.Substring(2, output.Length - 2);
+            return new string[] { output, output2, output3 };
+        }
+        public string jsonSubArg(string[] subargs, Compiler.Context context)
+        {
+            string output = "";
+            for (int j = 1; j < subargs.Length; j++)
+            {
+                //throw new Exception("Not supported!");
+            }
+            return output;
+        }
     }
 }
