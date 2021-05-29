@@ -55,6 +55,9 @@
             this.TreeSizeBox = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.IsLibCheckbox = new System.Windows.Forms.CheckBox();
+            this.HighlightName_Box = new System.Windows.Forms.CheckBox();
+            this.HighlighEnum_Box = new System.Windows.Forms.CheckBox();
+            this.HighlighFunction_Box = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -224,7 +227,6 @@
             this.PathTags.TabIndex = 23;
             this.PathTags.Text = "Pathed Tags";
             this.PathTags.UseVisualStyleBackColor = true;
-            this.PathTags.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
             // button5
             // 
@@ -342,12 +344,45 @@
             this.IsLibCheckbox.Text = "Is Library";
             this.IsLibCheckbox.UseVisualStyleBackColor = true;
             // 
+            // HighlightName_Box
+            // 
+            this.HighlightName_Box.AutoSize = true;
+            this.HighlightName_Box.Location = new System.Drawing.Point(8, 135);
+            this.HighlightName_Box.Name = "HighlightName_Box";
+            this.HighlightName_Box.Size = new System.Drawing.Size(103, 17);
+            this.HighlightName_Box.TabIndex = 14;
+            this.HighlightName_Box.Text = "Highlight Names";
+            this.HighlightName_Box.UseVisualStyleBackColor = true;
+            // 
+            // HighlighEnum_Box
+            // 
+            this.HighlighEnum_Box.AutoSize = true;
+            this.HighlighEnum_Box.Location = new System.Drawing.Point(8, 156);
+            this.HighlighEnum_Box.Name = "HighlighEnum_Box";
+            this.HighlighEnum_Box.Size = new System.Drawing.Size(127, 17);
+            this.HighlighEnum_Box.TabIndex = 15;
+            this.HighlighEnum_Box.Text = "Highlight Enum Value";
+            this.HighlighEnum_Box.UseVisualStyleBackColor = true;
+            // 
+            // HighlighFunction_Box
+            // 
+            this.HighlighFunction_Box.AutoSize = true;
+            this.HighlighFunction_Box.Location = new System.Drawing.Point(8, 177);
+            this.HighlighFunction_Box.Name = "HighlighFunction_Box";
+            this.HighlighFunction_Box.Size = new System.Drawing.Size(141, 17);
+            this.HighlighFunction_Box.TabIndex = 16;
+            this.HighlighFunction_Box.Text = "Highlight Function Value";
+            this.HighlighFunction_Box.UseVisualStyleBackColor = true;
+            // 
             // ProjectSetting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(696, 262);
+            this.Controls.Add(this.HighlighFunction_Box);
+            this.Controls.Add(this.HighlighEnum_Box);
+            this.Controls.Add(this.HighlightName_Box);
             this.Controls.Add(this.IsLibCheckbox);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.label4);
@@ -401,5 +436,8 @@
         private System.Windows.Forms.TextBox LibPaths;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.CheckBox IsLibCheckbox;
+        private System.Windows.Forms.CheckBox HighlightName_Box;
+        private System.Windows.Forms.CheckBox HighlighEnum_Box;
+        private System.Windows.Forms.CheckBox HighlighFunction_Box;
     }
 }

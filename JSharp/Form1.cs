@@ -43,7 +43,7 @@ namespace JSharp
         public string projectPath;
         public bool ignorNextListboxUpdate = false;
         public bool ignorNextKey = false;
-        
+        private List<string> openedFullPath = new List<string>();
         public bool isLibrary;
         public int isCompiling = 0;
 
@@ -355,11 +355,14 @@ namespace JSharp
         }
         public void Open(string name, string data)
         {
+            Reset();
+
             moddificationFileTime = new Dictionary<string, DateTime>();
             moddificationResTime = new Dictionary<string, DateTime>();
 
             ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
             codeOrder.Clear();
+            ResetTabBar();
             code.Clear();
             code = new Dictionary<string, string>();
             TagsList = project.TagsList;
@@ -810,19 +813,7 @@ namespace JSharp
             var res = form.ShowDialog();
             if (res == DialogResult.OK || res == DialogResult.Yes)
             {
-                codeOrder.Clear();
-                code.Clear();
-                resources.Clear();
-                resourceOrder.Clear();
-                projectVersion = new ProjectVersion();
-                projectDescription = "";
-                moddificationFileTime.Clear();
-                moddificationResTime.Clear();
-                compilerSetting = new Compiler.CompilerSetting();
-                structures.Clear();
-                MCTagsList.Clear();
-                TagsList.Clear();
-                CodeBox.Text = "";
+                Reset();
             }
             if (res == DialogResult.OK)
             {
@@ -882,6 +873,27 @@ namespace JSharp
                 }
             }
         }
+
+        private void Reset()
+        {
+            ResetTabBar();
+            codeOrder.Clear();
+            moddificationFileTime.Clear();
+            moddificationResTime.Clear();
+            code.Clear();
+            resources.Clear();
+            resourceOrder.Clear();
+            projectVersion = new ProjectVersion();
+            projectDescription = "";
+            moddificationFileTime.Clear();
+            moddificationResTime.Clear();
+            compilerSetting = new Compiler.CompilerSetting();
+            structures.Clear();
+            MCTagsList.Clear();
+            TagsList.Clear();
+            CodeBox.Text = "";
+        }
+
         public void AddLineNumbers()
         {
             LineNumberTextBox.ZoomFactor = CodeBox.ZoomFactor;
@@ -2011,7 +2023,7 @@ namespace JSharp
             treeView1.Nodes.Clear();
             var paths = codeOrder.Select(x => x.Replace("\\", "/")).ToList();
             var root = treeView1.Nodes.Add("src").Nodes;
-            BuildTree(paths, "",root);
+            BuildTree(paths, "src", root);
             string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
             if (Directory.Exists(dir))
             {
@@ -2022,11 +2034,11 @@ namespace JSharp
             {
                 paths.Clear();
             }
-            BuildTree(paths, "", root, false);
+            BuildTree(paths, "src", root, false);
 
             paths = resourceOrder.Select(x => x.Replace("\\", "/")).ToList();
             root = treeView1.Nodes.Add("resources").Nodes;
-            BuildTree(paths, "", root);
+            BuildTree(paths, "resources", root);
 
             dir = Path.GetDirectoryName(projectPath) + "/resources/";
             if (Directory.Exists(dir))
@@ -2038,7 +2050,7 @@ namespace JSharp
             {
                 paths.Clear();
             }
-            BuildTree(paths, "", root, false);
+            BuildTree(paths, "resources", root, false);
 
 
             string[] folders = { "resourcespack", "structures" };
@@ -2055,7 +2067,7 @@ namespace JSharp
                 {
                     paths.Clear();
                 }
-                BuildTree(paths, "", root);
+                BuildTree(paths, folder, root);
                 
                 if (Directory.Exists(dir))
                 {
@@ -2066,7 +2078,7 @@ namespace JSharp
                 {
                     paths.Clear();
                 }
-                BuildTree(paths, "", root, false);
+                BuildTree(paths, folder, root, false);
             });
            
             treeView1.ExpandAll();
@@ -2084,13 +2096,34 @@ namespace JSharp
                      .GroupBy(x => x[0]).ToList()
                      .ForEach(x =>
                      {
-                         TreeNode curNode = addInMe.Add(x.Key);
+                         TreeNode curNode = null;
+                         
+                         foreach (TreeNode n in addInMe)
+                         {
+                             if (n.FullPath == parent + "/" + x.Key)
+                             {
+                                 curNode = n;
+                             }
+                         }
+                         if (curNode == null)
+                            curNode = addInMe.Add(x.Key);
                          BuildTree(x.Select(z => z.Last())
                                                  .ToList(),
-                                                 parent, curNode.Nodes, isFile, rec + 1);
+                                                 parent + "/" + x.Key, curNode.Nodes, isFile, rec + 1);
 
                      });
-                paths.Where(x => !x.Contains("/")).ToList().ForEach(x => addInMe.Add(x).Checked = isFile);
+                paths.Where(x => !x.Contains("/")).ToList().ForEach(x => {
+                    TreeNode curNode = null;
+                    foreach (TreeNode n in addInMe)
+                    {
+                        if (n.FullPath == parent + "/" + x)
+                        {
+                            curNode = n;
+                        }
+                    }
+                    if (curNode == null)
+                        addInMe.Add(x).Checked = isFile;
+                    });
             }
         }
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
@@ -2101,53 +2134,8 @@ namespace JSharp
             }
             else
             {
-                pictureBox1.Visible = false;
-                CodeBox.Visible = true;
-                LineNumberTextBox.Visible = true;
-
                 string fullPath = treeView1.SelectedNode.FullPath;
-                if (fullPath.StartsWith("src") && fullPath.Length > 4)
-                {
-                    string path = fullPath.Substring(4, fullPath.Length - 4);
-                    
-                    if (code.ContainsKey(path))
-                    {
-                        ReloadCodeBoxFileCode(path);
-                    }
-                }
-                if (fullPath.StartsWith("resources") && fullPath.Length > 10)
-                {
-                    string path = fullPath.Substring(10, fullPath.Length - 10);
-                    
-                    if (resources.ContainsKey(path))
-                    {
-                        ReloadCodeBoxFileRes(path);
-                    }
-                }
-                if (fullPath.StartsWith("resourcespack") && fullPath.Length > 14)
-                {
-                    string path = fullPath.Substring(14, fullPath.Length - 14);
-                    
-                    string dir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
-                    
-                    if (File.Exists(dir+path))
-                    {
-                        if (path.EndsWith(".json") || path.EndsWith(".bps") || path.EndsWith(".txt") || path.EndsWith(".mcmeta") 
-                            || !path.Contains(".")) {
-                            ReloadCodeBoxFileResPack(path);
-                        }
-                        if (path.EndsWith(".png"))
-                        {
-                            pictureBox1.Visible = true;
-                            CodeBox.Visible = false;
-                            LineNumberTextBox.Visible = false;
-                            var img = Image.FromFile(dir + path);
-                            float ratio = Math.Min(pictureBox1.Width / (float)img.Size.Width,
-                                                    pictureBox1.Height / (float)img.Size.Height);
-                            pictureBox1.Image = DisplayImage(img, ratio);
-                        }
-                    }
-                }
+                SelectFullPath(fullPath);
             }
         }
         private Image DisplayImage(Image Image, float scale)
@@ -2182,33 +2170,6 @@ namespace JSharp
         {
             ChangeCompileOrder();
         }
-        #endregion
-
-        private void Form1_Activated(object sender, EventArgs e)
-        {
-            if (!ignorNextListboxUpdate)
-            {
-                CheckFileModdification();
-                ReloadTree();
-            }
-            else
-            {
-                ignorNextListboxUpdate = false;
-            }
-        }
-        
-
-        private class DebugMessage
-        {
-            public string msg;
-            public Color color;
-            public DebugMessage(string msg, Color color)
-            {
-                this.msg = msg;
-                this.color = color;
-            }
-        }
-
         private void treeView1_DrawNode(object sender, DrawTreeNodeEventArgs e)
         {
             Rectangle nodeRect = e.Node.Bounds;
@@ -2279,7 +2240,6 @@ namespace JSharp
             e.Graphics.DrawString(e.Node.Text, nodeFont, textBrush,
                 Rectangle.Inflate(textRect, -12, 0));
         }
-
         private void treeView1_DragDrop(object sender, DragEventArgs e)
         {
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop, false);
@@ -2328,13 +2288,25 @@ namespace JSharp
                 ReloadTree();
             }
         }
-
         private void treeView1_DragEnter(object sender, DragEventArgs e)
         {
             e.Effect = e.AllowedEffect;
         }
+        #endregion
 
-
+        private void Form1_Activated(object sender, EventArgs e)
+        {
+            if (!ignorNextListboxUpdate)
+            {
+                CheckFileModdification();
+                ReloadTree();
+            }
+            else
+            {
+                ignorNextListboxUpdate = false;
+            }
+        }
+        
         public void DeleteSelectedFile()
         {
             string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
@@ -2389,6 +2361,111 @@ namespace JSharp
                 }
                 FetchFilesInDirectory();
                 ReloadTree();
+            }
+        }
+
+        private class DebugMessage
+        {
+            public string msg;
+            public Color color;
+            public DebugMessage(string msg, Color color)
+            {
+                this.msg = msg;
+                this.color = color;
+            }
+        }
+
+        public void ShowCodeBox()
+        {
+            pictureBox1.Visible = false;
+            CodeBox.Visible = true;
+            LineNumberTextBox.Visible = true;
+        }
+        public void ShowImageBox()
+        {
+            pictureBox1.Visible = true;
+            CodeBox.Visible = false;
+            LineNumberTextBox.Visible = false;
+        }
+
+        private void SelectFullPath(string fullPath)
+        {
+            if (fullPath.StartsWith("src") && fullPath.Length > 4)
+            {
+                string path = fullPath.Substring(4, fullPath.Length - 4);
+
+                if (code.ContainsKey(path))
+                {
+                    ShowCodeBox();
+                    ReloadCodeBoxFileCode(path);
+                    AddTabBar(fullPath);
+                }
+            }
+            if (fullPath.StartsWith("resources") && fullPath.Length > 10)
+            {
+                string path = fullPath.Substring(10, fullPath.Length - 10);
+
+                if (resources.ContainsKey(path))
+                {
+                    ShowCodeBox();
+                    ReloadCodeBoxFileRes(path);
+                    AddTabBar(fullPath);
+                }
+            }
+            if (fullPath.StartsWith("resourcespack") && fullPath.Length > 14)
+            {
+                string path = fullPath.Substring(14, fullPath.Length - 14);
+
+                string dir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+
+                if (File.Exists(dir + path))
+                {
+                    if (path.EndsWith(".json") || path.EndsWith(".bps") || path.EndsWith(".txt") || path.EndsWith(".mcmeta")
+                        || !path.Contains("."))
+                    {
+                        ShowCodeBox();
+                        ReloadCodeBoxFileResPack(path);
+                        AddTabBar(fullPath);
+                    }
+                    if (path.EndsWith(".png"))
+                    {
+                        ShowImageBox();
+                        var img = Image.FromFile(dir + path);
+                        float ratio = Math.Min(pictureBox1.Width / (float)img.Size.Width,
+                                                pictureBox1.Height / (float)img.Size.Height);
+                        pictureBox1.Image = DisplayImage(img, ratio);
+                        AddTabBar(fullPath);
+                    }
+                }
+            }
+        }
+        private void ResetTabBar()
+        {
+            openedFullPath.Clear();
+            tabControl1.TabPages.Clear();
+        }
+        private void AddTabBar(string fullPath)
+        {
+            if (!openedFullPath.Contains(fullPath))
+            {
+                if (openedFullPath.Count > 20)
+                {
+                    openedFullPath.RemoveAt(20);
+                }
+                openedFullPath.Insert(0,fullPath);
+                tabControl1.TabPages.Clear();
+                openedFullPath.ForEach(name =>
+                {
+                    tabControl1.TabPages.Add(new TabPage(name.Substring(name.LastIndexOf("/") + 1, name.Length - name.LastIndexOf("/") - 1)));
+                });
+            }
+            tabControl1.SelectedIndex = openedFullPath.IndexOf(fullPath);
+        }
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (tabControl1.SelectedIndex > -1)
+            {
+                SelectFullPath(openedFullPath[tabControl1.SelectedIndex]);
             }
         }
     }

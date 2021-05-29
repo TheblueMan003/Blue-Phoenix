@@ -43,6 +43,10 @@ namespace JSharp
             TempScoreboardBox.Text = compilerSetting.scoreboardTmp;
             IsLibCheckbox.Checked = !compilerSetting.isLibrary;
             LibPaths.Text = compilerSetting.libraryFolder.Aggregate((s1, s2) => (s1 +";"+ s2));
+
+            HighlighEnum_Box.Checked = Formatter.showEnumValue;
+            HighlighFunction_Box.Checked = Formatter.showFunc;
+            HighlightName_Box.Checked = Formatter.showName;
         }
 
         private void ProjectSetting_Load(object sender, EventArgs e)
@@ -83,6 +87,10 @@ namespace JSharp
 
                 compilerSetting.libraryFolder = LibPaths.Text.Split(';').ToList();
                 compilerSetting.isLibrary = !IsLibCheckbox.Checked;
+
+                Formatter.showEnumValue = HighlighEnum_Box.Checked;
+                Formatter.showFunc = HighlighFunction_Box.Checked;
+                Formatter.showName = HighlightName_Box.Checked;
             }
             catch(Exception exc)
             {
@@ -106,11 +114,6 @@ namespace JSharp
         {
             ForceOffuscation form = new ForceOffuscation(variables, compilerSetting.forcedOffuscation);
             form.ShowDialog();
-        }
-
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-
         }
     }
 }

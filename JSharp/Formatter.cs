@@ -39,6 +39,8 @@ namespace JSharp
         private static List<ColorCoding> colorCodings = new List<ColorCoding>();
         public static bool reformating = false;
         public static bool showName = false;
+        public static bool showFunc = true;
+        public static bool showEnumValue = true;
 
         public static void loadDict()
         {
@@ -53,26 +55,34 @@ namespace JSharp
             colorCodings.Add(ColorCoding.Get(importWord, Color.FromArgb(74, 156, 199)));
             colorCodings.Add(ColorCoding.Get(CommandParser.funcName, Color.FromArgb(0, 185, 255)));
             colorCodings.Add(ColorCoding.Get(defWord, Color.FromArgb(74, 156, 199)));
-            colorCodings.Add(ColorCoding.Get(defWordMore1.ToArray(), Color.FromArgb(74, 156, 199)));
-            colorCodings.Add(ColorCoding.Get(funKeyword, Color.Magenta));
-            colorCodings.Add(ColorCoding.Get(typKeyword, Color.Orange));
-            colorCodings.Add(ColorCoding.Get(compKeyword, Color.Magenta));
+            colorCodings.Add(ColorCoding.Get(defWordMore1.Distinct().ToArray(), Color.FromArgb(74, 156, 199)));
+            if (showFunc)
+            {
+                colorCodings.Add(ColorCoding.Get(funKeyword.Distinct().ToArray(), Color.Magenta));
+            }
+            colorCodings.Add(ColorCoding.Get(typKeyword.Distinct().ToArray(), Color.Orange));
+            colorCodings.Add(ColorCoding.Get(compKeyword.Distinct().ToArray(), Color.Magenta));
             colorCodings.Add(ColorCoding.GetSelector(tags.ToArray(), Color.Magenta));
 
-            
-            colorCodings.Add(ColorCoding.Get(CommandParser.names, cKeyword));
-            colorCodings.Add(ColorCoding.Get(CommandParser.scoreboards, cKeyword));
-            colorCodings.Add(ColorCoding.Get(CommandParser.effects, cKeyword));
-            colorCodings.Add(ColorCoding.Get(CommandParser.gamerules.ToArray(), cKeyword));
-            colorCodings.Add(ColorCoding.Get(CommandParser.sounds, cKeyword));
+            if (showName)
+            {
+                colorCodings.Add(ColorCoding.Get(CommandParser.names.Distinct().ToArray(), cKeyword));
+                colorCodings.Add(ColorCoding.Get(CommandParser.scoreboards.Distinct().ToArray(), cKeyword));
+                colorCodings.Add(ColorCoding.Get(CommandParser.effects, cKeyword));
+                colorCodings.Add(ColorCoding.Get(CommandParser.gamerules.Distinct().ToArray(), cKeyword));
+                colorCodings.Add(ColorCoding.Get(CommandParser.sounds.Distinct().ToArray(), cKeyword));
+            }
             
 
             colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex));
-            colorCodings.Add(ColorCoding.Get(structs.ToArray(), cClass));
-            colorCodings.Add(ColorCoding.Get(defWordMore2.ToArray(), cFunction));
-            colorCodings.Add(ColorCoding.GetPackage(package.ToArray(), Color.LightSteelBlue));
-            colorCodings.Add(ColorCoding.Get(enums.ToArray(), cClass));
-            colorCodings.Add(ColorCoding.Get(enumsValue.ToArray(), Color.LightGreen));
+            colorCodings.Add(ColorCoding.Get(structs.Distinct().ToArray(), cClass));
+            colorCodings.Add(ColorCoding.Get(defWordMore2.Distinct().ToArray(), cFunction));
+            colorCodings.Add(ColorCoding.GetPackage(package.Distinct().ToArray(), Color.LightSteelBlue));
+            colorCodings.Add(ColorCoding.Get(enums.Distinct().ToArray(), cClass));
+            if (showEnumValue)
+            {
+                colorCodings.Add(ColorCoding.Get(enumsValue.Distinct().ToArray(), Color.LightGreen));
+            }
 
             colorCodings.Add(new ColorCoding(Color.Gray, commentRegex));
             colorCodings.Add(new ColorCoding(cString, wordRegex));

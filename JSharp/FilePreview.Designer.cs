@@ -67,6 +67,7 @@
             this.treeView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.treeView1.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawAll;
             this.treeView1.ForeColor = System.Drawing.Color.White;
+            this.treeView1.FullRowSelect = true;
             this.treeView1.Indent = 10;
             this.treeView1.Location = new System.Drawing.Point(12, 38);
             this.treeView1.Name = "treeView1";
