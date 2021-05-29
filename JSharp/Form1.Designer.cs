@@ -94,7 +94,18 @@
             this.ShowWarningButton = new System.Windows.Forms.Button();
             this.ShowInfoButton = new System.Windows.Forms.Button();
             this.ClearLogButton = new System.Windows.Forms.Button();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.generateResourcesPackToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.CodeListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.newFileToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.newFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fileToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.folderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.animatedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.CodeListContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // button1
@@ -362,7 +373,8 @@
             // toolsToolStripMenuItem
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.getCallStackTraceToolStripMenuItem});
+            this.getCallStackTraceToolStripMenuItem,
+            this.generateResourcesPackToolStripMenuItem});
             this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
@@ -371,7 +383,7 @@
             // getCallStackTraceToolStripMenuItem
             // 
             this.getCallStackTraceToolStripMenuItem.Name = "getCallStackTraceToolStripMenuItem";
-            this.getCallStackTraceToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.getCallStackTraceToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
             this.getCallStackTraceToolStripMenuItem.Text = "Get Call Stack Trace";
             this.getCallStackTraceToolStripMenuItem.Click += new System.EventHandler(this.getCallStackTraceToolStripMenuItem_Click);
             // 
@@ -393,7 +405,7 @@
             this.LineNumberTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.LineNumberTextBox.Font = new System.Drawing.Font("Arial", 9.75F);
             this.LineNumberTextBox.ForeColor = System.Drawing.Color.White;
-            this.LineNumberTextBox.Location = new System.Drawing.Point(205, 62);
+            this.LineNumberTextBox.Location = new System.Drawing.Point(237, 62);
             this.LineNumberTextBox.Name = "LineNumberTextBox";
             this.LineNumberTextBox.ReadOnly = true;
             this.LineNumberTextBox.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.None;
@@ -410,10 +422,10 @@
             this.ErrorBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.ErrorBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ErrorBox.ForeColor = System.Drawing.Color.White;
-            this.ErrorBox.Location = new System.Drawing.Point(205, 563);
+            this.ErrorBox.Location = new System.Drawing.Point(237, 563);
             this.ErrorBox.Name = "ErrorBox";
             this.ErrorBox.ReadOnly = true;
-            this.ErrorBox.Size = new System.Drawing.Size(941, 164);
+            this.ErrorBox.Size = new System.Drawing.Size(909, 164);
             this.ErrorBox.TabIndex = 1;
             this.ErrorBox.Text = "";
             // 
@@ -512,11 +524,11 @@
             this.CodeBox.DetectUrls = false;
             this.CodeBox.Font = new System.Drawing.Font("Courier New", 10F);
             this.CodeBox.ForeColor = System.Drawing.Color.White;
-            this.CodeBox.Location = new System.Drawing.Point(270, 62);
+            this.CodeBox.Location = new System.Drawing.Point(302, 62);
             this.CodeBox.Name = "CodeBox";
             this.CodeBox.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedBoth;
             this.CodeBox.ShowSelectionMargin = true;
-            this.CodeBox.Size = new System.Drawing.Size(762, 492);
+            this.CodeBox.Size = new System.Drawing.Size(730, 492);
             this.CodeBox.TabIndex = 0;
             this.CodeBox.Text = "package main";
             this.CodeBox.WordWrap = false;
@@ -710,23 +722,28 @@
             // 
             // treeView1
             // 
+            this.treeView1.AllowDrop = true;
             this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
             this.treeView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.treeView1.ContextMenuStrip = this.CodeListContextMenu;
             this.treeView1.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawAll;
             this.treeView1.ForeColor = System.Drawing.Color.White;
             this.treeView1.FullRowSelect = true;
             this.treeView1.Indent = 10;
-            this.treeView1.Location = new System.Drawing.Point(13, 62);
+            this.treeView1.Location = new System.Drawing.Point(12, 62);
             this.treeView1.Name = "treeView1";
             this.treeView1.PathSeparator = "/";
             this.treeView1.ShowLines = false;
             this.treeView1.ShowNodeToolTips = true;
-            this.treeView1.Size = new System.Drawing.Size(186, 665);
+            this.treeView1.Size = new System.Drawing.Size(219, 665);
             this.treeView1.TabIndex = 33;
             this.treeView1.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.treeView1_DrawNode);
             this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
+            this.treeView1.DragDrop += new System.Windows.Forms.DragEventHandler(this.treeView1_DragDrop);
+            this.treeView1.DragEnter += new System.Windows.Forms.DragEventHandler(this.treeView1_DragEnter);
             this.treeView1.DoubleClick += new System.EventHandler(this.treeView1_DoubleClick);
+            this.treeView1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.treeView1_KeyDown);
             // 
             // ShowErrorButton
             // 
@@ -787,12 +804,88 @@
             this.ClearLogButton.UseVisualStyleBackColor = false;
             this.ClearLogButton.Click += new System.EventHandler(this.ClearLogButton_Click);
             // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pictureBox1.Location = new System.Drawing.Point(237, 62);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(795, 492);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.pictureBox1.TabIndex = 38;
+            this.pictureBox1.TabStop = false;
+            this.pictureBox1.Visible = false;
+            // 
+            // generateResourcesPackToolStripMenuItem
+            // 
+            this.generateResourcesPackToolStripMenuItem.Name = "generateResourcesPackToolStripMenuItem";
+            this.generateResourcesPackToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.generateResourcesPackToolStripMenuItem.Text = "Generate Resources Pack";
+            this.generateResourcesPackToolStripMenuItem.Click += new System.EventHandler(this.generateResourcesPackToolStripMenuItem_Click);
+            // 
+            // CodeListContextMenu
+            // 
+            this.CodeListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.newFileToolStripMenuItem1,
+            this.deleteToolStripMenuItem,
+            this.newFolderToolStripMenuItem});
+            this.CodeListContextMenu.Name = "contextMenuStrip1";
+            this.CodeListContextMenu.Size = new System.Drawing.Size(156, 70);
+            // 
+            // newFileToolStripMenuItem1
+            // 
+            this.newFileToolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fileToolStripMenuItem1,
+            this.folderToolStripMenuItem});
+            this.newFileToolStripMenuItem1.Name = "newFileToolStripMenuItem1";
+            this.newFileToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
+            this.newFileToolStripMenuItem1.Text = "New";
+            // 
+            // newFolderToolStripMenuItem
+            // 
+            this.newFolderToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.animatedToolStripMenuItem});
+            this.newFolderToolStripMenuItem.Name = "newFolderToolStripMenuItem";
+            this.newFolderToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.newFolderToolStripMenuItem.Text = "Resources Pack";
+            // 
+            // fileToolStripMenuItem1
+            // 
+            this.fileToolStripMenuItem1.Name = "fileToolStripMenuItem1";
+            this.fileToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.fileToolStripMenuItem1.Text = "File";
+            this.fileToolStripMenuItem1.Click += new System.EventHandler(this.fileToolStripMenuItem1_Click);
+            // 
+            // folderToolStripMenuItem
+            // 
+            this.folderToolStripMenuItem.Name = "folderToolStripMenuItem";
+            this.folderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.folderToolStripMenuItem.Text = "Folder";
+            this.folderToolStripMenuItem.Click += new System.EventHandler(this.folderToolStripMenuItem_Click);
+            // 
+            // animatedToolStripMenuItem
+            // 
+            this.animatedToolStripMenuItem.Name = "animatedToolStripMenuItem";
+            this.animatedToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.animatedToolStripMenuItem.Text = "Animated";
+            this.animatedToolStripMenuItem.Click += new System.EventHandler(this.animatedToolStripMenuItem_Click);
+            // 
+            // deleteToolStripMenuItem
+            // 
+            this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.deleteToolStripMenuItem.Text = "Delete";
+            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(1192, 732);
+            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.ShowInfoButton);
             this.Controls.Add(this.ShowWarningButton);
             this.Controls.Add(this.ShowErrorButton);
@@ -835,6 +928,8 @@
             this.Load += new System.EventHandler(this.Form1_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.CodeListContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -905,6 +1000,15 @@
         private System.Windows.Forms.Button ShowErrorButton;
         private System.Windows.Forms.Button ShowWarningButton;
         private System.Windows.Forms.Button ShowInfoButton;
+        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.ToolStripMenuItem generateResourcesPackToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip CodeListContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem newFileToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem newFolderToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem folderToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem animatedToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
     }
 }
 

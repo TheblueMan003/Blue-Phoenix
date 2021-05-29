@@ -8,7 +8,7 @@ namespace JSharp
 {
     public class CompilerCoreJava : CompilerCore
     {
-        HashSet<string> validColor = new HashSet<string>() { "black","dark_blue","dark_green","dark_aqua","dark_purple",
+        HashSet<string> validColor = new HashSet<string>() { "black","dark_red","dark_blue","dark_green","dark_aqua","dark_purple",
                                                             "gold","yellow",
                                                             "gray","dark_gray","aqua",
                                                             "blue", "green", "red", "light_purple", "white", "reset" };

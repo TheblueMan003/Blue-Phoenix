@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BluePhoenix;
+using System.Drawing.Drawing2D;
 
 namespace JSharp
 {
@@ -42,6 +43,7 @@ namespace JSharp
         public string projectPath;
         public bool ignorNextListboxUpdate = false;
         public bool ignorNextKey = false;
+        
         public bool isLibrary;
         public int isCompiling = 0;
 
@@ -60,7 +62,7 @@ namespace JSharp
         private bool ignoreMod = false;
         private bool noReformat = false;
         private bool exporting;
-        private bool resourceSelected = false;
+        private string resourceSelected = "src";
         private int index = 0;
         private bool selfShift;
 
@@ -70,6 +72,7 @@ namespace JSharp
         private Image fileCSVPath;
         private Image fileINIPath;
         private Image fileTXTPath;
+        private Image fileImagePath;
 
         private bool showError = true;
         private bool showWarning = true;
@@ -93,16 +96,22 @@ namespace JSharp
             fileCSVPath = Image.FromFile(path + "assets/file_csv.png");
             fileINIPath = Image.FromFile(path + "assets/file_ini.png");
             fileTXTPath = Image.FromFile(path + "assets/file_txt.png");
+            fileImagePath = Image.FromFile(path + "assets/file_image.png");
         }
         private void recallFile()
         {
-            if (resourceSelected)
+            if (resourceSelected == "res")
             {
                 resources[previous] = CodeBox.Text;
             }
-            else
+            else if (resourceSelected == "src")
             {
                 code[previous] = CodeBox.Text;
+            }
+            else if (resourceSelected == "respack")
+            {
+                string dir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+                File.WriteAllText(dir+previous, CodeBox.Text);
             }
         }
         public void ReloadCodeBoxFileCode(string file)
@@ -110,7 +119,7 @@ namespace JSharp
             noReformat = true;
 
             recallFile();
-            resourceSelected = false;
+            resourceSelected = "src";
 
             PreviousText.Clear();
 
@@ -136,7 +145,7 @@ namespace JSharp
             noReformat = true;
 
             recallFile();
-            resourceSelected = true;
+            resourceSelected = "res";
 
             PreviousText.Clear();
 
@@ -152,7 +161,27 @@ namespace JSharp
             noReformat = false;
             UpdateCodeBox();
         }
-        
+        public void ReloadCodeBoxFileResPack(string file)
+        {
+            string dir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+
+            noReformat = true;
+
+            recallFile();
+            resourceSelected = "respack";
+
+            PreviousText.Clear();
+
+            index = 0;
+            
+            CodeBox.Text = File.ReadAllText(dir+file);
+            
+            PreviousText.Add(CodeBox.Text);
+            previous = file;
+            noReformat = false;
+            UpdateCodeBox();
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
             exporting = false;
@@ -424,20 +453,37 @@ namespace JSharp
                     i++;
                 }
             }
+            FetchFilesInDirectory();
+
+            ReloadTree();
+
+            Debug("Project Loaded: " + projectPath+" ("+i.ToString()+" Files)", Color.Aqua);
+            noReformat = false;
+            exporting = false;
+            CompileJava();
+            UpdateCodeBox();
+            ignorNextListboxUpdate = false;
+            projectDescription = project.description;
+        }
+
+        private void FetchFilesInDirectory()
+        {
+            string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
+            string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
             if (Directory.Exists(dir))
             {
                 foreach (var file in Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories))
                 {
                     string fname;
                     if (file.EndsWith(".bps"))
-                        fname = file.Substring(dir.Length,file.Length - dir.Length - Path.GetExtension(file).Length);
+                        fname = file.Substring(dir.Length, file.Length - dir.Length - Path.GetExtension(file).Length);
                     else
                         fname = file.Substring(dir.Length, file.Length - dir.Length);
 
-                    moddificationFileTime.Add(fname.ToLower(), DateTime.Now);
-
                     if (!code.ContainsKey(fname.ToLower()) && fname != "desktop.ini")
                     {
+                        moddificationFileTime.Add(fname.ToLower(), DateTime.Now);
+
                         try
                         {
                             code.Add(fname.ToLower(), File.ReadAllText(file));
@@ -456,10 +502,11 @@ namespace JSharp
                 foreach (var file in Directory.GetFiles(dirRes, "*.*", SearchOption.AllDirectories))
                 {
                     string fname = file.Substring(dirRes.Length, file.Length - dirRes.Length);
-                    moddificationResTime.Add(fname.ToLower(), DateTime.Now);
 
                     if (!resources.ContainsKey(fname.ToLower()))
                     {
+                        moddificationResTime.Add(fname.ToLower(), DateTime.Now);
+
                         try
                         {
                             resources.Add(fname.ToLower(), File.ReadAllText(file));
@@ -473,16 +520,47 @@ namespace JSharp
                     }
                 }
             }
+        }
+        public bool ForceSave()
+        {
+            if (projectPath == "" || projectPath == null)
+            {
+                if (ProjectSave.ShowDialog() == DialogResult.OK)
+                {
+                    projectPath = ProjectSave.FileName;
+                }
+                else
+                    return false;
 
-            ReloadTree();
+                Save(projectPath);
+                UpdateProjectList();
+                Debug("Project save as " + projectPath, Color.Aqua);
+            }
+            if (projectPath != "" && projectPath != null)
+            {
+                return true;
+            }
+            return false;
+        }
+        public void GenerateResourcesPackFolder()
+        {
+            if (ForceSave())
+            {
+                if (!Directory.Exists(Path.GetDirectoryName(projectPath) + "/resourcespack"))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/textures/block");
+                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/textures/item");
+                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/sounds");
+                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/models");
+                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/font");
 
-            Debug("Project Loaded: " + projectPath+" ("+i.ToString()+" Files)", Color.Aqua);
-            noReformat = false;
-            exporting = false;
-            CompileJava();
-            UpdateCodeBox();
-            ignorNextListboxUpdate = false;
-            projectDescription = project.description;
+                    string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+                    SafeCopy(path + "/assets/pack.png", Path.GetDirectoryName(projectPath) + "/resourcespack/pack.png");
+
+                    FetchFilesInDirectory();
+                    ReloadTree();
+                }
+            }
         }
         public void CheckFileModdification()
         {
@@ -571,6 +649,8 @@ namespace JSharp
                     }
                 }
             }
+
+            FetchFilesInDirectory();
         }
         public void UpdateProjectList()
         {
@@ -617,41 +697,108 @@ namespace JSharp
             }
             return output;
         }
-        public void NewFile()
+        public void NewFile(string value = "", JSharp.NewFile.Type? type = null)
         {
             NewFile form = new NewFile();
-            if (form.ShowDialog() == DialogResult.OK && !code.Keys.Contains(form.filename))
+            ignorNextListboxUpdate = true;
+            if (value != "" || (form.ShowDialog() == DialogResult.OK && !code.Keys.Contains(form.filename)))
             {
-                if (form.type == JSharp.NewFile.Type.EXTERNAL)
+                if (value != "")
                 {
-                    if (DatapackOpen.ShowDialog() == DialogResult.OK)
+                    form.filename = value;
+                }
+                if (type != null)
+                {
+                    form.type = (JSharp.NewFile.Type)type;
+                }
+                string dir = treeView1.SelectedNode != null?treeView1.SelectedNode.FullPath:"src/";
+                if (treeView1.SelectedNode != null && treeView1.SelectedNode.Checked && dir.Contains("/"))
+                {
+                    dir = dir.Substring(0, dir.LastIndexOf("/"));
+                }
+                string grp = dir.Contains("/")?dir.Substring(0, dir.IndexOf("/")):dir;
+                dir = dir.Contains("/")?dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1):"";
+                string path = dir == "" ? "" : dir + "/";
+
+                if (grp == "structures")
+                {
+                    if (form.type == JSharp.NewFile.Type.FOLDER)
                     {
-                        codeOrder.Add(form.filename);
-                        code.Add(form.filename.ToLower(), GenerateDatapackLink(DatapackOpen.FileName));
+                        if (ForceSave())
+                        {
+                            string gloDir = Path.GetDirectoryName(projectPath) + "/structures/";
+                            Directory.CreateDirectory(gloDir + dir + "/" + form.filename);
+                        }
                     }
                 }
-                else if (form.type == JSharp.NewFile.Type.RESOURCE)
+                else if (grp == "resources" || form.type == JSharp.NewFile.Type.RESOURCE)
                 {
-                    resourceOrder.Add(form.filename);
-                    resources.Add(form.filename, "");
+                    if (form.type == JSharp.NewFile.Type.FOLDER)
+                    {
+                        if (ForceSave())
+                        {
+                            string gloDir = Path.GetDirectoryName(projectPath) + "/resources/";
+                            Directory.CreateDirectory(gloDir + dir + "/" + form.filename);
+                        }
+                    }
+                    else
+                    {
+                        resourceOrder.Add(path + form.filename);
+                        resources.Add(path + form.filename, "");
+                    }
                 }
-                else
+                else if (grp == "resourcespack")
                 {
-                    if (form.filename != "import")
-                        codeOrder.Add(form.filename);
-                    else
-                        codeOrder.Insert(0, form.filename);
-                    if (form.type == JSharp.NewFile.Type.STRUCTURE)
+                    if (form.type == JSharp.NewFile.Type.FOLDER)
                     {
-                        code.Add(form.filename, "package " + form.filename.Replace("/",".") + "\n\nstruct " + form.filename.Replace("/", ".") + "{\n\tdef __init__(){\n\n\t}\n}");
-                    }
-                    else if (form.type == JSharp.NewFile.Type.SUBPROGRAMME)
-                    {
-                        code.Add(form.filename, "package " + form.filename.Replace("/", ".") + "\n\nBOOL Enabled\ndef ticking main(){\n\twith(@a,true,Enabled){\n\t\t\n\t}\n}\n\ndef start(){\n\tEnabled = true\n}\n\ndef close(){\n\tEnabled = false\n}");
+                        if (ForceSave())
+                        {
+                            string gloDir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+                            Directory.CreateDirectory(gloDir + dir + "/" + form.filename);
+                        }
                     }
                     else
                     {
-                        code.Add(form.filename, "package " + form.filename.Replace("/", "."));
+                        string gloDir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+                        File.WriteAllText(gloDir + dir + "/" + form.filename, "");
+                    }
+                }
+                else if (grp == "src")
+                {
+                    if (form.type == JSharp.NewFile.Type.FOLDER)
+                    {
+                        if (ForceSave())
+                        {
+                            string gloDir = Path.GetDirectoryName(projectPath) + "/scripts/";
+                            Directory.CreateDirectory(gloDir + dir + "/" + form.filename);
+                        }
+                    }
+                    else if (form.type == JSharp.NewFile.Type.EXTERNAL)
+                    {
+                        if (DatapackOpen.ShowDialog() == DialogResult.OK)
+                        {
+                            codeOrder.Add(path + form.filename);
+                            code.Add(path + form.filename.ToLower(), GenerateDatapackLink(DatapackOpen.FileName));
+                        }
+                    }
+                    else
+                    {
+                        if (form.filename != "import")
+                            codeOrder.Add(path + form.filename);
+                        else
+                            codeOrder.Insert(0, path + form.filename);
+                        if (form.type == JSharp.NewFile.Type.STRUCTURE)
+                        {
+                            code.Add(path + form.filename, "package " + (path + form.filename).Replace("/", ".") + "\n\nstruct " + (path + form.filename).Replace("/", ".") + "{\n\tdef __init__(){\n\n\t}\n}");
+                        }
+                        else if (form.type == JSharp.NewFile.Type.SUBPROGRAMME)
+                        {
+                            code.Add(path + form.filename, "package " + (path + form.filename).Replace("/", ".") + "\n\nBOOL Enabled\ndef ticking main(){\n\twith(@a,true,Enabled){\n\t\t\n\t}\n}\n\ndef start(){\n\tEnabled = true\n}\n\ndef close(){\n\tEnabled = false\n}");
+                        }
+                        else
+                        {
+                            code.Add(path + form.filename, "package " + (path + form.filename).Replace("/", "."));
+                        }
                     }
                 }
                 ReloadTree();
@@ -1795,33 +1942,136 @@ namespace JSharp
         }
         private void resourcesPackEditorToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!Directory.Exists(Path.GetDirectoryName(projectPath) + "/resourcespack"))
+            GenerateResourcesPackFolder();
+            if (ForceSave())
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/textures/block");
-                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/textures/item");
-                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/sounds");
-                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/models");
-                Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/font");
+                ResourcesPackEditor = new ResourcesPackEditor(Path.GetDirectoryName(projectPath) + "/resourcespack");
+                ResourcesPackEditor.Show();
             }
-            ResourcesPackEditor = new ResourcesPackEditor(Path.GetDirectoryName(projectPath) + "/resourcespack");
-            ResourcesPackEditor.Show();
         }
         private void getCallStackTraceToolStripMenuItem_Click(object sender, EventArgs e)
         {
             GetCallStackTrace();
         }
+        private void generateResourcesPackToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            GenerateResourcesPackFolder();
+        }
+        private void fileToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            ignorNextListboxUpdate = true;
+            NewItem f = new NewItem();
+            if (f.ShowDialog() == DialogResult.OK)
+            {
+                NewFile(f.FileName);
+                ignorNextListboxUpdate = false;
+            }
+        }
+        private void folderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ignorNextListboxUpdate = true;
+            NewItem f = new NewItem();
+            if (f.ShowDialog() == DialogResult.OK)
+            {
+                NewFile(f.FileName, JSharp.NewFile.Type.FOLDER);
+                ignorNextListboxUpdate = false;
+            }
+        }
+        private void animatedToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
+
+            string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
+            dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
+            
+            string gloDir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+            if (grp == "resourcespack")
+            {
+                SafeWriteFile(gloDir + dir + ".mcmeta", "{\"animation\":{\"frametime\": 1}}");
+                FetchFilesInDirectory();
+                ReloadTree();
+            }
+        }
+        private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DeleteSelectedFile();
+        }
+        private void treeView1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete)
+            {
+                DeleteSelectedFile();
+            }
+        }
         #endregion
+        
         #region codetree
         private void ReloadTree()
         {
             treeView1.Nodes.Clear();
-            var paths = codeOrder.Select(x => "src/"+x.Replace("\\", "/")).ToList();
-            BuildTree(paths, "", treeView1.Nodes);
-            paths = resourceOrder.Select(x => "resources/" + x.Replace("\\", "/")).ToList();
-            BuildTree(paths, "", treeView1.Nodes);
+            var paths = codeOrder.Select(x => x.Replace("\\", "/")).ToList();
+            var root = treeView1.Nodes.Add("src").Nodes;
+            BuildTree(paths, "",root);
+            string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
+            if (Directory.Exists(dir))
+            {
+                paths = Directory.EnumerateDirectories(dir, "*.*", SearchOption.AllDirectories)
+                        .Select(x => x.Replace(dir, "").Replace("\\", "/")).ToList();
+            }
+            else
+            {
+                paths.Clear();
+            }
+            BuildTree(paths, "", root, false);
+
+            paths = resourceOrder.Select(x => x.Replace("\\", "/")).ToList();
+            root = treeView1.Nodes.Add("resources").Nodes;
+            BuildTree(paths, "", root);
+
+            dir = Path.GetDirectoryName(projectPath) + "/resources/";
+            if (Directory.Exists(dir))
+            {
+                paths = Directory.EnumerateDirectories(dir, "*.*", SearchOption.AllDirectories)
+                        .Select(x => x.Replace(dir, "").Replace("\\", "/")).ToList();
+            }
+            else
+            {
+                paths.Clear();
+            }
+            BuildTree(paths, "", root, false);
+
+
+            string[] folders = { "resourcespack", "structures" };
+            folders.ToList().ForEach(folder =>
+            {
+                dir = Path.GetDirectoryName(projectPath) + $"/{folder}/";
+                root = treeView1.Nodes.Add(folder).Nodes;
+                if (Directory.Exists(dir))
+                {
+                    paths = Directory.EnumerateFiles(dir, "*.*", SearchOption.AllDirectories)
+                            .Select(x => x.Replace(dir, "").Replace("\\", "/")).ToList();
+                }
+                else
+                {
+                    paths.Clear();
+                }
+                BuildTree(paths, "", root);
+                
+                if (Directory.Exists(dir))
+                {
+                    paths = Directory.EnumerateDirectories(dir, "*.*", SearchOption.AllDirectories)
+                            .Select(x => x.Replace(dir, "").Replace("\\", "/")).ToList();
+                }
+                else
+                {
+                    paths.Clear();
+                }
+                BuildTree(paths, "", root, false);
+            });
+           
             treeView1.ExpandAll();
         }
-        private void BuildTree(List<string> paths, string parent, TreeNodeCollection addInMe, int rec = 0)
+        private void BuildTree(List<string> paths, string parent, TreeNodeCollection addInMe, bool isFile = true, int rec = 0)
         {
             if (rec > 100)
             {
@@ -1837,10 +2087,10 @@ namespace JSharp
                          TreeNode curNode = addInMe.Add(x.Key);
                          BuildTree(x.Select(z => z.Last())
                                                  .ToList(),
-                                                 parent, curNode.Nodes, rec + 1);
+                                                 parent, curNode.Nodes, isFile, rec + 1);
 
                      });
-                paths.Where(x => !x.Contains("/")).ToList().ForEach(x => addInMe.Add(x));
+                paths.Where(x => !x.Contains("/")).ToList().ForEach(x => addInMe.Add(x).Checked = isFile);
             }
         }
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
@@ -1851,11 +2101,15 @@ namespace JSharp
             }
             else
             {
+                pictureBox1.Visible = false;
+                CodeBox.Visible = true;
+                LineNumberTextBox.Visible = true;
+
                 string fullPath = treeView1.SelectedNode.FullPath;
                 if (fullPath.StartsWith("src") && fullPath.Length > 4)
                 {
                     string path = fullPath.Substring(4, fullPath.Length - 4);
-                    resourceSelected = false;
+                    
                     if (code.ContainsKey(path))
                     {
                         ReloadCodeBoxFileCode(path);
@@ -1864,13 +2118,65 @@ namespace JSharp
                 if (fullPath.StartsWith("resources") && fullPath.Length > 10)
                 {
                     string path = fullPath.Substring(10, fullPath.Length - 10);
-                    resourceSelected = true;
+                    
                     if (resources.ContainsKey(path))
                     {
                         ReloadCodeBoxFileRes(path);
                     }
                 }
+                if (fullPath.StartsWith("resourcespack") && fullPath.Length > 14)
+                {
+                    string path = fullPath.Substring(14, fullPath.Length - 14);
+                    
+                    string dir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+                    
+                    if (File.Exists(dir+path))
+                    {
+                        if (path.EndsWith(".json") || path.EndsWith(".bps") || path.EndsWith(".txt") || path.EndsWith(".mcmeta") 
+                            || !path.Contains(".")) {
+                            ReloadCodeBoxFileResPack(path);
+                        }
+                        if (path.EndsWith(".png"))
+                        {
+                            pictureBox1.Visible = true;
+                            CodeBox.Visible = false;
+                            LineNumberTextBox.Visible = false;
+                            var img = Image.FromFile(dir + path);
+                            float ratio = Math.Min(pictureBox1.Width / (float)img.Size.Width,
+                                                    pictureBox1.Height / (float)img.Size.Height);
+                            pictureBox1.Image = DisplayImage(img, ratio);
+                        }
+                    }
+                }
             }
+        }
+        private Image DisplayImage(Image Image, float scale)
+        {
+            int wid = (int)(Image.Width * scale);
+            int hgt = (int)(Image.Height * scale);
+            Bitmap bm = new Bitmap(wid, hgt);
+
+            // Draw the image onto the new bitmap.
+            using (Graphics gr = Graphics.FromImage(bm))
+            {
+                // No smoothing.
+                gr.InterpolationMode = InterpolationMode.NearestNeighbor;
+
+                Point[] dest =
+                {
+            new Point(0, 0),
+            new Point(wid, 0),
+            new Point(0, hgt),
+        };
+                Rectangle source = new Rectangle(
+                    0, 0,
+                    Image.Width,
+                    Image.Height);
+                gr.DrawImage(Image,
+                    dest, source, GraphicsUnit.Pixel);
+            }
+
+            return (Image)bm;
         }
         private void treeView1_DoubleClick(object sender, EventArgs e)
         {
@@ -1880,7 +2186,15 @@ namespace JSharp
 
         private void Form1_Activated(object sender, EventArgs e)
         {
-            CheckFileModdification();
+            if (!ignorNextListboxUpdate)
+            {
+                CheckFileModdification();
+                ReloadTree();
+            }
+            else
+            {
+                ignorNextListboxUpdate = false;
+            }
         }
         
 
@@ -1912,7 +2226,7 @@ namespace JSharp
             
             IntPtr imgPtr = g.GetHdc();
             g.ReleaseHdc();
-            if (e.Node.Nodes.Count > 0)
+            if (!e.Node.Checked)
             {
                 e.Graphics.DrawImage(expandImg, ptExpand);
             }
@@ -1929,15 +2243,23 @@ namespace JSharp
             {
                 nodeImg = fileINIPath;
             }
-            if (e.Node.FullPath.EndsWith(".txt"))
+            if (e.Node.FullPath.EndsWith(".txt") || e.Node.FullPath.EndsWith(".mcmeta"))
             {
                 nodeImg = fileTXTPath;
             }
-            
+            if (e.Node.FullPath.EndsWith(".json"))
+            {
+                nodeImg = fileINIPath;
+            }
+            if (e.Node.FullPath.EndsWith(".png"))
+            {
+                nodeImg = fileImagePath;
+            }
+
             g = Graphics.FromImage(nodeImg);
             imgPtr = g.GetHdc();
             g.ReleaseHdc();
-            if (e.Node.Nodes.Count == 0)
+            if (e.Node.Checked)
             {
                 e.Graphics.DrawImage(nodeImg, ptNodeIcon);
             }
@@ -1956,6 +2278,118 @@ namespace JSharp
             textRect.Width += 40;
             e.Graphics.DrawString(e.Node.Text, nodeFont, textBrush,
                 Rectangle.Inflate(textRect, -12, 0));
+        }
+
+        private void treeView1_DragDrop(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop, false);
+
+            Point targetPoint = treeView1.PointToClient(new Point(e.X, e.Y));
+            treeView1.SelectedNode = treeView1.GetNodeAt(targetPoint);
+            if (treeView1.SelectedNode.Checked)
+                treeView1.SelectedNode = treeView1.SelectedNode.Parent;
+            
+            if (ForceSave())
+            {
+                string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
+                if (treeView1.SelectedNode != null && treeView1.SelectedNode.Nodes.Count == 0 && dir.Contains("/"))
+                {
+                    dir = dir.Substring(0, dir.LastIndexOf("/"));
+                }
+                string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
+                dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
+                string path = dir == "" ? "" : dir + "/";
+                string gloDir = Path.GetDirectoryName(projectPath) + "/";
+                string final = "";
+                if (grp == "src")
+                {
+                    final = gloDir + "scripts/" + path + "/";
+                }
+                if (grp == "resources")
+                {
+                    final = gloDir + "resources/" + path + "/";
+                }
+                if (grp == "resourcespack")
+                {
+                    final = gloDir + "resourcespack/" + path + "/";
+                }
+                if (grp == "structures")
+                {
+                    final = gloDir + "structures/" + path + "/";
+                }
+                foreach (string f in files)
+                {
+                    var newP = f.Replace("\\", "/");
+                    newP = newP.Substring(newP.LastIndexOf("/") + 1, newP.Length - newP.LastIndexOf("/") - 1);
+                    SafeCopy(f, final + newP);
+                    Debug("Imported " + newP, Color.DarkGreen);
+                }
+                CheckFileModdification();
+                ReloadTree();
+            }
+        }
+
+        private void treeView1_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = e.AllowedEffect;
+        }
+
+
+        public void DeleteSelectedFile()
+        {
+            string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
+
+            string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
+            dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
+            if (MessageBox.Show($"Are you sure you want to delete {dir} from {grp}?", "Are you sure?", MessageBoxButtons.OKCancel)
+                == DialogResult.OK) {
+                string gloDir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+                if (grp == "resourcespack")
+                {
+                    if (File.Exists(gloDir + dir))
+                    {
+                        File.Delete(gloDir + dir);
+                    }
+                }
+                gloDir = Path.GetDirectoryName(projectPath) + "/structures/";
+                if (grp == "structures")
+                {
+                    if (File.Exists(gloDir + dir))
+                    {
+                        File.Delete(gloDir + dir);
+                    }
+                }
+                gloDir = Path.GetDirectoryName(projectPath) + "/resources/";
+                if (grp == "resources")
+                {
+                    if (File.Exists(gloDir + dir))
+                    {
+                        File.Delete(gloDir + dir);
+                    }
+                    if (resources.ContainsKey(dir))
+                    {
+                        resourceOrder.Remove(dir);
+                        resources.Remove(dir);
+                        moddificationResTime.Remove(dir);
+                    }
+                }
+                gloDir = Path.GetDirectoryName(projectPath) + "/scripts/";
+                if (grp == "src")
+                {
+                    if (File.Exists(gloDir + dir + ".bps"))
+                    {
+                        File.Delete(gloDir + dir + ".bps");
+                    }
+                    if (code.ContainsKey(dir))
+                    {
+                        codeOrder.Remove(dir);
+                        code.Remove(dir);
+                        moddificationFileTime.Remove(dir);
+                    }
+                }
+                FetchFilesInDirectory();
+                ReloadTree();
+            }
         }
     }
 }

@@ -89,7 +89,7 @@
             this.ForeColor = System.Drawing.Color.White;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FilePreview";
-            this.Text = "FilePreview";
+            this.Text = "Datapack Preview";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FilePreview_FormClosed);
             this.Load += new System.EventHandler(this.FilePreview_Load);
             this.ResumeLayout(false);
