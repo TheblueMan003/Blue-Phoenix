@@ -104,6 +104,10 @@ namespace JSharp
         {
             return "function " + function.gameName.Replace(":", "/");
         }
+        public override string[] FileNameSplitter()
+        {
+            return new string[] { "/", "/" };
+        }
 
         public override string DefineScoreboard(Compiler.Scoreboard var)
         {

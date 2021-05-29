@@ -25,7 +25,10 @@ namespace JSharp
         {
             return "function " + function.gameName;
         }
-
+        public override string[] FileNameSplitter()
+        {
+            return new string[] { ":", "/" };
+        }
         public override string DefineFunction(Compiler.Function function)
         {
             throw new NotImplementedException();

@@ -2468,5 +2468,31 @@ namespace JSharp
                 SelectFullPath(openedFullPath[tabControl1.SelectedIndex]);
             }
         }
+
+        private void CollapseRec(TreeNode node, int rec = 0)
+        {
+            if (rec < 100)
+            {
+                foreach (TreeNode n in node.Nodes)
+                {
+                    CollapseRec(n, rec + 1);
+                }
+                node.Collapse();
+            }
+        }
+        private void treeView1_AfterCollapse(object sender, TreeViewEventArgs e)
+        {
+            if (Control.ModifierKeys == Keys.Control) {
+                CollapseRec(e.Node);
+            }
+        }
+
+        private void treeView1_AfterExpand(object sender, TreeViewEventArgs e)
+        {
+            if (Control.ModifierKeys == Keys.Control)
+            {
+                e.Node.ExpandAll();
+            }
+        }
     }
 }

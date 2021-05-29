@@ -3049,7 +3049,7 @@ namespace JSharp
                     
 
                     string cond1 = getCondition(mux.gameName + "== " + lowerBound1.ToString() + ".." + upperBound1.ToString());
-                    fFiles[0].AddLine(cond1 + "function " + context.getRoot() + ":" + muxedFileNameInit);
+                    fFiles[0].AddLine(cond1 + "function " + context.getRoot() + Core.FileNameSplitter()[0] + muxedFileNameInit);
                 }
 
                 string muxedFileName = "__multiplex__/" + grp + "/__splitted_" + (fFiles.Count - 1).ToString();
@@ -3061,7 +3061,7 @@ namespace JSharp
                 files.Add(newfFile);
 
                 string cond = getCondition(mux.gameName + "== " + lowerBound.ToString()+ ".." + upperBound.ToString());
-                fFiles[0].AddLine(cond + "function "+ context.getRoot() + ":"+ muxedFileName);
+                fFiles[0].AddLine(cond + "function "+ context.getRoot() + Core.FileNameSplitter()[0] + muxedFileName);
             }
 
             File fFile = fFiles[fFiles.Count - 1];
@@ -3100,7 +3100,7 @@ namespace JSharp
                 i++;
             }
 
-            output += "function " + context.getRoot() + ":__multiplex__/" + grp + '\n';
+            output += "function " + context.getRoot() + Core.FileNameSplitter()[0]+"__multiplex__/" + grp + '\n';
             if (outVar != null)
             {
                 for (int j = 0; j < outVar.Length; j++)
@@ -8712,7 +8712,8 @@ namespace JSharp
                     {
                         string contName = "__splitted_" + i.ToString();
                         string funcName = (context.GetFun() + contName);
-                        string subName = funcName.Substring(funcName.IndexOf(":") + 1, funcName.Length - funcName.IndexOf(":") - 1);
+                        string c = Core.FileNameSplitter()[0];
+                        string subName = funcName.Substring(funcName.IndexOf(c) + 1, funcName.Length - funcName.IndexOf(c) - 1);
                         File f = new File(subName);
                         files.Add(f);
                         context.currentFile().addChild(f);
@@ -9606,7 +9607,7 @@ namespace JSharp
             public List<string> import = new List<string>();
             public string fakeContext;
             public List<List<ImpliciteVar>> impliciteVars = new List<List<ImpliciteVar>>();
-            
+            private string[] funcSplitter = Core.FileNameSplitter();
             public Context(string project, File f)
             {
                 directories.Add(project);
@@ -9672,7 +9673,8 @@ namespace JSharp
                     if (p != "")
                     {
                         string fullName = context.GetFun() + p;
-                        string subName = fullName.Substring(fullName.IndexOf(":") + 1, fullName.Length - fullName.IndexOf(":") - 1);
+                        string c = Core.FileNameSplitter()[0];
+                        string subName = fullName.Substring(fullName.IndexOf(c) + 1, fullName.Length - fullName.IndexOf(c) - 1);
                         File f = new File(subName, "", "");
                         Compiler.files.Add(f);
                         Sub(p, f);
@@ -9708,11 +9710,11 @@ namespace JSharp
 
             public string GetFun()
             {
-                string output = directories[0].ToLower() + ":";
+                string output = directories[0].ToLower() + funcSplitter[0];
 
                 for (int i = 1; i < directories.Count; i++)
                 {
-                    output += directories[i].ToLower() + "/";
+                    output += directories[i].ToLower() + funcSplitter[1];
                 }
 
                 return output;
