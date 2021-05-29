@@ -31,7 +31,6 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.button1 = new System.Windows.Forms.Button();
-            this.CodeListBox = new System.Windows.Forms.ListBox();
             this.button2 = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
@@ -77,9 +76,6 @@
             this.button9 = new System.Windows.Forms.Button();
             this.button10 = new System.Windows.Forms.Button();
             this.button11 = new System.Windows.Forms.Button();
-            this.ResourceListBox = new System.Windows.Forms.ListBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
             this.DatapackOpen = new System.Windows.Forms.OpenFileDialog();
             this.button12 = new System.Windows.Forms.Button();
             this.button13 = new System.Windows.Forms.Button();
@@ -93,6 +89,7 @@
             this.button16 = new System.Windows.Forms.Button();
             this.label7 = new System.Windows.Forms.Label();
             this.LibraryButton = new System.Windows.Forms.Button();
+            this.treeView1 = new System.Windows.Forms.TreeView();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -108,24 +105,6 @@
             this.button1.Text = "Compile Java";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // CodeListBox
-            // 
-            this.CodeListBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.CodeListBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.CodeListBox.ForeColor = System.Drawing.Color.White;
-            this.CodeListBox.FormattingEnabled = true;
-            this.CodeListBox.Items.AddRange(new object[] {
-            "import",
-            "load",
-            "main"});
-            this.CodeListBox.Location = new System.Drawing.Point(13, 80);
-            this.CodeListBox.Name = "CodeListBox";
-            this.CodeListBox.Size = new System.Drawing.Size(187, 472);
-            this.CodeListBox.TabIndex = 5;
-            this.CodeListBox.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
-            this.CodeListBox.DoubleClick += new System.EventHandler(this.listBox1_DoubleClick);
             // 
             // button2
             // 
@@ -446,7 +425,7 @@
             this.button5.TabIndex = 9;
             this.button5.Text = "Functions";
             this.button5.UseVisualStyleBackColor = false;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
+            this.button5.Click += new System.EventHandler(this.FunctionPreview_Click);
             // 
             // button3
             // 
@@ -460,7 +439,7 @@
             this.button3.TabIndex = 8;
             this.button3.Text = "Gamerule";
             this.button3.UseVisualStyleBackColor = false;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
+            this.button3.Click += new System.EventHandler(this.GameruleGenerator_Click);
             // 
             // button4
             // 
@@ -474,7 +453,7 @@
             this.button4.TabIndex = 7;
             this.button4.Text = "Effect";
             this.button4.UseVisualStyleBackColor = false;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
+            this.button4.Click += new System.EventHandler(this.EffectGenerator_Click);
             // 
             // button6
             // 
@@ -488,7 +467,7 @@
             this.button6.TabIndex = 13;
             this.button6.Text = "Structures";
             this.button6.UseVisualStyleBackColor = false;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
+            this.button6.Click += new System.EventHandler(this.StructPreview_Click);
             // 
             // button7
             // 
@@ -502,7 +481,7 @@
             this.button7.TabIndex = 14;
             this.button7.Text = "Variables";
             this.button7.UseVisualStyleBackColor = false;
-            this.button7.Click += new System.EventHandler(this.button7_Click);
+            this.button7.Click += new System.EventHandler(this.VariablePreview_Click);
             // 
             // button8
             // 
@@ -516,7 +495,7 @@
             this.button8.TabIndex = 15;
             this.button8.Text = "Enums";
             this.button8.UseVisualStyleBackColor = false;
-            this.button8.Click += new System.EventHandler(this.button8_Click);
+            this.button8.Click += new System.EventHandler(this.EnumPreview_Click);
             // 
             // CodeBox
             // 
@@ -556,7 +535,7 @@
             this.button9.TabIndex = 16;
             this.button9.Text = "Sounds";
             this.button9.UseVisualStyleBackColor = false;
-            this.button9.Click += new System.EventHandler(this.button9_Click);
+            this.button9.Click += new System.EventHandler(this.SoundPreview_Click);
             // 
             // button10
             // 
@@ -570,7 +549,7 @@
             this.button10.TabIndex = 17;
             this.button10.Text = "Block/Item";
             this.button10.UseVisualStyleBackColor = false;
-            this.button10.Click += new System.EventHandler(this.button10_Click);
+            this.button10.Click += new System.EventHandler(this.BlockPreview_Click);
             // 
             // button11
             // 
@@ -583,38 +562,7 @@
             this.button11.TabIndex = 18;
             this.button11.Text = "Compile Bedrock";
             this.button11.UseVisualStyleBackColor = true;
-            this.button11.Click += new System.EventHandler(this.button11_Click);
-            // 
-            // ResourceListBox
-            // 
-            this.ResourceListBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.ResourceListBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.ResourceListBox.ForeColor = System.Drawing.Color.White;
-            this.ResourceListBox.FormattingEnabled = true;
-            this.ResourceListBox.Location = new System.Drawing.Point(12, 580);
-            this.ResourceListBox.Name = "ResourceListBox";
-            this.ResourceListBox.Size = new System.Drawing.Size(187, 147);
-            this.ResourceListBox.TabIndex = 19;
-            this.ResourceListBox.SelectedIndexChanged += new System.EventHandler(this.ResourceListBox_SelectedIndexChanged);
-            // 
-            // label1
-            // 
-            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(10, 566);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(61, 13);
-            this.label1.TabIndex = 20;
-            this.label1.Text = "Resources:";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(13, 64);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(72, 13);
-            this.label2.TabIndex = 21;
-            this.label2.Text = "Source Code:";
+            this.button11.Click += new System.EventHandler(this.CompileBedrock_Click);
             // 
             // button12
             // 
@@ -628,7 +576,7 @@
             this.button12.TabIndex = 22;
             this.button12.Text = "Predicates";
             this.button12.UseVisualStyleBackColor = false;
-            this.button12.Click += new System.EventHandler(this.button12_Click);
+            this.button12.Click += new System.EventHandler(this.PredicatePreview_Click);
             // 
             // button13
             // 
@@ -642,7 +590,7 @@
             this.button13.TabIndex = 23;
             this.button13.Text = "Class";
             this.button13.UseVisualStyleBackColor = false;
-            this.button13.Click += new System.EventHandler(this.button13_Click);
+            this.button13.Click += new System.EventHandler(this.ClassPreview_Click);
             // 
             // button14
             // 
@@ -656,7 +604,7 @@
             this.button14.TabIndex = 24;
             this.button14.Text = "Blocktags";
             this.button14.UseVisualStyleBackColor = false;
-            this.button14.Click += new System.EventHandler(this.button14_Click);
+            this.button14.Click += new System.EventHandler(this.BlockTagsPreview_Click);
             // 
             // ExportRP
             // 
@@ -674,7 +622,7 @@
             this.button15.TabIndex = 25;
             this.button15.Text = "Entitytags";
             this.button15.UseVisualStyleBackColor = false;
-            this.button15.Click += new System.EventHandler(this.button15_Click);
+            this.button15.Click += new System.EventHandler(this.EntityTagsPreview_Click);
             // 
             // label3
             // 
@@ -729,7 +677,7 @@
             this.button16.TabIndex = 30;
             this.button16.Text = "Itemtags";
             this.button16.UseVisualStyleBackColor = false;
-            this.button16.Click += new System.EventHandler(this.button16_Click);
+            this.button16.Click += new System.EventHandler(this.CompileJava_Click);
             // 
             // label7
             // 
@@ -756,12 +704,29 @@
             this.LibraryButton.UseVisualStyleBackColor = false;
             this.LibraryButton.Click += new System.EventHandler(this.LibraryButton_Click);
             // 
+            // treeView1
+            // 
+            this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.treeView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.treeView1.ForeColor = System.Drawing.Color.White;
+            this.treeView1.Indent = 10;
+            this.treeView1.Location = new System.Drawing.Point(13, 62);
+            this.treeView1.Name = "treeView1";
+            this.treeView1.PathSeparator = "/";
+            this.treeView1.ShowLines = false;
+            this.treeView1.Size = new System.Drawing.Size(186, 665);
+            this.treeView1.TabIndex = 33;
+            this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
+            this.treeView1.DoubleClick += new System.EventHandler(this.treeView1_DoubleClick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(1192, 732);
+            this.Controls.Add(this.treeView1);
             this.Controls.Add(this.LibraryButton);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.button16);
@@ -773,9 +738,6 @@
             this.Controls.Add(this.button14);
             this.Controls.Add(this.button13);
             this.Controls.Add(this.button12);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.ResourceListBox);
             this.Controls.Add(this.button11);
             this.Controls.Add(this.button10);
             this.Controls.Add(this.button9);
@@ -789,7 +751,6 @@
             this.Controls.Add(this.LineNumberTextBox);
             this.Controls.Add(this.CodeBox);
             this.Controls.Add(this.button2);
-            this.Controls.Add(this.CodeListBox);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.menuStrip1);
             this.ForeColor = System.Drawing.Color.White;
@@ -810,7 +771,6 @@
 
         #endregion
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.ListBox CodeListBox;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.MenuStrip menuStrip1;
@@ -851,9 +811,6 @@
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.Button button10;
         private System.Windows.Forms.Button button11;
-        private System.Windows.Forms.ListBox ResourceListBox;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ToolStripMenuItem settingToolStripMenuItem;
         private System.Windows.Forms.OpenFileDialog DatapackOpen;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
@@ -872,6 +829,7 @@
         private System.Windows.Forms.Button button16;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button LibraryButton;
+        private System.Windows.Forms.TreeView treeView1;
     }
 }
 

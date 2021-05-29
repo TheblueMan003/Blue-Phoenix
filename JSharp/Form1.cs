@@ -27,6 +27,8 @@ namespace JSharp
         public Dictionary<string, DateTime> moddificationFileTime = new Dictionary<string, DateTime>();
         public Dictionary<string, DateTime> moddificationResTime = new Dictionary<string, DateTime>();
         public Dictionary<string, string> structures = new Dictionary<string, string>();
+        public List<string> codeOrder = new List<string>();
+        public List<string> resourceOrder = new List<string>();
         public ProjectVersion projectVersion = new ProjectVersion();
         public Compiler.CompilerSetting compilerSetting = new Compiler.CompilerSetting();
         public ResourcesPackEditor ResourcesPackEditor;
@@ -84,45 +86,61 @@ namespace JSharp
                 code[previous] = CodeBox.Text;
             }
         }
+        public void ReloadCodeBoxFileCode(string file)
+        {
+            noReformat = true;
+
+            recallFile();
+            resourceSelected = false;
+
+            PreviousText.Clear();
+
+            index = 0;
+            if (code.ContainsKey(file))
+                CodeBox.Text = code[file];
+            else
+            {
+                CodeBox.Text = "";
+            }
+
+            PreviousText.Add(CodeBox.Text);
+
+            previous = file;
+            noReformat = false;
+            UpdateCodeBox();
+
+            //ignorNextListboxUpdate = true;
+            //ResourceListBox.SelectedIndex = -1;
+        }
+        public void ReloadCodeBoxFileRes(string file)
+        {
+            noReformat = true;
+
+            recallFile();
+            resourceSelected = true;
+
+            PreviousText.Clear();
+
+            index = 0;
+            if (resources.ContainsKey(file))
+                CodeBox.Text = resources[file];
+            else
+            {
+                CodeBox.Text = "";
+            }
+            PreviousText.Add(CodeBox.Text);
+            previous = file;
+            noReformat = false;
+            UpdateCodeBox();
+        }
+        
         private void button1_Click(object sender, EventArgs e)
         {
             exporting = false;
             CompileJava(true);
             UpdateCodeBox();
         }
-        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (ignorNextListboxUpdate)
-            {
-                ignorNextListboxUpdate = false;
-            }
-            else if (CodeListBox.SelectedIndex >= 0)
-            {
-                noReformat = true;
 
-                recallFile();
-                resourceSelected = false;
-
-                PreviousText.Clear();
-                
-                index = 0;
-                if (code.ContainsKey(CodeListBox.SelectedItem.ToString()))
-                    CodeBox.Text = code[CodeListBox.SelectedItem.ToString()];
-                else
-                {
-                    CodeBox.Text = "";
-                }
-
-                PreviousText.Add(CodeBox.Text);
-
-                previous = CodeListBox.SelectedItem.ToString();
-                noReformat = false;
-                UpdateCodeBox();
-
-                //ignorNextListboxUpdate = true;
-                ResourceListBox.SelectedIndex = -1;
-            }
-        }
         private void button2_Click(object sender, EventArgs e)
         {
             NewFile();
@@ -173,14 +191,6 @@ namespace JSharp
                 isCompiling = 0;
             }
         }
-        private void toolStripTextBox1_Click(object sender, EventArgs e)
-        {
-            EffectForm form = new EffectForm();
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                CodeBox.Text.Insert(CodeBox.SelectionStart, form.Content);
-            }
-        }
 
         private void CodeBox_MouseClick(object sender, MouseEventArgs e)
         {
@@ -199,23 +209,6 @@ namespace JSharp
             }
         }
 
-        private void button4_Click(object sender, EventArgs e)
-        {
-            EffectForm form = new EffectForm();
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                CodeBox.Text += form.Content;
-            }
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            GameruleForm form = new GameruleForm();
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                CodeBox.Text += form.Content;
-            }
-        }
 
         public void Debug(object text, Color color)
         {
@@ -224,39 +217,7 @@ namespace JSharp
             ErrorBox.AppendText("[" + DateTime.Now.ToString() + "] " + text.ToString()+"\n");
         }
 
-        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (projectPath == null)
-            {
-                if (ProjectSave.ShowDialog() == DialogResult.OK)
-                {
-                    projectPath = ProjectSave.FileName;
-                }
-                else
-                    return;
-            }
-            Save(projectPath);
-            UpdateProjectList();
-            Debug("Project save as " + projectPath, Color.Aqua);
-        }
 
-        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (ProjectSave.ShowDialog() == DialogResult.OK)
-            {
-                projectPath = ProjectSave.FileName;
-            }
-            else
-                return;
-
-            Save(projectPath);
-            UpdateProjectList();
-            Debug("Project save as " + projectPath, Color.Aqua);
-        }
-        private void newFileToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            NewFile();
-        }
 
         public void Save(string projectPath)
         {
@@ -279,7 +240,7 @@ namespace JSharp
             string dir = Path.GetDirectoryName(projectPath)+"/scripts/";
             string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
 
-            foreach (string file in CodeListBox.Items)
+            foreach (string file in codeOrder)
             {
                 if (project.compilationSetting.isLibrary)
                 {
@@ -300,7 +261,7 @@ namespace JSharp
                     lst.Add(new ProjectSave.FileSave(file, code[file], i));
                 }
             }
-            foreach (string file in ResourceListBox.Items)
+            foreach (string file in resourceOrder)
             {
                 if (project.compilationSetting.isLibrary)
                 {
@@ -337,7 +298,7 @@ namespace JSharp
             moddificationResTime = new Dictionary<string, DateTime>();
 
             ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
-            CodeListBox.Items.Clear();
+            codeOrder.Clear();
             code.Clear();
             code = new Dictionary<string, string>();
             TagsList = project.TagsList;
@@ -365,8 +326,8 @@ namespace JSharp
                 {
                     Debug("Duplicated " +file.name+"-"+file.content+"////"+code[file.name], Color.Red);
                 }
-                
-                CodeListBox.Items.Add(file.name);
+
+                codeOrder.Add(file.name);
                 
                 if (i == 0)
                 {
@@ -379,6 +340,7 @@ namespace JSharp
                 }
                 i++;
             }
+            
             if (project.resources != null)
             {
                 foreach (var file in project.resources)
@@ -393,7 +355,7 @@ namespace JSharp
                         Debug("Duplicated " + file.name + "-" + file.content + "////" + resources[file.name], Color.Red);
                     }
 
-                    ResourceListBox.Items.Add(file.name);
+                    resourceOrder.Add(file.name);
 
                     i++;
                 }
@@ -416,7 +378,7 @@ namespace JSharp
                         Debug("Exception while reading " + e.ToString(), Color.Red);
                     }
 
-                    CodeListBox.Items.Add(file);
+                    codeOrder.Add(file);
 
                     if (i == 0)
                     {
@@ -453,7 +415,7 @@ namespace JSharp
                             Debug("Exception while reading " + e.ToString(), Color.Red);
                         }
 
-                        CodeListBox.Items.Add(fname.ToLower());
+                        codeOrder.Add(fname.ToLower());
                     }
                 }
             }
@@ -475,10 +437,13 @@ namespace JSharp
                             Debug("Exception while reading " + e.ToString(), Color.Red);
                         }
 
-                        ResourceListBox.Items.Add(fname.ToLower());
+                        resourceOrder.Add(fname.ToLower());
                     }
                 }
             }
+
+            ReloadTree();
+
             Debug("Project Loaded: " + projectPath+" ("+i.ToString()+" Files)", Color.Aqua);
             noReformat = false;
             exporting = false;
@@ -623,40 +588,41 @@ namespace JSharp
         public void NewFile()
         {
             NewFile form = new NewFile();
-            if (form.ShowDialog() == DialogResult.OK && !CodeListBox.Items.Contains(form.filename))
+            if (form.ShowDialog() == DialogResult.OK && !code.Keys.Contains(form.filename))
             {
                 if (form.type == JSharp.NewFile.Type.EXTERNAL)
                 {
                     if (DatapackOpen.ShowDialog() == DialogResult.OK)
                     {
-                        CodeListBox.Items.Add(form.filename);
+                        codeOrder.Add(form.filename);
                         code.Add(form.filename.ToLower(), GenerateDatapackLink(DatapackOpen.FileName));
                     }
                 }
                 else if (form.type == JSharp.NewFile.Type.RESOURCE)
                 {
-                    ResourceListBox.Items.Add(form.filename);
+                    resourceOrder.Add(form.filename);
                     resources.Add(form.filename, "");
                 }
                 else
                 {
-                    if (form.filename != "import") 
-                        CodeListBox.Items.Add(form.filename);
+                    if (form.filename != "import")
+                        codeOrder.Add(form.filename);
                     else
-                        CodeListBox.Items.Insert(0, form.filename);
+                        codeOrder.Insert(0, form.filename);
                     if (form.type == JSharp.NewFile.Type.STRUCTURE)
                     {
-                        code.Add(form.filename, "package " + form.filename + "\n\nstruct " + form.filename + "{\n\tdef __init__(){\n\n\t}\n}");
+                        code.Add(form.filename, "package " + form.filename.Replace("/",".") + "\n\nstruct " + form.filename.Replace("/", ".") + "{\n\tdef __init__(){\n\n\t}\n}");
                     }
                     else if (form.type == JSharp.NewFile.Type.SUBPROGRAMME)
                     {
-                        code.Add(form.filename, "package " + form.filename + "\n\nBOOL Enabled\ndef ticking main(){\n\twith(@a,true,Enabled){\n\t\t\n\t}\n}\n\ndef start(){\n\tEnabled = true\n}\n\ndef close(){\n\tEnabled = false\n}");
+                        code.Add(form.filename, "package " + form.filename.Replace("/", ".") + "\n\nBOOL Enabled\ndef ticking main(){\n\twith(@a,true,Enabled){\n\t\t\n\t}\n}\n\ndef start(){\n\tEnabled = true\n}\n\ndef close(){\n\tEnabled = false\n}");
                     }
                     else
                     {
-                        code.Add(form.filename, "package " + form.filename);
+                        code.Add(form.filename, "package " + form.filename.Replace("/", "."));
                     }
                 }
+                ReloadTree();
             }
         }
         public void NewProject()
@@ -665,10 +631,10 @@ namespace JSharp
             var res = form.ShowDialog();
             if (res == DialogResult.OK || res == DialogResult.Yes)
             {
-                CodeListBox.Items.Clear();
+                codeOrder.Clear();
                 code.Clear();
                 resources.Clear();
-                ResourceListBox.Items.Clear();
+                resourceOrder.Clear();
                 projectVersion = new ProjectVersion();
                 projectDescription = "";
                 moddificationFileTime.Clear();
@@ -694,8 +660,8 @@ namespace JSharp
                 code.Add("import", libs);
                 code.Add(projectName.ToLower(), "package "+ projectName.ToLower()+"\n");
 
-                CodeListBox.Items.Add("import");
-                CodeListBox.Items.Add(projectName.ToLower());
+                codeOrder.Add("import");
+                codeOrder.Add(projectName.ToLower());
 
                 MCTagsList.Clear();
                 MCTagsList.Add("blocks", new Dictionary<string, TagsList>());
@@ -710,6 +676,7 @@ namespace JSharp
                 TagsList.Add("functions", new Dictionary<string, TagsList>());
                 structures.Clear();
                 currentDataPack = null;
+                ReloadTree();
             }
             if (res == DialogResult.Yes)
             {
@@ -791,6 +758,7 @@ namespace JSharp
             }
             );
         }
+        #region Compile & Export
         public void ExportDataPackThread()
         {
             isCompiling = 1;
@@ -825,7 +793,7 @@ namespace JSharp
         public void ExportFiles(string path)
         {
             List<Compiler.File> files = new List<Compiler.File>();
-            foreach (string f in CodeListBox.Items)
+            foreach (string f in codeOrder)
             {
                 files.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
             }
@@ -842,7 +810,7 @@ namespace JSharp
             }
 
             List<Compiler.File> resourcesfiles = new List<Compiler.File>();
-            foreach (string f in ResourceListBox.Items)
+            foreach (string f in resourceOrder)
             {
                 resourcesfiles.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
             }
@@ -1004,14 +972,15 @@ namespace JSharp
                 }
             }
         }
+        #endregion
         public void ChangeCompileOrder()
         {
-            CompileOrder form = new CompileOrder(CodeListBox.Items, CodeListBox.Items.Contains("import")?1:0);
+            CompileOrder form = new CompileOrder(codeOrder, codeOrder.Contains("import")?1:0);
             if (form.ShowDialog() == DialogResult.OK)
             {
                 ignorNextListboxUpdate = true;
-                CodeListBox.Items.Clear();
-                CodeListBox.Items.AddRange(form.Content);
+                codeOrder.Clear();
+                codeOrder.AddRange(form.Content);
                 Debug("Compile Order Changed", Color.Aqua);
             }
         }
@@ -1030,7 +999,7 @@ namespace JSharp
 
                 recallFile();
 
-                foreach (string f in CodeListBox.Items)
+                foreach (string f in codeOrder)
                 {
                     compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
                 }
@@ -1046,7 +1015,7 @@ namespace JSharp
                 }
 
                 compileResource = new List<Compiler.File>();
-                foreach (string f in ResourceListBox.Items)
+                foreach (string f in resourceOrder)
                 {
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
@@ -1065,13 +1034,13 @@ namespace JSharp
 
                 recallFile();
 
-                foreach (string f in CodeListBox.Items)
+                foreach (string f in codeOrder)
                 {
                     compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
                 }
 
                 compileResource = new List<Compiler.File>();
-                foreach (string f in ResourceListBox.Items)
+                foreach (string f in resourceOrder)
                 {
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
@@ -1089,13 +1058,13 @@ namespace JSharp
                 compileFile = new List<Compiler.File>();
 
                 recallFile();
-                foreach (string f in CodeListBox.Items)
+                foreach (string f in codeOrder)
                 {
                     compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
                 }
 
                 compileResource = new List<Compiler.File>();
-                foreach (string f in ResourceListBox.Items)
+                foreach (string f in resourceOrder)
                 {
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
@@ -1300,143 +1269,10 @@ namespace JSharp
             return projectPath.Replace(Path.GetFileName(projectPath), "");
         }
 
-        private void newProjectToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            NewProject();
-        }
-        
-        private void openToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if(ProjectOpen.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    OpenFile(ProjectOpen.FileName);
-                }
-                catch(Exception error)
-                {
-                    MessageBox.Show(error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            else
-                return;
-        }
 
-        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Close();
-        }
-        
-        private void datapackToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (currentDataPack != null || ExportSave.ShowDialog() == DialogResult.OK)
-            {
-                string path = (currentDataPack == null) ? ExportSave.FileName : currentDataPack;
-                currentDataPack = path;
-
-                string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
-                Debug(rpdir, Color.Yellow);
-                if (!Directory.Exists(rpdir))
-                {
-                    if (isCompiling == 0)
-                    {
-                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
-                        t.Start();
-                    }
-                }
-                else if (currentResourcesPack!=null || ExportRP.ShowDialog() == DialogResult.OK)
-                {
-                    string rpPath = currentResourcesPack==null ? ExportRP.FileName: currentResourcesPack;
-                    currentResourcesPack = rpPath;
-                    if (isCompiling == 0)
-                    {
-                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
-                        t.Start();
-                    }
-                }
-            }
-        }
-
-        private void compileOrderToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            ChangeCompileOrder();
-        }
-        private void reformatToolStripMenuItem_Click_1(object sender, EventArgs e)
-        {
-            ReIndent();
-            UpdateCodeBox();
-        }
         private void CodeBox_VScroll(object sender, EventArgs e)
         {
             AddLineNumbers();
-        }
-        private void tagsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            TagsForm form = new TagsForm(TagsList);
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                TagsList = form.data;
-                
-                Debug("Project Tags Changed", Color.Aqua);
-            }
-        }
-        private void projectToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            TagsForm form = new TagsForm(TagsList);
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                TagsList = form.data;
-
-                Debug("Project Tags Changed", Color.Aqua);
-            }
-        }
-        private void minecraftToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            TagsForm form = new TagsForm(MCTagsList);
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                TagsList = form.data;
-
-                Debug("Project Tags Changed", Color.Aqua);
-            }
-        }
-        private void listBox1_DoubleClick(object sender, EventArgs e)
-        {
-            ChangeCompileOrder();
-        }
-        private void newDatapackToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (ExportSave.ShowDialog() == DialogResult.OK)
-            {
-                string path = ExportSave.FileName;
-                
-                string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
-                if (!Directory.Exists(rpdir))
-                {
-                    currentDataPack = path;
-                    if (isCompiling == 0)
-                    {
-                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
-                        t.Start();
-                    }
-                }
-                else if (ExportRP.ShowDialog() == DialogResult.OK)
-                {
-                    string rpPath = ExportRP.FileName;
-                    currentDataPack = path;
-                    currentResourcesPack = rpPath;
-                    if (isCompiling == 0)
-                    {
-                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
-                        t.Start();
-                    }
-                }
-            }
-        }
-
-        private void structuresToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            new StructureImport(projectPath.Replace(Path.GetFileName(projectPath),"")).ShowDialog();
         }
         
         private void CodeBox_KeyDown(object sender, KeyEventArgs e)
@@ -1579,58 +1415,249 @@ namespace JSharp
         {
             debugMSGs.Add(new DebugMessage(msg.ToString(), c));
         }
-        private class DebugMessage
-        {
-            public string msg;
-            public Color color;
-            public DebugMessage(string msg, Color color)
-            {
-                this.msg = msg;
-                this.color = color;
-            }
-        }
 
         private void splitContainer2_Panel2_Paint(object sender, PaintEventArgs e)
         {
 
         }
 
-        private void button5_Click(object sender, EventArgs e)
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (CompileThread != null)
+                tokenSource2.Cancel();
+        }
+
+        #region Preview Button
+        private void FunctionPreview_Click(object sender, EventArgs e)
         {
             FunctionPreview fp = new FunctionPreview(Compiler.functions);
             fp.Show();
         }
-
-        private void button6_Click(object sender, EventArgs e)
+        private void StructPreview_Click(object sender, EventArgs e)
         {
             FunctionPreview fp = new FunctionPreview(Compiler.structs, false);
             fp.Show();
         }
-
-        private void button7_Click(object sender, EventArgs e)
+        private void VariablePreview_Click(object sender, EventArgs e)
         {
             FunctionPreview fp = new FunctionPreview(Compiler.variables);
             fp.Show();
         }
-
-        private void button8_Click(object sender, EventArgs e)
+        private void EnumPreview_Click(object sender, EventArgs e)
         {
             FunctionPreview fp = new FunctionPreview(Compiler.enums);
             fp.Show();
         }
+        private void BlockPreview_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(CommandParser.names);
+            fp.Show();
+        }
+        private void SoundPreview_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(CommandParser.sounds);
+            fp.Show();
+        }
+        private void PredicatePreview_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(Compiler.predicates);
+            fp.Show();
+        }
+        private void ClassPreview_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(Compiler.structs, true);
+            fp.Show();
+        }
+        private void BlockTagsPreview_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(Compiler.blockTags);
+            fp.Show();
+        }
+        private void EntityTagsPreview_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(Compiler.entityTags);
+            fp.Show();
+        }
+        private void EffectGenerator_Click(object sender, EventArgs e)
+        {
+            EffectForm form = new EffectForm();
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                CodeBox.Text += form.Content;
+            }
+        }
+        private void GameruleGenerator_Click(object sender, EventArgs e)
+        {
+            GameruleForm form = new GameruleForm();
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                CodeBox.Text += form.Content;
+            }
+        }
+        private void CompileJava_Click(object sender, EventArgs e)
+        {
+            exporting = false;
+            CompileJava(true);
+            UpdateCodeBox();
+        }
+        private void CompileBedrock_Click(object sender, EventArgs e)
+        {
+            exporting = false;
+            CompileBedrock(true);
+            UpdateCodeBox();
+        }
+        private void LibraryButton_Click(object sender, EventArgs e)
+        {
+            List<string> imported = code["import"].Split('\n').Where(x => x.StartsWith("import")).Select(x => x.Replace("import ", "")).ToList();
+            LibImport libForm2 = new LibImport(compilerSetting.libraryFolder, imported);
+            if (libForm2.ShowDialog() == DialogResult.OK)
+            {
+                string libs = libForm2.import.Count() > 0 ? libForm2.import.Select(x => $"import {x}").Aggregate((x, y) => x + "\n" + y) : "";
+                code["import"] = libs;
+                if (previous == "import")
+                {
+                    CodeBox.Text = code["import"];
+                    Formatter.reformat(CodeBox, this, false);
+                }
+            }
+        }
+        #endregion
+        #region Menu Strip
+        private void newProjectToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            NewProject();
+        }
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if(ProjectOpen.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    OpenFile(ProjectOpen.FileName);
+                }
+                catch(Exception error)
+                {
+                    MessageBox.Show(error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+                return;
+        }
+        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+        private void datapackToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (currentDataPack != null || ExportSave.ShowDialog() == DialogResult.OK)
+            {
+                string path = (currentDataPack == null) ? ExportSave.FileName : currentDataPack;
+                currentDataPack = path;
 
+                string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+                Debug(rpdir, Color.Yellow);
+                if (!Directory.Exists(rpdir))
+                {
+                    if (isCompiling == 0)
+                    {
+                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
+                        t.Start();
+                    }
+                }
+                else if (currentResourcesPack!=null || ExportRP.ShowDialog() == DialogResult.OK)
+                {
+                    string rpPath = currentResourcesPack==null ? ExportRP.FileName: currentResourcesPack;
+                    currentResourcesPack = rpPath;
+                    if (isCompiling == 0)
+                    {
+                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
+                        t.Start();
+                    }
+                }
+            }
+        }
+        private void compileOrderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ChangeCompileOrder();
+        }
+        private void reformatToolStripMenuItem_Click_1(object sender, EventArgs e)
+        {
+            ReIndent();
+            UpdateCodeBox();
+        }
+        private void tagsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            TagsForm form = new TagsForm(TagsList);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                TagsList = form.data;
+                
+                Debug("Project Tags Changed", Color.Aqua);
+            }
+        }
+        private void projectToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            TagsForm form = new TagsForm(TagsList);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                TagsList = form.data;
+
+                Debug("Project Tags Changed", Color.Aqua);
+            }
+        }
+        private void minecraftToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            TagsForm form = new TagsForm(MCTagsList);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                TagsList = form.data;
+
+                Debug("Project Tags Changed", Color.Aqua);
+            }
+        }
+        private void newDatapackToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (ExportSave.ShowDialog() == DialogResult.OK)
+            {
+                string path = ExportSave.FileName;
+                
+                string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+                if (!Directory.Exists(rpdir))
+                {
+                    currentDataPack = path;
+                    if (isCompiling == 0)
+                    {
+                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
+                        t.Start();
+                    }
+                }
+                else if (ExportRP.ShowDialog() == DialogResult.OK)
+                {
+                    string rpPath = ExportRP.FileName;
+                    currentDataPack = path;
+                    currentResourcesPack = rpPath;
+                    if (isCompiling == 0)
+                    {
+                        Thread t = new Thread(new ThreadStart(ExportDataPackThread));
+                        t.Start();
+                    }
+                }
+            }
+        }
+        private void structuresToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            new StructureImport(projectPath.Replace(Path.GetFileName(projectPath),"")).ShowDialog();
+        }
         private void findToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Find_and_Replace far = new Find_and_Replace(CodeBox);
             far.Show();
         }
-
         private void findAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Find_and_Replace far = new Find_and_Replace(CodeBox);
             far.Show();
         }
-
         private void undoToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (index >= 1)
@@ -1640,7 +1667,6 @@ namespace JSharp
                 ignoreMod = false;
             }
         }
-
         private void redoToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (index < PreviousText.Count-1)
@@ -1650,58 +1676,6 @@ namespace JSharp
                 ignoreMod = false;
             }
         }
-
-        private void button10_Click(object sender, EventArgs e)
-        {
-            FunctionPreview fp = new FunctionPreview(CommandParser.names);
-            fp.Show();
-        }
-
-        private void button9_Click(object sender, EventArgs e)
-        {
-            FunctionPreview fp = new FunctionPreview(CommandParser.sounds);
-            fp.Show();
-        }
-
-        private void button11_Click(object sender, EventArgs e)
-        {
-            exporting = false;
-            CompileBedrock(true);
-            UpdateCodeBox();
-        }
-
-        private void ResourceListBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (ignorNextListboxUpdate)
-            {
-                ignorNextListboxUpdate = false;
-            }
-            else if (ResourceListBox.SelectedIndex >= 0)
-            {
-                noReformat = true;
-
-                recallFile();
-                resourceSelected = true;
-
-                PreviousText.Clear();
-                
-                index = 0;
-                if (resources.ContainsKey(ResourceListBox.SelectedItem.ToString()))
-                    CodeBox.Text = resources[ResourceListBox.SelectedItem.ToString()];
-                else
-                {
-                    CodeBox.Text = "";
-                }
-                PreviousText.Add(CodeBox.Text);
-                previous = ResourceListBox.SelectedItem.ToString();
-                noReformat = false;
-                UpdateCodeBox();
-
-                //ignorNextListboxUpdate = true;
-                CodeListBox.SelectedIndex = -1;
-            }
-        }
-
         private void settingToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ProjectSetting settingForm = new ProjectSetting(projectName, projectVersion, projectDescription, compilerSetting, Compiler.variables);
@@ -1711,41 +1685,52 @@ namespace JSharp
             projectVersion = settingForm.version;
             projectDescription = settingForm.description;
         }
-
-        private void getCallStackTraceToolStripMenuItem_Click(object sender, EventArgs e)
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            GetCallStackTrace();
+            if (projectPath == null)
+            {
+                if (ProjectSave.ShowDialog() == DialogResult.OK)
+                {
+                    projectPath = ProjectSave.FileName;
+                }
+                else
+                    return;
+            }
+            Save(projectPath);
+            UpdateProjectList();
+            Debug("Project save as " + projectPath, Color.Aqua);
         }
-
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        private void toolStripTextBox1_Click(object sender, EventArgs e)
         {
-            if (CompileThread != null)
-                tokenSource2.Cancel();
+            EffectForm form = new EffectForm();
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                CodeBox.Text.Insert(CodeBox.SelectionStart, form.Content);
+            }
         }
-
-        private void button12_Click(object sender, EventArgs e)
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            FunctionPreview fp = new FunctionPreview(Compiler.predicates);
-            fp.Show();
-        }
+            if (ProjectSave.ShowDialog() == DialogResult.OK)
+            {
+                projectPath = ProjectSave.FileName;
+            }
+            else
+                return;
 
-        private void Form1_Activated(object sender, EventArgs e)
+            Save(projectPath);
+            UpdateProjectList();
+            Debug("Project save as " + projectPath, Color.Aqua);
+        }
+        private void newFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            CheckFileModdification();
+            NewFile();
         }
-
-        private void button13_Click(object sender, EventArgs e)
+        private void compileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            FunctionPreview fp = new FunctionPreview(Compiler.structs, true);
-            fp.Show();
+            exporting = false;
+            CompileJava(true);
+            UpdateCodeBox();
         }
-
-        private void button14_Click(object sender, EventArgs e)
-        {
-            FunctionPreview fp = new FunctionPreview(Compiler.blockTags);
-            fp.Show();
-        }
-
         private void resourcesPackEditorToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!Directory.Exists(Path.GetDirectoryName(projectPath) + "/resourcespack"))
@@ -1759,38 +1744,93 @@ namespace JSharp
             ResourcesPackEditor = new ResourcesPackEditor(Path.GetDirectoryName(projectPath) + "/resourcespack");
             ResourcesPackEditor.Show();
         }
-
-        private void button15_Click(object sender, EventArgs e)
+        private void getCallStackTraceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            FunctionPreview fp = new FunctionPreview(Compiler.entityTags);
-            fp.Show();
+            GetCallStackTrace();
+        }
+        #endregion
+
+        private void Form1_Activated(object sender, EventArgs e)
+        {
+            CheckFileModdification();
         }
 
-        private void compileToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ReloadTree()
         {
-            exporting = false;
-            CompileJava(true);
-            UpdateCodeBox();
+            treeView1.Nodes.Clear();
+            var paths = codeOrder.Select(x => "src/"+x.Replace("\\", "/")).ToList();
+            BuildTree(paths, "", treeView1.Nodes);
+            paths = resourceOrder.Select(x => "resources/" + x.Replace("\\", "/")).ToList();
+            BuildTree(paths, "", treeView1.Nodes);
+            treeView1.ExpandAll();
         }
 
-        private void button16_Click(object sender, EventArgs e)
+        private void BuildTree(List<string> paths, string parent, TreeNodeCollection addInMe, int rec = 0)
         {
-            exporting = false;
-            CompileJava(true);
-            UpdateCodeBox();
-        }
-
-        private void LibraryButton_Click(object sender, EventArgs e)
-        {
-            List<string> imported = code["import"].Split('\n').Where(x => x.StartsWith("import")).Select(x => x.Replace("import ", "")).ToList();
-            LibImport libForm2 = new LibImport(compilerSetting.libraryFolder, imported);
-            libForm2.ShowDialog();
-            string libs = libForm2.import.Count()>0?libForm2.import.Select(x => $"import {x}").Aggregate((x, y) => x + "\n" + y):"";
-            code["import"] = libs;
-            if (previous == "import")
+            if (rec > 100)
             {
-                CodeBox.Text = code["import"];
-                Formatter.reformat(CodeBox, this, false);
+                paths.ForEach(x => addInMe.Add(x));
+            }
+            else
+            {
+                paths.Where(x => x.Contains("/"))
+                     .Select(x => Compiler.smartSplit(x, '/', 1))
+                     .GroupBy(x => x[0]).ToList()
+                     .ForEach(x =>
+                     {
+                         TreeNode curNode = addInMe.Add(x.Key);
+                         BuildTree(x.Select(z => z.Last())
+                                                 .ToList(),
+                                                 parent, curNode.Nodes, rec + 1);
+
+                     });
+                paths.Where(x => !x.Contains("/")).ToList().ForEach(x => addInMe.Add(x));
+            }
+        }
+
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (ignorNextListboxUpdate)
+            {
+                ignorNextListboxUpdate = false;
+            }
+            else
+            {
+                string fullPath = treeView1.SelectedNode.FullPath;
+                if (fullPath.StartsWith("src") && fullPath.Length > 4)
+                {
+                    string path = fullPath.Substring(4, fullPath.Length - 4);
+                    resourceSelected = false;
+                    if (code.ContainsKey(path))
+                    {
+                        ReloadCodeBoxFileCode(path);
+                    }
+                }
+                if (fullPath.StartsWith("resources") && fullPath.Length > 10)
+                {
+                    string path = fullPath.Substring(10, fullPath.Length - 10);
+                    resourceSelected = true;
+                    if (resources.ContainsKey(path))
+                    {
+                        ReloadCodeBoxFileRes(path);
+                    }
+                }
+            }
+        }
+
+        private void treeView1_DoubleClick(object sender, EventArgs e)
+        {
+            ChangeCompileOrder();
+        }
+
+        private class DebugMessage
+        {
+            public string msg;
+            public Color color;
+            public DebugMessage(string msg, Color color)
+            {
+                this.msg = msg;
+                this.color = color;
             }
         }
     }

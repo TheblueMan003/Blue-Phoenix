@@ -12,12 +12,12 @@ namespace JSharp
 {
     public partial class CompileOrder : Form
     {
-        public ListBox.ObjectCollection Content;
+        public List<string> Content;
         public int fixedFile=1;
-        public CompileOrder(ListBox.ObjectCollection order, int fixedFile)
+        public CompileOrder(List<string> order, int fixedFile)
         {
             InitializeComponent();
-            listBox1.Items.AddRange(order);
+            order.ForEach(x=>listBox1.Items.Add(x));
             this.fixedFile = fixedFile;
         }
 
@@ -70,7 +70,11 @@ namespace JSharp
         private void button5_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.OK;
-            Content = listBox1.Items;
+            Content.Clear();
+            foreach(string l in listBox1.Items)
+            {
+                Content.Add(l);
+            }
             Close();
         }
 

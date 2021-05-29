@@ -66,6 +66,7 @@ namespace BluePhoenix
             {
                 import.Add(s);
             }
+            DialogResult = DialogResult.OK;
             Close();
         }
     }
