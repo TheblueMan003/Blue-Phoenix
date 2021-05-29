@@ -40,6 +40,9 @@
             this.label4 = new System.Windows.Forms.Label();
             this.FloatPrecBox = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.LibPaths = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.PathTags = new System.Windows.Forms.CheckBox();
             this.button5 = new System.Windows.Forms.Button();
             this.TempScoreboardBox = new System.Windows.Forms.TextBox();
             this.ConstScoreboardBox = new System.Windows.Forms.TextBox();
@@ -51,9 +54,7 @@
             this.label6 = new System.Windows.Forms.Label();
             this.TreeSizeBox = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.PathTags = new System.Windows.Forms.CheckBox();
-            this.LibPaths = new System.Windows.Forms.TextBox();
-            this.label10 = new System.Windows.Forms.Label();
+            this.IsLibCheckbox = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -195,6 +196,36 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Compiler Setting";
             // 
+            // LibPaths
+            // 
+            this.LibPaths.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.LibPaths.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.LibPaths.ForeColor = System.Drawing.Color.White;
+            this.LibPaths.Location = new System.Drawing.Point(92, 149);
+            this.LibPaths.Name = "LibPaths";
+            this.LibPaths.Size = new System.Drawing.Size(176, 20);
+            this.LibPaths.TabIndex = 25;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(7, 151);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(49, 13);
+            this.label10.TabIndex = 24;
+            this.label10.Text = "Lib Path:";
+            // 
+            // PathTags
+            // 
+            this.PathTags.AutoSize = true;
+            this.PathTags.Location = new System.Drawing.Point(10, 199);
+            this.PathTags.Name = "PathTags";
+            this.PathTags.Size = new System.Drawing.Size(87, 17);
+            this.PathTags.TabIndex = 23;
+            this.PathTags.Text = "Pathed Tags";
+            this.PathTags.UseVisualStyleBackColor = true;
+            this.PathTags.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
+            // 
             // button5
             // 
             this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -301,35 +332,15 @@
             this.label5.TabIndex = 12;
             this.label5.Text = "Float Precision:";
             // 
-            // PathTags
+            // IsLibCheckbox
             // 
-            this.PathTags.AutoSize = true;
-            this.PathTags.Location = new System.Drawing.Point(10, 199);
-            this.PathTags.Name = "PathTags";
-            this.PathTags.Size = new System.Drawing.Size(87, 17);
-            this.PathTags.TabIndex = 23;
-            this.PathTags.Text = "Pathed Tags";
-            this.PathTags.UseVisualStyleBackColor = true;
-            this.PathTags.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
-            // 
-            // LibPaths
-            // 
-            this.LibPaths.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.LibPaths.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.LibPaths.ForeColor = System.Drawing.Color.White;
-            this.LibPaths.Location = new System.Drawing.Point(92, 149);
-            this.LibPaths.Name = "LibPaths";
-            this.LibPaths.Size = new System.Drawing.Size(176, 20);
-            this.LibPaths.TabIndex = 25;
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(7, 151);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(49, 13);
-            this.label10.TabIndex = 24;
-            this.label10.Text = "Lib Path:";
+            this.IsLibCheckbox.AutoSize = true;
+            this.IsLibCheckbox.Location = new System.Drawing.Point(194, 57);
+            this.IsLibCheckbox.Name = "IsLibCheckbox";
+            this.IsLibCheckbox.Size = new System.Drawing.Size(68, 17);
+            this.IsLibCheckbox.TabIndex = 13;
+            this.IsLibCheckbox.Text = "Is Library";
+            this.IsLibCheckbox.UseVisualStyleBackColor = true;
             // 
             // ProjectSetting
             // 
@@ -337,6 +348,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(696, 262);
+            this.Controls.Add(this.IsLibCheckbox);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.textBox2);
@@ -388,5 +400,6 @@
         private System.Windows.Forms.CheckBox PathTags;
         private System.Windows.Forms.TextBox LibPaths;
         private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.CheckBox IsLibCheckbox;
     }
 }

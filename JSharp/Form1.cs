@@ -30,6 +30,7 @@ namespace JSharp
         public ProjectVersion projectVersion = new ProjectVersion();
         public Compiler.CompilerSetting compilerSetting = new Compiler.CompilerSetting();
         public ResourcesPackEditor ResourcesPackEditor;
+        
         public string projectDescription;
         
         private string previous = "load";
@@ -39,6 +40,7 @@ namespace JSharp
         public string projectPath;
         public bool ignorNextListboxUpdate = false;
         public bool ignorNextKey = false;
+        public bool isLibrary;
         public int isCompiling = 0;
 
         private Task CompileThread;
@@ -261,36 +263,36 @@ namespace JSharp
             recallFile();
 
             int i = 0;
-            ProjectSave save = new ProjectSave();
-            save.projectName = projectName;
-            save.TagsList = TagsList;
-            save.mcTagsList = MCTagsList;
-            save.version = projectVersion;
-            save.offuscate = isLibraryCheckbox.Checked;
-            save.isLibrary = isLibraryCheckbox.Checked;
-            save.compilationSetting = compilerSetting;
+            ProjectSave project = new ProjectSave();
+            project.projectName = projectName;
+            project.TagsList = TagsList;
+            project.mcTagsList = MCTagsList;
+            project.version = projectVersion;
+            project.offuscate = project.compilationSetting.isLibrary;
+            project.isLibrary = project.compilationSetting.isLibrary;
+            project.compilationSetting = compilerSetting;
             List<ProjectSave.FileSave> lst = new List<ProjectSave.FileSave>();
             List<ProjectSave.FileSave> lstRes = new List<ProjectSave.FileSave>();
-            save.compileOrder = new List<string>();
-            save.datapackDirectory = currentDataPack;
-            save.resourcesPackDirectory = currentResourcesPack;
+            project.compileOrder = new List<string>();
+            project.datapackDirectory = currentDataPack;
+            project.resourcesPackDirectory = currentResourcesPack;
             string dir = Path.GetDirectoryName(projectPath)+"/scripts/";
             string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
 
             foreach (string file in CodeListBox.Items)
             {
-                if (isLibraryCheckbox.Checked)
+                if (project.compilationSetting.isLibrary)
                 {
                     if (!file.Contains('.')) {
                         SafeWriteFile(dir + file + ".bps", code[file]);
                         moddificationFileTime[file] = DateTime.Now.AddSeconds(5);
-                        save.compileOrder.Add(file);
+                        project.compileOrder.Add(file);
                     }
                     else
                     {
                         SafeWriteFile(dir + file, code[file]);
                         moddificationFileTime[file] = DateTime.Now.AddSeconds(5);
-                        save.compileOrder.Add(file);
+                        project.compileOrder.Add(file);
                     }
                 }
                 else
@@ -300,7 +302,7 @@ namespace JSharp
             }
             foreach (string file in ResourceListBox.Items)
             {
-                if (isLibraryCheckbox.Checked)
+                if (project.compilationSetting.isLibrary)
                 {
                     SafeWriteFile(dirRes + file, resources[file]);
                     moddificationResTime[file] = DateTime.Now.AddSeconds(5);
@@ -310,11 +312,11 @@ namespace JSharp
                     lstRes.Add(new ProjectSave.FileSave(file, resources[file], i));
                 }
             }
-            save.files = lst.ToArray();
-            save.resources = lstRes.ToArray();
-            save.description = projectDescription;
+            project.files = lst.ToArray();
+            project.resources = lstRes.ToArray();
+            project.description = projectDescription;
 
-            File.WriteAllText(projectPath,JsonConvert.SerializeObject(save));
+            File.WriteAllText(projectPath,JsonConvert.SerializeObject(project));
         }
         public void OpenFile(string name)
         {
@@ -345,7 +347,7 @@ namespace JSharp
             projectName = project.projectName;
             currentDataPack = project.datapackDirectory;
             currentResourcesPack = project.resourcesPackDirectory;
-            isLibraryCheckbox.Checked = project.isLibrary;
+            project.compilationSetting.isLibrary = project.isLibrary;
             compilerSetting = project.compilationSetting;
 
             previous = "$$$$$$$$$";
@@ -686,7 +688,10 @@ namespace JSharp
                 Text = projectName + " - TBMScript";
 
                 code.Clear();
-                code.Add("import", "import standard.java\nimport standard.entity_id\nimport standard.object\n");
+                LibImport libForm2 = new LibImport(compilerSetting.libraryFolder);
+                libForm2.ShowDialog();
+                string libs = libForm2.import.Count() > 0 ? libForm2.import.Select(x => $"import {x}").Aggregate((x, y) => x + "\n" + y) : "";
+                code.Add("import", libs);
                 code.Add(projectName.ToLower(), "package "+ projectName.ToLower()+"\n");
 
                 CodeListBox.Items.Add("import");
@@ -1766,6 +1771,27 @@ namespace JSharp
             exporting = false;
             CompileJava(true);
             UpdateCodeBox();
+        }
+
+        private void button16_Click(object sender, EventArgs e)
+        {
+            exporting = false;
+            CompileJava(true);
+            UpdateCodeBox();
+        }
+
+        private void LibraryButton_Click(object sender, EventArgs e)
+        {
+            List<string> imported = code["import"].Split('\n').Where(x => x.StartsWith("import")).Select(x => x.Replace("import ", "")).ToList();
+            LibImport libForm2 = new LibImport(compilerSetting.libraryFolder, imported);
+            libForm2.ShowDialog();
+            string libs = libForm2.import.Count()>0?libForm2.import.Select(x => $"import {x}").Aggregate((x, y) => x + "\n" + y):"";
+            code["import"] = libs;
+            if (previous == "import")
+            {
+                CodeBox.Text = code["import"];
+                Formatter.reformat(CodeBox, this, false);
+            }
         }
     }
 }

@@ -41,6 +41,7 @@ namespace JSharp
             ValueScoreboardBox.Text = compilerSetting.scoreboardValue;
             ConstScoreboardBox.Text = compilerSetting.scoreboardConst;
             TempScoreboardBox.Text = compilerSetting.scoreboardTmp;
+            IsLibCheckbox.Checked = !compilerSetting.isLibrary;
             LibPaths.Text = compilerSetting.libraryFolder.Aggregate((s1, s2) => (s1 +";"+ s2));
         }
 
@@ -81,6 +82,7 @@ namespace JSharp
                 compilerSetting.scoreboardTmp = TempScoreboardBox.Text.Replace(" ", "").Replace("\t", "");
 
                 compilerSetting.libraryFolder = LibPaths.Text.Split(';').ToList();
+                compilerSetting.isLibrary = !IsLibCheckbox.Checked;
             }
             catch(Exception exc)
             {

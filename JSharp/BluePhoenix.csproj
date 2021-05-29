@@ -122,6 +122,12 @@
       <DependentUpon>GameruleForm.cs</DependentUpon>
     </Compile>
     <Compile Include="ImageGenerator.cs" />
+    <Compile Include="LibImport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LibImport.Designer.cs">
+      <DependentUpon>LibImport.cs</DependentUpon>
+    </Compile>
     <Compile Include="NBT_Data.cs" />
     <Compile Include="NewFile.cs">
       <SubType>Form</SubType>
@@ -210,6 +216,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="GameruleForm.resx">
       <DependentUpon>GameruleForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LibImport.resx">
+      <DependentUpon>LibImport.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="NewFile.resx">
       <DependentUpon>NewFile.cs</DependentUpon>

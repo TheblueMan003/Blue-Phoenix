@@ -95,7 +95,7 @@
             this.ForeColor = System.Drawing.Color.White;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Name = "FunctionPreview";
-            this.Text = "FunctionPreview";
+            this.Text = "Preview";
             this.Load += new System.EventHandler(this.FunctionPreview_Load);
             this.ResumeLayout(false);
             this.PerformLayout();

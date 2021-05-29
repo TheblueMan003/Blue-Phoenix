@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ResourcesPackEditor));
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.label2 = new System.Windows.Forms.Label();
             this.CodeBox = new System.Windows.Forms.RichTextBox();
@@ -204,8 +205,9 @@
             this.Controls.Add(this.label2);
             this.Controls.Add(this.treeView1);
             this.ForeColor = System.Drawing.Color.White;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "ResourcesPackEditor";
-            this.Text = "ResourcesPackEditor";
+            this.Text = "Resources Pack Editor";
             this.Activated += new System.EventHandler(this.ResourcesPackEditor_Activated);
             this.Load += new System.EventHandler(this.ResourcesPackEditor_Load);
             this.panel1.ResumeLayout(false);

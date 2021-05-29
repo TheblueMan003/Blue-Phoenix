@@ -9065,6 +9065,8 @@ namespace JSharp
             public List<string> libraryFolder = new List<string>() { "./lib/1_16_5/", "./lib/shared/" };
             public string MCVersion = "1.16.5";
 
+            public bool isLibrary = false;
+
             public CompilerSetting()
             {
             }

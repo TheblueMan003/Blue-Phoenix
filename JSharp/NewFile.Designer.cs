@@ -93,7 +93,7 @@
             this.Controls.Add(this.textBox1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "NewFile";
-            this.Text = "NewFile";
+            this.Text = "New File";
             this.ResumeLayout(false);
             this.PerformLayout();
 
