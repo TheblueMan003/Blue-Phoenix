@@ -470,8 +470,8 @@ namespace JSharp
                 }
                 if (!ignoreFormat)
                     output += jsonSubArg(subargs, context);
-
-                output += "}";
+                if (!ignoreFormat)
+                    output += "}";
             }
 
             output += "]";
