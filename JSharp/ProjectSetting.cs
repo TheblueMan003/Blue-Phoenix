@@ -32,6 +32,7 @@ namespace JSharp
             textBox1.Text = ProjectName;
             label3.Text = version.ToString();
             textBox2.Text = description;
+            PackFormat_Box.Text = compilerSetting.packformat.ToString();
 
             TreeSizeBox.Text = compilerSetting.TreeMaxSize.ToString();
             FloatPrecBox.Text = compilerSetting.FloatPrecision.ToString();
@@ -80,6 +81,7 @@ namespace JSharp
             {
                 compilerSetting.TreeMaxSize = int.Parse(TreeSizeBox.Text);
                 compilerSetting.FloatPrecision = int.Parse(FloatPrecBox.Text);
+                compilerSetting.packformat = int.Parse(PackFormat_Box.Text);
                 compilerSetting.removeUselessFile = RMFileBox.Checked;
                 compilerSetting.tagsFolder = PathTags.Checked;
 

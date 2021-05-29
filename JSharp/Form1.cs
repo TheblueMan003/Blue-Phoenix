@@ -1166,7 +1166,9 @@ namespace JSharp
             {
                 string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
                 SafeWriteFile(rpPath + "/pack.mcmeta",
-                                JsonConvert.SerializeObject(new ResourcePackMeta(projectName + " - " + projectDescription)));
+                                JsonConvert.SerializeObject(
+                                    new ResourcePackMeta(projectName + " - " + projectDescription, 
+                                    compilerSetting.packformat)));
 
                 if (Directory.Exists(rpPath))
                 {

@@ -59,6 +59,8 @@
             this.HighlighEnum_Box = new System.Windows.Forms.CheckBox();
             this.HighlighFunction_Box = new System.Windows.Forms.CheckBox();
             this.ExportAsZip_Box = new System.Windows.Forms.CheckBox();
+            this.label11 = new System.Windows.Forms.Label();
+            this.PackFormat_Box = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -338,7 +340,7 @@
             // IsLibCheckbox
             // 
             this.IsLibCheckbox.AutoSize = true;
-            this.IsLibCheckbox.Location = new System.Drawing.Point(194, 57);
+            this.IsLibCheckbox.Location = new System.Drawing.Point(197, 130);
             this.IsLibCheckbox.Name = "IsLibCheckbox";
             this.IsLibCheckbox.Size = new System.Drawing.Size(68, 17);
             this.IsLibCheckbox.TabIndex = 13;
@@ -378,12 +380,32 @@
             // ExportAsZip_Box
             // 
             this.ExportAsZip_Box.AutoSize = true;
-            this.ExportAsZip_Box.Location = new System.Drawing.Point(194, 77);
+            this.ExportAsZip_Box.Location = new System.Drawing.Point(197, 150);
             this.ExportAsZip_Box.Name = "ExportAsZip_Box";
             this.ExportAsZip_Box.Size = new System.Drawing.Size(89, 17);
             this.ExportAsZip_Box.TabIndex = 17;
             this.ExportAsZip_Box.Text = "Export As Zip";
             this.ExportAsZip_Box.UseVisualStyleBackColor = true;
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(194, 58);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(70, 13);
+            this.label11.TabIndex = 19;
+            this.label11.Text = "Pack Format:";
+            // 
+            // PackFormat_Box
+            // 
+            this.PackFormat_Box.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.PackFormat_Box.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.PackFormat_Box.ForeColor = System.Drawing.Color.White;
+            this.PackFormat_Box.Location = new System.Drawing.Point(194, 74);
+            this.PackFormat_Box.Name = "PackFormat_Box";
+            this.PackFormat_Box.Size = new System.Drawing.Size(176, 20);
+            this.PackFormat_Box.TabIndex = 18;
+            this.PackFormat_Box.Text = "6";
             // 
             // ProjectSetting
             // 
@@ -391,6 +413,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(696, 262);
+            this.Controls.Add(this.label11);
+            this.Controls.Add(this.PackFormat_Box);
             this.Controls.Add(this.ExportAsZip_Box);
             this.Controls.Add(this.HighlighFunction_Box);
             this.Controls.Add(this.HighlighEnum_Box);
@@ -452,5 +476,7 @@
         private System.Windows.Forms.CheckBox HighlighEnum_Box;
         private System.Windows.Forms.CheckBox HighlighFunction_Box;
         private System.Windows.Forms.CheckBox ExportAsZip_Box;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.TextBox PackFormat_Box;
     }
 }

@@ -9130,11 +9130,13 @@ namespace JSharp
             public List<string> libraryFolder = new List<string>() { "./lib/1_16_5/", "./lib/shared/" };
             public string MCVersion = "1.16.5";
             public bool ExportAsZip = false;
+            public int packformat = 6;
 
             public bool isLibrary = false;
 
             public CompilerSetting()
             {
+                packformat = 6;
             }
 
             public CompilerSetting withoutOffuscation()

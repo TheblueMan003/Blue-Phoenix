@@ -51,7 +51,9 @@ namespace BluePhoenix
             ExportReadMe(writePath);
             SafeCopy(ProjectPath + "/assets/pack.png", writePath + "/pack.png");
             SafeWriteFile(writePath + "/pack.mcmeta",
-                        JsonConvert.SerializeObject(new DataPackMeta(project.projectName + " - " + project.description)));
+                        JsonConvert.SerializeObject(new DataPackMeta(
+                            project.projectName + " - " + project.description,
+                            project.compilationSetting.packformat)));
 
             if (project.compilationSetting.ExportAsZip)
             {
