@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,13 @@ namespace JSharp
         List<Compiler.File> files;
         Dictionary<string, Compiler.File> filesDic;
         public bool closed = false;
+
+        private Image minusPath;
+        private Image plusPath;
+        private Image filePath;
+        private Image fileCSVPath;
+        private Image fileINIPath;
+        private Image fileTXTPath;
 
         private void UpdateList(){
             if (files.Count > 0)
@@ -29,6 +37,15 @@ namespace JSharp
         {
             InitializeComponent();
             this.files = files;
+
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            minusPath = Image.FromFile(path + "assets/folder_open.png");
+            plusPath = Image.FromFile(path + "assets/folder_closed.png");
+            filePath = Image.FromFile(path + "assets/file.png");
+            fileCSVPath = Image.FromFile(path + "assets/file_csv.png");
+            fileINIPath = Image.FromFile(path + "assets/file_ini.png");
+            fileTXTPath = Image.FromFile(path + "assets/file_txt.png");
+
             UpdateList();
         }
 
@@ -97,6 +114,73 @@ namespace JSharp
             {
                 richTextBox1.Text = filesDic[fullPath].content;
             }
+        }
+
+        private void treeView1_DrawNode(object sender, DrawTreeNodeEventArgs e)
+        {
+            Rectangle nodeRect = e.Node.Bounds;
+
+            /*--------- 1. draw expand/collapse icon ---------*/
+            Point ptExpand = new Point(nodeRect.Location.X - 10, nodeRect.Location.Y - 2);
+            Image expandImg = null;
+
+            if (e.Node.IsExpanded)
+                expandImg = minusPath;
+            else
+                expandImg = plusPath;
+
+            Graphics g = Graphics.FromImage(expandImg);
+
+            IntPtr imgPtr = g.GetHdc();
+            g.ReleaseHdc();
+            if (e.Node.Nodes.Count > 0)
+            {
+                e.Graphics.DrawImage(expandImg, ptExpand);
+            }
+
+
+            /*--------- 2. draw node icon ---------*/
+            Point ptNodeIcon = new Point(nodeRect.Location.X - 4, nodeRect.Location.Y - 2);
+            Image nodeImg = filePath;
+            if (e.Node.FullPath.EndsWith(".csv"))
+            {
+                nodeImg = fileCSVPath;
+            }
+            if (e.Node.FullPath.EndsWith(".ini"))
+            {
+                nodeImg = fileINIPath;
+            }
+            if (e.Node.FullPath.EndsWith(".txt"))
+            {
+                nodeImg = fileTXTPath;
+            }
+            if (e.Node.FullPath.EndsWith(".json"))
+            {
+                nodeImg = fileINIPath;
+            }
+
+            g = Graphics.FromImage(nodeImg);
+            imgPtr = g.GetHdc();
+            g.ReleaseHdc();
+            if (e.Node.Nodes.Count == 0)
+            {
+                e.Graphics.DrawImage(nodeImg, ptNodeIcon);
+            }
+
+            /*--------- 3. draw node text ---------*/
+            Font nodeFont = e.Node.NodeFont;
+            if (nodeFont == null)
+                nodeFont = ((TreeView)sender).Font;
+            Brush textBrush = new SolidBrush(Color.White);
+            //to highlight the text when selected
+            if ((e.State & TreeNodeStates.Focused) != 0)
+                textBrush = new SolidBrush(Color.Aqua);
+            //Inflate to not be cut
+            Rectangle textRect = nodeRect;
+            //need to extend node rect
+            textRect.Width += 40;
+            e.Graphics.DrawString(e.Node.Text, nodeFont, textBrush,
+                Rectangle.Inflate(textRect, -12, 0));
         }
     }
 }

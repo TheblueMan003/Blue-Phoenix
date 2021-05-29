@@ -52,6 +52,7 @@ namespace JSharp
         public List<Compiler.File> compileResource;
         public List<Compiler.File> compileFiled;
         private List<DebugMessage> debugMSGs = new List<DebugMessage>();
+        private List<DebugMessage> debugMSGsShowned = new List<DebugMessage>();
         private int lastSeen = -1;
         private bool showForm;
 
@@ -63,6 +64,16 @@ namespace JSharp
         private int index = 0;
         private bool selfShift;
 
+        private Image minusPath;
+        private Image plusPath;
+        private Image filePath;
+        private Image fileCSVPath;
+        private Image fileINIPath;
+        private Image fileTXTPath;
+
+        private bool showError = true;
+        private bool showWarning = true;
+        private bool showInfo = true;
 
         public Form1(string project = null)
         {
@@ -74,6 +85,14 @@ namespace JSharp
             {
                 OpenFile(project);
             }
+
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            minusPath =   Image.FromFile(path + "assets/folder_open.png");
+            plusPath =    Image.FromFile(path + "assets/folder_closed.png");
+            filePath =    Image.FromFile(path + "assets/file.png");
+            fileCSVPath = Image.FromFile(path + "assets/file_csv.png");
+            fileINIPath = Image.FromFile(path + "assets/file_ini.png");
+            fileTXTPath = Image.FromFile(path + "assets/file_txt.png");
         }
         private void recallFile()
         {
@@ -212,9 +231,22 @@ namespace JSharp
 
         public void Debug(object text, Color color)
         {
-            ErrorBox.SelectionStart = ErrorBox.Text.Length;
-            ErrorBox.SelectionColor = color;
-            ErrorBox.AppendText("[" + DateTime.Now.ToString() + "] " + text.ToString()+"\n");
+            debugMSGsShowned.Add(new DebugMessage(text.ToString(), color));
+            DebugDisplay(text.ToString(), color);
+        }
+        public void DebugDisplay(string text, Color color)
+        {
+            bool show = true;
+            if (color == Color.Red && !showError) show = false;
+            if (color == Color.Yellow && !showWarning) show = false;
+            if (color != Color.Red && color != Color.Yellow && color != Color.Aqua && !showInfo) show = false;
+
+            if (show)
+            {
+                ErrorBox.SelectionStart = ErrorBox.Text.Length;
+                ErrorBox.SelectionColor = color;
+                ErrorBox.AppendText("[" + DateTime.Now.ToString() + "] " + text + "\n");
+            }
         }
 
 
@@ -1268,7 +1300,11 @@ namespace JSharp
         {
             return projectPath.Replace(Path.GetFileName(projectPath), "");
         }
-
+        private void ReShowError()
+        {
+            ErrorBox.Text = "";
+            debugMSGsShowned.ForEach(x => DebugDisplay(x.msg, x.color));
+        }
 
         private void CodeBox_VScroll(object sender, EventArgs e)
         {
@@ -1521,6 +1557,32 @@ namespace JSharp
                 }
             }
         }
+        private void ClearLogButton_Click(object sender, EventArgs e)
+        {
+            ErrorBox.Text = "";
+            debugMSGsShowned.Clear();
+        }
+        private void ErrorButton_Click(object sender, EventArgs e)
+        {
+            showError = !showError;
+            ShowErrorButton.FlatAppearance.BorderSize = showError ? 3 : 1;
+            ShowErrorButton.ForeColor = showError ? Color.FromArgb(255,0, 165, 255) : Color.Gray;
+            ReShowError();
+        }
+        private void WarningButton_Click(object sender, EventArgs e)
+        {
+            showWarning = !showWarning;
+            ShowWarningButton.FlatAppearance.BorderSize = showWarning ? 3 : 1;
+            ShowWarningButton.ForeColor = showWarning ? Color.FromArgb(255,0, 165, 255) : Color.Gray;
+            ReShowError();
+        }
+        private void InfoButton_Click(object sender, EventArgs e)
+        {
+            showInfo = !showInfo;
+            ShowInfoButton.FlatAppearance.BorderSize = showInfo ? 3 : 1;
+            ShowInfoButton.ForeColor = showInfo ? Color.FromArgb(255,0, 165, 255) : Color.Gray;
+            ReShowError();
+        }
         #endregion
         #region Menu Strip
         private void newProjectToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1749,12 +1811,7 @@ namespace JSharp
             GetCallStackTrace();
         }
         #endregion
-
-        private void Form1_Activated(object sender, EventArgs e)
-        {
-            CheckFileModdification();
-        }
-
+        #region codetree
         private void ReloadTree()
         {
             treeView1.Nodes.Clear();
@@ -1764,7 +1821,6 @@ namespace JSharp
             BuildTree(paths, "", treeView1.Nodes);
             treeView1.ExpandAll();
         }
-
         private void BuildTree(List<string> paths, string parent, TreeNodeCollection addInMe, int rec = 0)
         {
             if (rec > 100)
@@ -1787,7 +1843,6 @@ namespace JSharp
                 paths.Where(x => !x.Contains("/")).ToList().ForEach(x => addInMe.Add(x));
             }
         }
-
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             if (ignorNextListboxUpdate)
@@ -1817,11 +1872,17 @@ namespace JSharp
                 }
             }
         }
-
         private void treeView1_DoubleClick(object sender, EventArgs e)
         {
             ChangeCompileOrder();
         }
+        #endregion
+
+        private void Form1_Activated(object sender, EventArgs e)
+        {
+            CheckFileModdification();
+        }
+        
 
         private class DebugMessage
         {
@@ -1832,6 +1893,69 @@ namespace JSharp
                 this.msg = msg;
                 this.color = color;
             }
+        }
+
+        private void treeView1_DrawNode(object sender, DrawTreeNodeEventArgs e)
+        {
+            Rectangle nodeRect = e.Node.Bounds;
+
+            /*--------- 1. draw expand/collapse icon ---------*/
+            Point ptExpand = new Point(nodeRect.Location.X - 10, nodeRect.Location.Y-2);
+            Image expandImg = null;
+
+            if (e.Node.IsExpanded)
+                expandImg = minusPath;
+            else
+                expandImg = plusPath;
+            
+            Graphics g = Graphics.FromImage(expandImg);
+            
+            IntPtr imgPtr = g.GetHdc();
+            g.ReleaseHdc();
+            if (e.Node.Nodes.Count > 0)
+            {
+                e.Graphics.DrawImage(expandImg, ptExpand);
+            }
+            
+
+            /*--------- 2. draw node icon ---------*/
+            Point ptNodeIcon = new Point(nodeRect.Location.X - 4, nodeRect.Location.Y-2);
+            Image nodeImg = filePath;
+            if (e.Node.FullPath.EndsWith(".csv"))
+            {
+                nodeImg = fileCSVPath;
+            }
+            if (e.Node.FullPath.EndsWith(".ini"))
+            {
+                nodeImg = fileINIPath;
+            }
+            if (e.Node.FullPath.EndsWith(".txt"))
+            {
+                nodeImg = fileTXTPath;
+            }
+            
+            g = Graphics.FromImage(nodeImg);
+            imgPtr = g.GetHdc();
+            g.ReleaseHdc();
+            if (e.Node.Nodes.Count == 0)
+            {
+                e.Graphics.DrawImage(nodeImg, ptNodeIcon);
+            }
+
+            /*--------- 3. draw node text ---------*/
+            Font nodeFont = e.Node.NodeFont;
+            if (nodeFont == null)
+                nodeFont = ((TreeView)sender).Font;
+            Brush textBrush = new SolidBrush(Color.White);
+            //to highlight the text when selected
+            if ((e.State & TreeNodeStates.Focused) != 0)
+                textBrush = new SolidBrush(Color.Aqua);
+            //Inflate to not be cut
+            Rectangle textRect = nodeRect;
+            //need to extend node rect
+            textRect.Width += 40;
+            e.Graphics.DrawString(e.Node.Text, nodeFont, textBrush,
+                Rectangle.Inflate(textRect, -12, 0));
         }
     }
 }

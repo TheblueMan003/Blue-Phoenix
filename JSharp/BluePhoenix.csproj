@@ -276,6 +276,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\Debug\logo.png" />
+    <None Include="bin\Debug\assets\clear.png" />
+    <None Include="bin\Debug\assets\error.png" />
+    <None Include="bin\Debug\assets\info.png" />
+    <None Include="bin\Debug\assets\warning.png" />
     <Content Include="icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

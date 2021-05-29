@@ -90,6 +90,10 @@
             this.label7 = new System.Windows.Forms.Label();
             this.LibraryButton = new System.Windows.Forms.Button();
             this.treeView1 = new System.Windows.Forms.TreeView();
+            this.ShowErrorButton = new System.Windows.Forms.Button();
+            this.ShowWarningButton = new System.Windows.Forms.Button();
+            this.ShowInfoButton = new System.Windows.Forms.Button();
+            this.ClearLogButton = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -409,7 +413,7 @@
             this.ErrorBox.Location = new System.Drawing.Point(205, 563);
             this.ErrorBox.Name = "ErrorBox";
             this.ErrorBox.ReadOnly = true;
-            this.ErrorBox.Size = new System.Drawing.Size(975, 164);
+            this.ErrorBox.Size = new System.Drawing.Size(941, 164);
             this.ErrorBox.TabIndex = 1;
             this.ErrorBox.Text = "";
             // 
@@ -418,7 +422,7 @@
             this.button5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button5.BackColor = System.Drawing.Color.Black;
             this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button5.ForeColor = System.Drawing.Color.White;
+            this.button5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button5.Location = new System.Drawing.Point(1038, 199);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(142, 23);
@@ -432,7 +436,7 @@
             this.button3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button3.BackColor = System.Drawing.Color.Black;
             this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button3.ForeColor = System.Drawing.Color.White;
+            this.button3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button3.Location = new System.Drawing.Point(1038, 109);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(142, 23);
@@ -446,7 +450,7 @@
             this.button4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button4.BackColor = System.Drawing.Color.Black;
             this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button4.ForeColor = System.Drawing.Color.White;
+            this.button4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button4.Location = new System.Drawing.Point(1038, 80);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(142, 23);
@@ -460,7 +464,7 @@
             this.button6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button6.BackColor = System.Drawing.Color.Black;
             this.button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button6.ForeColor = System.Drawing.Color.White;
+            this.button6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button6.Location = new System.Drawing.Point(1038, 257);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(142, 23);
@@ -474,7 +478,7 @@
             this.button7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button7.BackColor = System.Drawing.Color.Black;
             this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button7.ForeColor = System.Drawing.Color.White;
+            this.button7.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button7.Location = new System.Drawing.Point(1038, 170);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(142, 23);
@@ -488,7 +492,7 @@
             this.button8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button8.BackColor = System.Drawing.Color.Black;
             this.button8.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button8.ForeColor = System.Drawing.Color.White;
+            this.button8.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button8.Location = new System.Drawing.Point(1038, 228);
             this.button8.Name = "button8";
             this.button8.Size = new System.Drawing.Size(142, 23);
@@ -528,7 +532,7 @@
             this.button9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button9.BackColor = System.Drawing.Color.Black;
             this.button9.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button9.ForeColor = System.Drawing.Color.White;
+            this.button9.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button9.Location = new System.Drawing.Point(1038, 522);
             this.button9.Name = "button9";
             this.button9.Size = new System.Drawing.Size(142, 23);
@@ -542,7 +546,7 @@
             this.button10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button10.BackColor = System.Drawing.Color.Black;
             this.button10.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button10.ForeColor = System.Drawing.Color.White;
+            this.button10.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button10.Location = new System.Drawing.Point(1038, 493);
             this.button10.Name = "button10";
             this.button10.Size = new System.Drawing.Size(142, 23);
@@ -569,7 +573,7 @@
             this.button12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button12.BackColor = System.Drawing.Color.Black;
             this.button12.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button12.ForeColor = System.Drawing.Color.White;
+            this.button12.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button12.Location = new System.Drawing.Point(1038, 359);
             this.button12.Name = "button12";
             this.button12.Size = new System.Drawing.Size(142, 23);
@@ -583,7 +587,7 @@
             this.button13.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button13.BackColor = System.Drawing.Color.Black;
             this.button13.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button13.ForeColor = System.Drawing.Color.White;
+            this.button13.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button13.Location = new System.Drawing.Point(1038, 286);
             this.button13.Name = "button13";
             this.button13.Size = new System.Drawing.Size(142, 23);
@@ -597,7 +601,7 @@
             this.button14.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button14.BackColor = System.Drawing.Color.Black;
             this.button14.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button14.ForeColor = System.Drawing.Color.White;
+            this.button14.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button14.Location = new System.Drawing.Point(1038, 388);
             this.button14.Name = "button14";
             this.button14.Size = new System.Drawing.Size(142, 23);
@@ -615,7 +619,7 @@
             this.button15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button15.BackColor = System.Drawing.Color.Black;
             this.button15.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button15.ForeColor = System.Drawing.Color.White;
+            this.button15.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button15.Location = new System.Drawing.Point(1038, 417);
             this.button15.Name = "button15";
             this.button15.Size = new System.Drawing.Size(142, 23);
@@ -670,7 +674,7 @@
             this.button16.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button16.BackColor = System.Drawing.Color.Black;
             this.button16.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button16.ForeColor = System.Drawing.Color.White;
+            this.button16.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.button16.Location = new System.Drawing.Point(1038, 446);
             this.button16.Name = "button16";
             this.button16.Size = new System.Drawing.Size(142, 23);
@@ -695,7 +699,7 @@
             this.LibraryButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.LibraryButton.BackColor = System.Drawing.Color.Black;
             this.LibraryButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.LibraryButton.ForeColor = System.Drawing.Color.White;
+            this.LibraryButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
             this.LibraryButton.Location = new System.Drawing.Point(1038, 315);
             this.LibraryButton.Name = "LibraryButton";
             this.LibraryButton.Size = new System.Drawing.Size(142, 23);
@@ -709,16 +713,79 @@
             this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
             this.treeView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.treeView1.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawAll;
             this.treeView1.ForeColor = System.Drawing.Color.White;
+            this.treeView1.FullRowSelect = true;
             this.treeView1.Indent = 10;
             this.treeView1.Location = new System.Drawing.Point(13, 62);
             this.treeView1.Name = "treeView1";
             this.treeView1.PathSeparator = "/";
             this.treeView1.ShowLines = false;
+            this.treeView1.ShowNodeToolTips = true;
             this.treeView1.Size = new System.Drawing.Size(186, 665);
             this.treeView1.TabIndex = 33;
+            this.treeView1.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.treeView1_DrawNode);
             this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
             this.treeView1.DoubleClick += new System.EventHandler(this.treeView1_DoubleClick);
+            // 
+            // ShowErrorButton
+            // 
+            this.ShowErrorButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ShowErrorButton.BackColor = System.Drawing.Color.Black;
+            this.ShowErrorButton.FlatAppearance.BorderSize = 3;
+            this.ShowErrorButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ShowErrorButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.ShowErrorButton.Image = global::BluePhoenix.Properties.Resources.error;
+            this.ShowErrorButton.Location = new System.Drawing.Point(1152, 594);
+            this.ShowErrorButton.Name = "ShowErrorButton";
+            this.ShowErrorButton.Size = new System.Drawing.Size(28, 28);
+            this.ShowErrorButton.TabIndex = 35;
+            this.ShowErrorButton.UseVisualStyleBackColor = false;
+            this.ShowErrorButton.Click += new System.EventHandler(this.ErrorButton_Click);
+            // 
+            // ShowWarningButton
+            // 
+            this.ShowWarningButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ShowWarningButton.BackColor = System.Drawing.Color.Black;
+            this.ShowWarningButton.FlatAppearance.BorderSize = 3;
+            this.ShowWarningButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ShowWarningButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.ShowWarningButton.Image = global::BluePhoenix.Properties.Resources.warning;
+            this.ShowWarningButton.Location = new System.Drawing.Point(1152, 625);
+            this.ShowWarningButton.Name = "ShowWarningButton";
+            this.ShowWarningButton.Size = new System.Drawing.Size(28, 28);
+            this.ShowWarningButton.TabIndex = 36;
+            this.ShowWarningButton.UseVisualStyleBackColor = false;
+            this.ShowWarningButton.Click += new System.EventHandler(this.WarningButton_Click);
+            // 
+            // ShowInfoButton
+            // 
+            this.ShowInfoButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ShowInfoButton.BackColor = System.Drawing.Color.Black;
+            this.ShowInfoButton.FlatAppearance.BorderSize = 3;
+            this.ShowInfoButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ShowInfoButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.ShowInfoButton.Image = global::BluePhoenix.Properties.Resources.info;
+            this.ShowInfoButton.Location = new System.Drawing.Point(1152, 656);
+            this.ShowInfoButton.Name = "ShowInfoButton";
+            this.ShowInfoButton.Size = new System.Drawing.Size(28, 28);
+            this.ShowInfoButton.TabIndex = 37;
+            this.ShowInfoButton.UseVisualStyleBackColor = false;
+            this.ShowInfoButton.Click += new System.EventHandler(this.InfoButton_Click);
+            // 
+            // ClearLogButton
+            // 
+            this.ClearLogButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ClearLogButton.BackColor = System.Drawing.Color.Black;
+            this.ClearLogButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ClearLogButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.ClearLogButton.Image = global::BluePhoenix.Properties.Resources.clear;
+            this.ClearLogButton.Location = new System.Drawing.Point(1152, 563);
+            this.ClearLogButton.Name = "ClearLogButton";
+            this.ClearLogButton.Size = new System.Drawing.Size(28, 28);
+            this.ClearLogButton.TabIndex = 34;
+            this.ClearLogButton.UseVisualStyleBackColor = false;
+            this.ClearLogButton.Click += new System.EventHandler(this.ClearLogButton_Click);
             // 
             // Form1
             // 
@@ -726,6 +793,10 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(1192, 732);
+            this.Controls.Add(this.ShowInfoButton);
+            this.Controls.Add(this.ShowWarningButton);
+            this.Controls.Add(this.ShowErrorButton);
+            this.Controls.Add(this.ClearLogButton);
             this.Controls.Add(this.treeView1);
             this.Controls.Add(this.LibraryButton);
             this.Controls.Add(this.label7);
@@ -830,6 +901,10 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button LibraryButton;
         private System.Windows.Forms.TreeView treeView1;
+        private System.Windows.Forms.Button ClearLogButton;
+        private System.Windows.Forms.Button ShowErrorButton;
+        private System.Windows.Forms.Button ShowWarningButton;
+        private System.Windows.Forms.Button ShowInfoButton;
     }
 }
 

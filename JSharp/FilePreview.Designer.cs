@@ -65,6 +65,7 @@
             this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
             this.treeView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.treeView1.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawAll;
             this.treeView1.ForeColor = System.Drawing.Color.White;
             this.treeView1.Indent = 10;
             this.treeView1.Location = new System.Drawing.Point(12, 38);
@@ -73,6 +74,7 @@
             this.treeView1.ShowLines = false;
             this.treeView1.Size = new System.Drawing.Size(299, 576);
             this.treeView1.TabIndex = 34;
+            this.treeView1.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.treeView1_DrawNode);
             this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
             // 
             // FilePreview
