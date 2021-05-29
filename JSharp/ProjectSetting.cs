@@ -44,6 +44,8 @@ namespace JSharp
             IsLibCheckbox.Checked = !compilerSetting.isLibrary;
             LibPaths.Text = compilerSetting.libraryFolder.Aggregate((s1, s2) => (s1 +";"+ s2));
 
+            ExportAsZip_Box.Checked = compilerSetting.ExportAsZip;
+
             HighlighEnum_Box.Checked = Formatter.showEnumValue;
             HighlighFunction_Box.Checked = Formatter.showFunc;
             HighlightName_Box.Checked = Formatter.showName;
@@ -87,6 +89,8 @@ namespace JSharp
 
                 compilerSetting.libraryFolder = LibPaths.Text.Split(';').ToList();
                 compilerSetting.isLibrary = !IsLibCheckbox.Checked;
+
+                compilerSetting.ExportAsZip = ExportAsZip_Box.Checked;
 
                 Formatter.showEnumValue = HighlighEnum_Box.Checked;
                 Formatter.showFunc = HighlighFunction_Box.Checked;

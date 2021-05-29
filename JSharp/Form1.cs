@@ -207,6 +207,7 @@ namespace JSharp
                     index++;
                 }
                 AddLineNumbers();
+
                 Formatter.reformat(CodeBox, this, true);
             }
         }
@@ -960,18 +961,29 @@ namespace JSharp
         {
             try
             {
-                if (File.Exists(path + "/pack.mcmeta"))
+                string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+                string writePath = compilerSetting.ExportAsZip? ProjectPath +"tmp_dp": path;
+
+                if (File.Exists(writePath + "/pack.mcmeta"))
                 {
-                    Directory.Delete(path, true);
+                    Directory.Delete(writePath, true);
                 }
                 projectVersion.Build();
-                ExportFiles(path);
-                ExportTags(path);
-                ExportStructures(path);
-                ExportReadMe(path);
-
-                SafeWriteFile(path + "/pack.mcmeta",
+                ExportFiles(writePath);
+                ExportTags(writePath);
+                ExportStructures(writePath);
+                ExportReadMe(writePath);
+                SafeCopy(ProjectPath + "/assets/pack.png", writePath + "/pack.png");
+                SafeWriteFile(writePath + "/pack.mcmeta",
                             JsonConvert.SerializeObject(new DataPackMeta(projectName +" - "+ projectDescription)));
+
+                if (compilerSetting.ExportAsZip)
+                {
+                    if (!path.EndsWith(".zip")) path += ".zip";
+                    if (File.Exists(path)) { File.Delete(path); }
+                    ZipFile.CreateFromDirectory(writePath, path);
+                    Directory.Delete(writePath, true);
+                }
 
                 ExportResourcePack(rpPath);
                 DebugThread("Datapack successfully exported!", Color.Aqua);
@@ -1161,6 +1173,7 @@ namespace JSharp
                     if (File.Exists(path)) { File.Delete(path); }
                     ZipFile.CreateFromDirectory(rpPath, path);
                 }
+                Directory.Delete(rpPath, true);
             }
         }
         #endregion
@@ -1482,7 +1495,7 @@ namespace JSharp
                         string temp = Convert.ToString(CodeBox.Lines.GetValue(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart - 1)));
                         Regex tab = new Regex("\t");
 
-                        int indent = tab.Matches(temp).Count;
+                        int indent = temp.TakeWhile(x => x == '\t').Count();
                         if (temp.EndsWith("{"))
                             // si la ligne finit par "{" (début de struct / class / etc...) on ajoute une indentation
                             indent++;
@@ -1743,6 +1756,7 @@ namespace JSharp
             ReShowError();
         }
         #endregion
+
         #region Menu Strip
         private void newProjectToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -2292,6 +2306,30 @@ namespace JSharp
         {
             e.Effect = e.AllowedEffect;
         }
+        private void CollapseRec(TreeNode node, int rec = 0)
+        {
+            if (rec < 100)
+            {
+                foreach (TreeNode n in node.Nodes)
+                {
+                    CollapseRec(n, rec + 1);
+                }
+                node.Collapse();
+            }
+        }
+        private void treeView1_AfterCollapse(object sender, TreeViewEventArgs e)
+        {
+            if (Control.ModifierKeys == Keys.Control) {
+                CollapseRec(e.Node);
+            }
+        }
+        private void treeView1_AfterExpand(object sender, TreeViewEventArgs e)
+        {
+            if (Control.ModifierKeys == Keys.Control)
+            {
+                e.Node.ExpandAll();
+            }
+        }
         #endregion
 
         private void Form1_Activated(object sender, EventArgs e)
@@ -2466,32 +2504,6 @@ namespace JSharp
             if (tabControl1.SelectedIndex > -1)
             {
                 SelectFullPath(openedFullPath[tabControl1.SelectedIndex]);
-            }
-        }
-
-        private void CollapseRec(TreeNode node, int rec = 0)
-        {
-            if (rec < 100)
-            {
-                foreach (TreeNode n in node.Nodes)
-                {
-                    CollapseRec(n, rec + 1);
-                }
-                node.Collapse();
-            }
-        }
-        private void treeView1_AfterCollapse(object sender, TreeViewEventArgs e)
-        {
-            if (Control.ModifierKeys == Keys.Control) {
-                CollapseRec(e.Node);
-            }
-        }
-
-        private void treeView1_AfterExpand(object sender, TreeViewEventArgs e)
-        {
-            if (Control.ModifierKeys == Keys.Control)
-            {
-                e.Node.ExpandAll();
             }
         }
     }

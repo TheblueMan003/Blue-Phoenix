@@ -58,6 +58,7 @@
             this.HighlightName_Box = new System.Windows.Forms.CheckBox();
             this.HighlighEnum_Box = new System.Windows.Forms.CheckBox();
             this.HighlighFunction_Box = new System.Windows.Forms.CheckBox();
+            this.ExportAsZip_Box = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -374,12 +375,23 @@
             this.HighlighFunction_Box.Text = "Highlight Function Value";
             this.HighlighFunction_Box.UseVisualStyleBackColor = true;
             // 
+            // ExportAsZip_Box
+            // 
+            this.ExportAsZip_Box.AutoSize = true;
+            this.ExportAsZip_Box.Location = new System.Drawing.Point(194, 77);
+            this.ExportAsZip_Box.Name = "ExportAsZip_Box";
+            this.ExportAsZip_Box.Size = new System.Drawing.Size(89, 17);
+            this.ExportAsZip_Box.TabIndex = 17;
+            this.ExportAsZip_Box.Text = "Export As Zip";
+            this.ExportAsZip_Box.UseVisualStyleBackColor = true;
+            // 
             // ProjectSetting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(696, 262);
+            this.Controls.Add(this.ExportAsZip_Box);
             this.Controls.Add(this.HighlighFunction_Box);
             this.Controls.Add(this.HighlighEnum_Box);
             this.Controls.Add(this.HighlightName_Box);
@@ -439,5 +451,6 @@
         private System.Windows.Forms.CheckBox HighlightName_Box;
         private System.Windows.Forms.CheckBox HighlighEnum_Box;
         private System.Windows.Forms.CheckBox HighlighFunction_Box;
+        private System.Windows.Forms.CheckBox ExportAsZip_Box;
     }
 }

@@ -8,12 +8,12 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace JSharp
 {
     public class Compiler
     {
+        #region dictonary
         public static Dictionary<string, List<Function>> functions;
         public static HashSet<Function> abstractFunctionsNeeded;
         public static Dictionary<string, Scoreboard> scoreboards;
@@ -26,7 +26,7 @@ namespace JSharp
         public static Dictionary<string, TagsList> itemTags;
         public static Dictionary<string, List<Predicate>> predicates;
         public static Dictionary<string, List<string>> functionTags;
-
+        #endregion
 
         public static Dictionary<string, string> offuscationMap;
         public static Dictionary<string, string> classOffuscationMap;
@@ -822,6 +822,67 @@ namespace JSharp
                     return "";
             }
         }
+        public static ParenthiseError checkParenthisation(string[] file)
+        {
+            Stack<char> chars = new Stack<char>();
+            int lineIndex = 0;
+            foreach (string line in file)
+            {
+                lineIndex++;
+                bool inComment = false;
+                bool inString = false;
+                char cPrev = '\n';
+
+                int columns = 0;
+
+                if (!line.Replace(" ", "").StartsWith("/"))
+                {
+                    foreach (char c in line)
+                    {
+                        if (c == '"' && cPrev != '\\')
+                        {
+                            inString = !inString;
+                        }
+                        else if (c == '\\' && cPrev == '\\')
+                        {
+                            inComment = true;
+                        }
+                        else if (c == '{' && !inComment && !inString)
+                        {
+                            chars.Push(c);
+                        }
+                        else if (c == '}' && !inComment && !inString && chars.Pop() != '{')
+                        {
+                            return new ParenthiseError(lineIndex, columns, c);
+                        }
+                        else if (c == '(' && !inComment && !inString)
+                        {
+                            chars.Push(c);
+                        }
+                        else if (c == ')' && !inComment && !inString && chars.Pop() != '(')
+                        {
+                            return new ParenthiseError(lineIndex, columns, c);
+                        }
+                        else if (c == '[' && !inComment && !inString)
+                        {
+                            chars.Push(c);
+                        }
+                        else if (c == ']' && !inComment && !inString && chars.Pop() != '[')
+                        {
+                            return new ParenthiseError(lineIndex, columns, c);
+                        }
+                        cPrev = c;
+                        columns++;
+                    }
+                }
+            }
+            if (chars.Count == 0)
+                return null;
+            else
+                return new ParenthiseError(++lineIndex, 0, chars.Pop());
+        }
+
+        #region desugar
         public static string regReplace(string text, Match match, string value)
         {
             return text.Substring(0, match.Index) +
@@ -895,7 +956,8 @@ namespace JSharp
         }
         public static string desugar(string text)
         {
-            text = desugarParenthis(text).Replace("$projectName", Project.ToLower()).Replace("$projectVersion", projectVersion.ToString());
+            text = desugarParenthis(text).Replace("$projectName", Project.ToLower())
+                                         .Replace("$projectVersion", projectVersion.ToString());
             Match match;
             text = ifelseDetect(text);
             
@@ -1166,7 +1228,9 @@ namespace JSharp
  
             return text;
         }
+        #endregion
 
+        #region import
         public static string import(string text)
         {
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
@@ -1273,7 +1337,9 @@ namespace JSharp
             }
             return "";
         }
+        #endregion
 
+        #region variable
         private static void AddVariable(string key, Variable variable)
         {
             if (variables.ContainsKey(key))
@@ -1328,7 +1394,9 @@ namespace JSharp
             }
             return constants[value];
         }
+        #endregion
 
+        #region lazy val
         public static string getLazyVal(string val)
         {
             foreach(var lst in lazyEvalVar)
@@ -1352,45 +1420,9 @@ namespace JSharp
         {
             return getLazyVal(val) != null;
         }
+        #endregion
 
-        private static void stringInit()
-        {
-            File fFile = new File("__multiplex__/sstring");
-            stringPool = fFile;
-            Function function = new Function("sstring", Project + ":__multiplex__/sstring", fFile);
-            List<Function> lst = new List<Function>();
-            lst.Add(function);
-            functions.Add((Project + ".__multiplex__.sstring").ToLower(), lst);
-            files.Add(fFile);
-
-            Argument b = new Argument("__strSelector__", "__multiplex__.sstring.__strSelector__", Type.STRING);
-            Variable c = new Variable("__strSelector__", "__multiplex__.sstring.__strSelector__", Type.STRING);
-            variables.Add("__multiplex__.sstring.__strSelector__", c);
-            function.args.Add(b);
-        }
-        public static bool isStringVar(string val)
-        {
-            return context.GetVariable(val, true) != null && variables[context.GetVariable(val)].type == Type.STRING;
-        }
-        public static string getString(string val)
-        {
-            Variable v = variables[context.GetVariable(val)];
-            return parseLine("__multiplex__.sSTRING(" + v.gameName + ")");
-        }
-        private static int getStringID(string text)
-        {
-            while (text.StartsWith(" "))
-                text = text.Substring(1, text.Length - 1);
-            while (text.EndsWith(" "))
-                text = text.Substring(0, text.Length - 1);
-            if (text.StartsWith("\""))
-                text = text.Substring(1, text.Length - 2);
-
-            if (!stringSet.Contains(text))
-                stringSet.Add(text);
-            return stringSet.IndexOf(text);
-        }
-
+        #region eval
         public static string modVar(string text)
         {
             if (text.StartsWith("$"))
@@ -2221,7 +2253,9 @@ namespace JSharp
             preparseLine(varStr+"=__decurry__(" + val.Replace(left, "") + ")");
             return "";
         }
+        #endregion
 
+        #region condition
         public static string getCondition(string text)
         {
             string[] v = getConditionSplit(text);
@@ -2690,7 +2724,7 @@ namespace JSharp
         {
             return new string[] { text[0], text[1] + "\n" + val };
         }
-
+        #endregion
 
         #region function
         public static void AddFunction(string name, Function func)
@@ -3186,6 +3220,59 @@ namespace JSharp
             functionTags[tag.ToLower()].Add(func.gameName.Replace(":", ".").Replace("/", "."));
             func.file.notUsed = wasUsed;
             f.addChild(func.file);
+        }
+        #endregion
+
+        #region string
+        private static void stringInit()
+        {
+            File fFile = new File("__multiplex__/sstring");
+            stringPool = fFile;
+            fFile.notUsed = true;
+            Function function = new Function("sstring", Project + ":__multiplex__/sstring", fFile);
+            List<Function> lst = new List<Function>();
+            lst.Add(function);
+            functions.Add((Project + ".__multiplex__.sstring").ToLower(), lst);
+            files.Add(fFile);
+
+            Argument b = new Argument("__strSelector__", "__multiplex__.sstring.__strSelector__", Type.STRING);
+            Variable c = new Variable("__strSelector__", "__multiplex__.sstring.__strSelector__", Type.STRING);
+            variables.Add("__multiplex__.sstring.__strSelector__", c);
+            function.args.Add(b);
+        }
+        public static bool isStringVar(string val)
+        {
+            return context.GetVariable(val, true) != null && variables[context.GetVariable(val)].type == Type.STRING;
+        }
+        public static string getString(string val)
+        {
+            Variable v = variables[context.GetVariable(val)];
+            stringPool.use();
+            return parseLine("__multiplex__.sSTRING(" + v.gameName + ")");
+        }
+        private static int getStringID(string text)
+        {
+            while (text.StartsWith(" "))
+                text = text.Substring(1, text.Length - 1);
+            while (text.EndsWith(" "))
+                text = text.Substring(0, text.Length - 1);
+            if (text.StartsWith("\""))
+                text = text.Substring(1, text.Length - 2);
+
+            if (!stringSet.Contains(text))
+                stringSet.Add(text);
+
+            return stringSet.IndexOf(text);
+        }
+        public static string extractString(string text)
+        {
+            string tmp = smartEmpty(text);
+            return tmp.Substring(1, tmp.Length - 2);
+        }
+        public static bool isString(string text)
+        {
+            string tmp = smartEmpty(text);
+            return tmp.StartsWith("\"") && tmp.EndsWith("\"");
         }
         #endregion
 
@@ -5302,9 +5389,10 @@ namespace JSharp
                 throw new Exception("No Enough argument for require");
             }
             return "";
-        }        
+        }
         #endregion
 
+        #region type
         private static bool containType(string text)
         {
             if (typeMaps.Count > 0)
@@ -5714,18 +5802,78 @@ namespace JSharp
             }
             throw new Exception("Unable to Infer enum");
         }
-        
-        public static string extractString(string text)
+        public static string getEnum(string text)
         {
-            string tmp = smartEmpty(text);
-            return tmp.Substring(1, tmp.Length - 2);
-        }
-        public static bool isString(string text)
-        {
-            string tmp = smartEmpty(text);
-            return tmp.StartsWith("\"") && tmp.EndsWith("\"");
-        }
+            while (text.StartsWith(" "))
+                text = text.Substring(1, text.Length - 1);
+            text = text.Replace("{", " ") + " ";
+            if (typeMaps.Count > 0)
+            {
+                foreach (string key in typeMaps.Peek().Keys)
+                {
+                    if (text.ToLower().StartsWith(key.ToLower() + " "))
+                    {
+                        return getEnum(typeMaps.Peek()[key]);
+                    }
+                }
+            }
 
+            foreach (string key in enums.Keys) {
+                if (text.ToLower().StartsWith(key+" "))
+                {
+                    return key;
+                }
+            }
+            return null;
+        }
+        public static bool containEnum(string text)
+        {
+            return getEnum(text) != null;
+        }
+        public static string getStruct(string text)
+        {
+            while (text.StartsWith(" "))
+                text = text.Substring(1, text.Length - 1);
+            text = text.Replace("{", " ")+" ";
+            if (text.Contains("<"))
+            {
+                if (!structs.ContainsKey(text.Substring(0, getCloseCharIndex(text, '>') + 1).Replace("<", "[").Replace(">", "]").ToLower()))
+                {
+                    string generics = text.Substring(text.IndexOf("<") + 1, getCloseCharIndex(text,'>') - text.IndexOf("<") - 1);
+                    string name = smartEmpty(text.Substring(0, text.IndexOf("<"))).ToLower();
+                    
+                    structs[name].createGeneric(text.Substring(0, getCloseCharIndex(text, '>') + 1).Replace("<","[").Replace(">", "]"),
+                        smartSplit(smartEmpty(generics), ','));
+                }
+                return text.Substring(0, getCloseCharIndex(text, '>') + 1).Replace("<", "[").Replace(">", "]").ToLower();
+            }
+            if (typeMaps.Count > 0)
+            {
+                foreach (string key in typeMaps.Peek().Keys)
+                {
+                    if (text.ToLower().StartsWith(key.ToLower() + " ") || text.ToLower().StartsWith(key.ToLower() + "["))
+                    {
+                        return getStruct(typeMaps.Peek()[key]);
+                    }
+                }
+            }
+
+            foreach (string key in structs.Keys)
+            {
+                if (text.ToLower().StartsWith(key.ToLower() + " ") || text.ToLower().StartsWith(key.ToLower() + "["))
+                {
+                    return key;
+                }
+            }
+            return null;
+        }
+        public static bool containStruct(string text)
+        {
+            return getStruct(text) != null;
+        }
+        #endregion
+
+        #region function eval
         public static string functionEval(string text, string[] outVar = null, string op = "=")
         {
             string funcVar = smartExtract(text.Substring(0, text.IndexOf('(')));
@@ -6263,7 +6411,14 @@ namespace JSharp
 
             return output;
         }
+        public static string getFunctionName(string text)
+        {
+            int opIndex = getOpenCharIndex(text, '(');
+            return text.Substring(0,opIndex);
+        }
+        #endregion
 
+        #region generate info
         private static string GenerateInfoPackage(string package)
         {
             string output = "#=================================================#" + '\n';
@@ -6294,7 +6449,9 @@ namespace JSharp
 
             return output;
         }
+        #endregion
 
+        #region tools
         public static string[] smartSplit(string text, char c, int max = -1)
         {
             List<string> output = new List<string>();
@@ -6557,11 +6714,6 @@ namespace JSharp
             }
             return args;
         }
-        public static string getFunctionName(string text)
-        {
-            int opIndex = getOpenCharIndex(text, '(');
-            return text.Substring(0,opIndex);
-        }
         public static string getParenthis(string text, int max = -1, int recCall = 0)
         {
             if (recCall > maxRecCall)
@@ -6758,30 +6910,6 @@ namespace JSharp
             return -1;
         }
 
-        public static string getEnum(string text)
-        {
-            while (text.StartsWith(" "))
-                text = text.Substring(1, text.Length - 1);
-            text = text.Replace("{", " ") + " ";
-            if (typeMaps.Count > 0)
-            {
-                foreach (string key in typeMaps.Peek().Keys)
-                {
-                    if (text.ToLower().StartsWith(key.ToLower() + " "))
-                    {
-                        return getEnum(typeMaps.Peek()[key]);
-                    }
-                }
-            }
-
-            foreach (string key in enums.Keys) {
-                if (text.ToLower().StartsWith(key+" "))
-                {
-                    return key;
-                }
-            }
-            return null;
-        }
         public static List<ImpliciteVar> getImpliciteFromExpr(string text)
         {
             List<ImpliciteVar> lst = new List<ImpliciteVar>();
@@ -6811,52 +6939,10 @@ namespace JSharp
 
             return lst;
         }
-        public static bool containEnum(string text)
-        {
-            return getEnum(text) != null;
-        }
+        #endregion
 
-        public static string getStruct(string text)
-        {
-            while (text.StartsWith(" "))
-                text = text.Substring(1, text.Length - 1);
-            text = text.Replace("{", " ")+" ";
-            if (text.Contains("<"))
-            {
-                if (!structs.ContainsKey(text.Substring(0, getCloseCharIndex(text, '>') + 1).Replace("<", "[").Replace(">", "]").ToLower()))
-                {
-                    string generics = text.Substring(text.IndexOf("<") + 1, getCloseCharIndex(text,'>') - text.IndexOf("<") - 1);
-                    string name = smartEmpty(text.Substring(0, text.IndexOf("<"))).ToLower();
-                    
-                    structs[name].createGeneric(text.Substring(0, getCloseCharIndex(text, '>') + 1).Replace("<","[").Replace(">", "]"),
-                        smartSplit(smartEmpty(generics), ','));
-                }
-                return text.Substring(0, getCloseCharIndex(text, '>') + 1).Replace("<", "[").Replace(">", "]").ToLower();
-            }
-            if (typeMaps.Count > 0)
-            {
-                foreach (string key in typeMaps.Peek().Keys)
-                {
-                    if (text.ToLower().StartsWith(key.ToLower() + " ") || text.ToLower().StartsWith(key.ToLower() + "["))
-                    {
-                        return getStruct(typeMaps.Peek()[key]);
-                    }
-                }
-            }
 
-            foreach (string key in structs.Keys)
-            {
-                if (text.ToLower().StartsWith(key.ToLower() + " ") || text.ToLower().StartsWith(key.ToLower() + "["))
-                {
-                    return key;
-                }
-            }
-            return null;
-        }
-        public static bool containStruct(string text)
-        {
-            return getStruct(text) != null;
-        }
+        #region offuscation
         public static long IntPow(long x, long pow)
         {
             long ret = 1;
@@ -6974,7 +7060,9 @@ namespace JSharp
             classOffuscationMap.Add(text, forced);
             return forced;
         }
+        #endregion
 
+        #region Finishing
         public static void ConstCreate()
         {
             bool change = true;
@@ -7056,67 +7144,9 @@ namespace JSharp
                 i++;
             }
         }
+        #endregion
 
-        public static ParenthiseError checkParenthisation(string[] file)
-        {
-            Stack<char> chars = new Stack<char>();
-            int lineIndex = 0;
-            foreach (string line in file)
-            {
-                lineIndex++;
-                bool inComment = false;
-                bool inString = false;
-                char cPrev = '\n';
-
-                int columns = 0;
-
-                if (!line.Replace(" ", "").StartsWith("/"))
-                {
-                    foreach (char c in line)
-                    {
-                        if (c == '"' && cPrev != '\\')
-                        {
-                            inString = !inString;
-                        }
-                        else if (c == '\\' && cPrev == '\\')
-                        {
-                            inComment = true;
-                        }
-                        else if (c == '{' && !inComment && !inString)
-                        {
-                            chars.Push(c);
-                        }
-                        else if (c == '}' && !inComment && !inString && chars.Pop() != '{')
-                        {
-                            return new ParenthiseError(lineIndex, columns, c);
-                        }
-                        else if (c == '(' && !inComment && !inString)
-                        {
-                            chars.Push(c);
-                        }
-                        else if (c == ')' && !inComment && !inString && chars.Pop() != '(')
-                        {
-                            return new ParenthiseError(lineIndex, columns, c);
-                        }
-                        else if (c == '[' && !inComment && !inString)
-                        {
-                            chars.Push(c);
-                        }
-                        else if (c == ']' && !inComment && !inString && chars.Pop() != '[')
-                        {
-                            return new ParenthiseError(lineIndex, columns, c);
-                        }
-                        cPrev = c;
-                        columns++;
-                    }
-                }
-            }
-            if (chars.Count == 0)
-                return null;
-            else
-                return new ParenthiseError(++lineIndex, 0, chars.Pop());
-        }
-
+        #region Data Class
         public class Function
         {
             public string name;
@@ -8308,6 +8338,18 @@ namespace JSharp
                 scoreboardObj.use();
             }
         }
+        public class Argument: Variable
+        {
+            public string defValue = null;
+            public bool isImplicite;
+            public bool isLazy;
+            public Argument(string name, string gameName, Type type) : base(name, gameName, type)
+            {
+                isLazy = name.StartsWith("$");
+            }
+            public Variable variable;
+            
+        }
         public class Scoreboard
         {
             public string name;
@@ -8327,7 +8369,6 @@ namespace JSharp
                 wasUsed = true;
             }
         }
-
         public class Enum
         {
             public class EnumValue
@@ -8582,7 +8623,29 @@ namespace JSharp
         {
             string Compile();
         }
+        public enum Type
+        {
+            UNKNOWN,
+            INT,
+            FLOAT,
+            BOOL,
+            ENTITY,
+            ENTITY_COMPONENT,
+            ENUM,
+            FUNCTION,
+            STRUCT,
+            CLASS,
+            STRING,
+            VOID,
+            ARRAY,
+            JSON,
+            PARAMS,
+            RANGE,
+            DEFINE
+        }
+        #endregion
 
+        #region Structure Class
         public class Switch: Component
         {
             List<Case> casesUnit = new List<Case>();
@@ -9050,6 +9113,7 @@ namespace JSharp
                 return name + "_" + args2.Length.ToString() + "_" + generated.IndexOf(arg);
             }
         }
+        #endregion
 
         [Serializable]
         public class CompilerSetting
@@ -9065,6 +9129,7 @@ namespace JSharp
             public Dictionary<string, string> forcedOffuscation = new Dictionary<string, string>();
             public List<string> libraryFolder = new List<string>() { "./lib/1_16_5/", "./lib/shared/" };
             public string MCVersion = "1.16.5";
+            public bool ExportAsZip = false;
 
             public bool isLibrary = false;
 
@@ -9087,38 +9152,44 @@ namespace JSharp
             }
         }
 
-        public class Argument: Variable
+        public class ParenthiseError
         {
-            public string defValue = null;
-            public bool isImplicite;
-            public bool isLazy;
-            public Argument(string name, string gameName, Type type) : base(name, gameName, type)
+            public int line;
+            public int column;
+            public char c;
+            public bool expected;
+
+            public ParenthiseError(int line, int column, char c, bool expected = false)
             {
-                isLazy = name.StartsWith("$");
+                this.line = line;
+                this.column = column;
+                this.c = c;
+                this.expected = expected;
             }
-            public Variable variable;
-            
+
+            public void throwException()
+            {
+                if (expected)
+                {
+                    throw new Exception("Unexcepted " + c + " at line " + line.ToString() + " column " + column.ToString());
+                }
+                throw new Exception("Excepted " + c + " at line " + line.ToString() + " column " + column.ToString());
+            }
         }
-        public enum Type
+        public class ImpliciteVar
         {
-            UNKNOWN,
-            INT,
-            FLOAT,
-            BOOL,
-            ENTITY,
-            ENTITY_COMPONENT,
-            ENUM,
-            FUNCTION,
-            STRUCT,
-            CLASS,
-            STRING,
-            VOID,
-            ARRAY,
-            JSON,
-            PARAMS,
-            RANGE,
-            DEFINE
+            public string enums;
+            public Type type;
+            public string value;
+
+            public ImpliciteVar(string enums, Type type, string value)
+            {
+                this.enums = enums;
+                this.type = type;
+                this.value = value;
+            }
         }
+        
         public class File
         {
             public string name;
@@ -9561,44 +9632,6 @@ namespace JSharp
                 UnparsedFunctionFile = false;
             }
         }
-        public class ParenthiseError
-        {
-            public int line;
-            public int column;
-            public char c;
-            public bool expected;
-
-            public ParenthiseError(int line, int column, char c, bool expected = false)
-            {
-                this.line = line;
-                this.column = column;
-                this.c = c;
-                this.expected = expected;
-            }
-
-            public void throwException()
-            {
-                if (expected)
-                {
-                    throw new Exception("Unexcepted " + c + " at line " + line.ToString() + " column " + column.ToString());
-                }
-                throw new Exception("Excepted " + c + " at line " + line.ToString() + " column " + column.ToString());
-            }
-        }
-        public class ImpliciteVar
-        {
-            public string enums;
-            public Type type;
-            public string value;
-
-            public ImpliciteVar(string enums, Type type, string value)
-            {
-                this.enums = enums;
-                this.type = type;
-                this.value = value;
-            }
-        }
-        
         public class Context
         {
             public List<string> directories = new List<string>();

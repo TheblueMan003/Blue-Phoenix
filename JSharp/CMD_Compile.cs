@@ -37,19 +37,31 @@ namespace BluePhoenix
         }
         public void ExportDataPack(string path, string rpPath)
         {
-            if (File.Exists(path + "/pack.mcmeta"))
+            string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            string writePath = project.compilationSetting.ExportAsZip ? ProjectPath + "tmp_dp" : path;
+
+            if (File.Exists(writePath + "/pack.mcmeta"))
             {
-                Directory.Delete(path, true);
+                Directory.Delete(writePath, true);
             }
             project.version.Build();
-            ExportFiles(path);
-            ExportTags(path);
-            ExportStructures(path);
-            ExportReadMe(path);
-            ExportResourcePack(rpPath);
-            SafeWriteFile(path + "/pack.mcmeta",
+            ExportFiles(writePath);
+            ExportTags(writePath);
+            ExportStructures(writePath);
+            ExportReadMe(writePath);
+            SafeCopy(ProjectPath + "/assets/pack.png", writePath + "/pack.png");
+            SafeWriteFile(writePath + "/pack.mcmeta",
                         JsonConvert.SerializeObject(new DataPackMeta(project.projectName + " - " + project.description)));
-                
+
+            if (project.compilationSetting.ExportAsZip)
+            {
+                if (!path.EndsWith(".zip")) path += ".zip";
+                if (File.Exists(path)) { File.Delete(path); }
+                ZipFile.CreateFromDirectory(writePath, path);
+                Directory.Delete(writePath, true);
+            }
+
+            ExportResourcePack(rpPath);
             Debug("Datapack successfully exported!", Color.Aqua);
         }
         public static void Debug(object text, Color c)
@@ -231,6 +243,7 @@ namespace BluePhoenix
                     if (File.Exists(path)) { File.Delete(path); }
                     ZipFile.CreateFromDirectory(rpPath, path);
                 }
+                Directory.Delete(rpPath, true);
             }
         }
         public static void SafeCopy(string src, string dest)

@@ -88,7 +88,7 @@ namespace JSharp
             }
             if (structs != null)
             {
-                foreach (string key in structs.Keys)
+                foreach (string key in structs.Values.Distinct().Select(x => x.name))
                 {
                     if (key.Contains(Filter.Text) && structs[key].isClass == isClass)
                     {
@@ -108,7 +108,7 @@ namespace JSharp
             }
             if (enums != null)
             {
-                foreach (string key in enums.Keys)
+                foreach (string key in enums.Values.Distinct().Select(x => x.name))
                 {
                     if (key.Contains(Filter.Text))
                     {
@@ -234,6 +234,23 @@ namespace JSharp
         private void Filter_TextChanged(object sender, EventArgs e)
         {
             Reload();
+        }
+
+        private void listBox2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listBox2.SelectedIndex > -1)
+            {
+                if (enums != null)
+                {
+                    var en = enums[listBox1.SelectedItem.ToString()];
+                    var f = en.values[listBox2.SelectedIndex];
+
+                    richTextBox1.Text = 
+                        f.fields.Select((x) => 
+                            $"{x.Key}({en.fields.Find(y => y.name == x.Key).type}): {x.Value}\n"
+                            ).Aggregate((x, y) => x + y);
+                }
+            }
         }
     }
 }
