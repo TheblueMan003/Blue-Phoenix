@@ -26,6 +26,7 @@ namespace JSharp
         public static Dictionary<string, TagsList> itemTags;
         public static Dictionary<string, List<Predicate>> predicates;
         public static Dictionary<string, List<string>> functionTags;
+        public static Dictionary<int, List<File>> dedupFiles;
         #endregion
 
         public static Dictionary<string, string> offuscationMap;
@@ -133,8 +134,8 @@ namespace JSharp
         private static Regex varInstReg = new Regex(@"^[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+[\w\$\.]+\s*");
         private static Regex compVarInstReg = new Regex(@"^[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+\$[\w\$\.]+\s*=");
         private static Regex elseReg = new Regex(@"^else\s*");
-        private static Regex regEval = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.]*\)");
-        private static Regex regEval2 = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.\(\)\s]*\)eval\$");
+        private static Regex regEval = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.\^]*\)");
+        private static Regex regEval2 = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.\(\)\s\^]*\)eval\$");
         private static Regex forgenInLineReg = new Regex(@"forgenerate\([^\(\)]*\)\{[^\{\}]*\}");
         private static Regex dualCompVar = new Regex(@"^\$[\w\.\$]+\s*=\s*\$?[\w\.\$]+\s*");
         private static Regex requireReg = new Regex(@"^require\s+\$?\w+\s+[\w\=\<\>]+");
@@ -147,6 +148,7 @@ namespace JSharp
         private static Regex valExtReg = new Regex(@"((\bval\b)|(\bvar\b)|(\blet\b))\s+\w+");
         private static Regex valReg = new Regex(@"((\bval\b)|(\bvar\b)|(\blet\b))");
         private static Regex entityTagsRpReg = new Regex(@"type=#[\w\.:/]+");
+        private static Regex shortFuncReg = new Regex(@"\b[\w\.]+\{");
 
         private static string ConditionAlwayTrue = "=$=TRUE=$=";
         private static string ConditionAlwayFalse = "=$=False=$=";
@@ -242,6 +244,7 @@ namespace JSharp
                 itemTags = new Dictionary<string, TagsList>();
                 resourceFiles = new Dictionary<string, string>();
                 compVal = new List<Dictionary<string, string>>();
+                dedupFiles = new Dictionary<int, List<File>>();
                 ExtensionClassStack = new Stack<string>();
                 ExtensionMethod = new Dictionary<string, List<Function>>();
 
@@ -289,8 +292,10 @@ namespace JSharp
                 
                 foreach(File f in files)
                 {
-                    if (!compilerSetting.removeUselessFile && f.valid)
+                    if (!compilerSetting.removeUselessFile)
                     {
+                        f.content += $"not used:{f.notUsed}, f.isLazy: {f.isLazy}, line: {f.lineCount} valid: {f.valid}\n";
+                        f.content += f.parsed.Count > 0 ? f.parsed.Aggregate((x,y)=>x+"\n"+y):"";
                         returnFiles.Add(f);
                     }
                     else if (!f.notUsed && !f.isLazy && f.lineCount > 0 && f.valid)
@@ -797,7 +802,7 @@ namespace JSharp
                     return modVar(text.Replace("++", "+=1").Replace("--", "-=1"));
                 }
                 //function call
-                else if (text.Contains("(") && text.Contains(")") || context.IsFunction(text))
+                else if (text.Contains("(") && text.Contains(")") || context.IsFunction(text) || shortFuncReg.Match(text).Success)
                 {
                     return functionEval(text);
                 }
@@ -3045,7 +3050,7 @@ namespace JSharp
                     fFile.AddLine(cond + line);
                 }
             }
-            if (func.file.UnparsedFunctionFile)
+            if (func.file.UnparsedFunctionFile || func.isAbstract)
                 func.file.addParsedLine("if ("+mux.gameName + "== " + id.ToString()+"){" + mux.gameName +"=-1}");
             else
                 func.file.AddLine(cond + Core.VariableOperation(mux, -1, "="));
@@ -3955,6 +3960,7 @@ namespace JSharp
                 function.isPrivate = prev.isPrivate || isPrivate;
                 function.isLambda = prev.isLambda || isLambda;
                 function.isExternal = prev.isExternal || isExternal;
+                fFile.parsed_end = prev.file.parsed;
             }
             else
             {
@@ -4174,15 +4180,15 @@ namespace JSharp
             string loop = getCondition(text);
 
             int wID = While.GetID(context.GetFun());
-            string funcName = context.GetFun() + "w_" + wID.ToString();
+            string funcName = context.GetFun() + "u_" + wID.ToString();
 
             string cmd = "function " + funcName + '\n';
 
             context.currentFile().AddLine(loop + cmd);
 
-            File fFile = new File(context.GetFile() + "w_" + wID, "", "while");
+            File fFile = new File(context.GetFile() + "u_" + wID, "", "while");
             fFile.AddEndLine(loop + cmd);
-            context.Sub("w_" + wID, fFile);
+            context.Sub("u_" + wID, fFile);
             files.Add(fFile);
 
             autoIndent(fText);
@@ -4316,6 +4322,7 @@ namespace JSharp
                 int wID = Forgenerate.GetID(context.GetFun());
 
                 File fFile = new File(context.GetFile() + "g_" + wID, "", "forgenerate");
+
                 fFile.var = smartEmpty(args[0]);
                 string args1Extra = smartExtract(args[1]);
                 if (enums.ContainsKey(args1Extra.ToLower()))
@@ -5876,6 +5883,11 @@ namespace JSharp
         #region function eval
         public static string functionEval(string text, string[] outVar = null, string op = "=")
         {
+            Match _m = shortFuncReg.Match(text);
+            if (_m.Success)
+            {
+                text = regReplace(text, _m, _m.Value.Replace("{", "(){"));
+            }
             string funcVar = smartExtract(text.Substring(0, text.IndexOf('(')));
             var var = GetVariableByName(funcVar, true);
             if (var != null && var.type == Type.FUNCTION && !muxAdding)
@@ -5952,6 +5964,7 @@ namespace JSharp
                     if (!context.currentFile().notUsed)
                         funObj.file.use();
                 }
+                
                 context.currentFile().addChild(funObj.file);
                 if (callStackDisplay)
                     callTrace += "\""+callingFunctName+"\"->\"" + funObj.gameName + "\"\n";
@@ -6195,7 +6208,7 @@ namespace JSharp
                     
                     if (anonymusFunc)
                     {
-                        parseLine("def " + anonymusFuncName + anonymusFuncNameArg +"{");
+                        parseLine("def __lambda__ " + anonymusFuncName + anonymusFuncNameArg +"{");
                         if (smartEmpty(text).EndsWith("}"))
                         {
                             preparseLine(getCodeBlock(text));
@@ -6268,8 +6281,6 @@ namespace JSharp
                                         throw new Exception("Not Enought argument for " + funObj.gameName + "(" + arg + ")");
                                     }
                                 }
-                                else if (a.defValue != null)
-                                    output += parseLine(a.gameName + "=" + a.defValue);
                                 else if (endWithAccollade && a.type == Type.FUNCTION)
                                 {
                                     anonymusFuncName = "lamba_" + Lambda.GetID(context.GetFun()).ToString();
@@ -6280,6 +6291,8 @@ namespace JSharp
                                     output += parseLine(a.gameName + "=" + anonymusFuncName) + "\n";
                                     anonymusFunc = true;
                                 }
+                                else if (a.defValue != null)
+                                    output += parseLine(a.gameName + "=" + a.defValue);
                             }
                         }
                     }
@@ -6315,7 +6328,7 @@ namespace JSharp
                     if (anonymusFunc)
                     {
                         context.currentFile().AddLine(output);
-                        parseLine("def " + anonymusFuncName + anonymusFuncNameArg+"{");
+                        parseLine("def __lambda__ " + anonymusFuncName + anonymusFuncNameArg+"{");
                         if (smartEmpty(text).EndsWith("}"))
                         {
                             preparseLine(getCodeBlock(text));
@@ -7125,7 +7138,7 @@ namespace JSharp
                 changed = false;
                 while (fi < files.Count)
                 {
-                    if ((files[fi].UnparsedFunctionFile && !files[fi].notUsed) || !compilerSetting.removeUselessFile)
+                    if ((files[fi].UnparsedFunctionFile && !files[fi].notUsed))
                     {
                         files[fi].Compile();
                         changed = true;
@@ -7140,10 +7153,12 @@ namespace JSharp
             foreach (string s in stringSet)
             {
                 Variable mux = GetVariable("__multiplex__.sstring.__strSelector__");
-                stringPool.AddLine("execute if score " + mux.scoreboard() + " matches " + i.ToString() + " run summon minecraft:area_effect_cloud ~ ~ ~ { CustomName: \"\\\"" + s + "\\\"\",Tags:[\"__str__\"]}");
+                stringPool.AddLine("execute if score " + mux.scoreboard() + " matches " + i.ToString() +
+                    " run summon minecraft:area_effect_cloud ~ ~ ~ { CustomName: '{\"text\":\""+s+"\"}'},Tags:[\"__str__\"]}");
                 i++;
             }
         }
+        
         #endregion
 
         #region Data Class
@@ -9127,10 +9142,11 @@ namespace JSharp
             public string scoreboardTmp = "tbms.tmp";
             public bool tagsFolder = true;
             public Dictionary<string, string> forcedOffuscation = new Dictionary<string, string>();
-            public List<string> libraryFolder = new List<string>() { "./lib/1_16_5/", "./lib/shared/" };
+            public List<string> libraryFolder = new List<string>();
             public string MCVersion = "1.16.5";
             public bool ExportAsZip = false;
             public int packformat = 6;
+            public string CompilerCoreName = "java";
 
             public bool isLibrary = false;
 
@@ -9202,6 +9218,7 @@ namespace JSharp
             public bool valid = true;
             public StringBuilder scoreboardDef = new StringBuilder();
             public List<string> parsed = new List<string>();
+            public List<string> parsed_end = new List<string>();
             public bool isLazy;
             public string type;
             public int lineCount=0;
@@ -9302,7 +9319,7 @@ namespace JSharp
                         compVal[compVal.Count - 1].Add(var + ".height", img.Height.ToString());
                     }
                 }
-
+                File f = context.currentFile();
                 foreach (string l in parsed)
                 {
                     string line = l;
@@ -9324,12 +9341,12 @@ namespace JSharp
                         }
                         line = line.Replace(var + ".count", argget.Length.ToString());
                     }
-
+                    
                     line = line.Replace(var + ".index", genIndex.ToString())
                         .Replace(var + ".length", genAmount.ToString())
                         .Replace(var, value);
                     
-                    preparseLine(line);
+                    preparseLine(line, f);
                 }
 
                 if (compVal.Count > 0 && !structInstCompVar)
@@ -9528,6 +9545,49 @@ namespace JSharp
                 {
                     ExtensionClassStack.Pop();
                 }
+ 
+                if (type == "if" || type == "case")
+                {
+                    bool found = false;
+                    if (dedupFiles.ContainsKey(content.GetHashCode()))
+                    {
+                        var lst = dedupFiles[content.GetHashCode()];
+                        
+                        foreach (File file in lst)
+                        {
+                            if (file.content == content)
+                            {
+                                if (type == "if" && lineCount != 1)
+                                {
+                                    context.currentFile().content =
+                                            context.currentFile()
+                                            .content
+                                            .Replace(Core.CallFunction(this), Core.CallFunction(file));
+                                    found = true;
+                                    valid = false;
+                                    break;
+                                }
+                                if (type == "case" && lineCount != 1)
+                                {
+                                    switchcase.cmd = switchcase.cmd
+                                                                .Replace(Core.CallFunction(this), Core.CallFunction(file));
+                                    found = true;
+                                    valid = false;
+                                    break;
+                                }
+                            }
+                            
+                        }
+                    }
+                    if (!found)
+                    {
+                        if (!dedupFiles.ContainsKey(content.GetHashCode()))
+                        {
+                            dedupFiles.Add(content.GetHashCode(), new List<File>());
+                        }
+                        dedupFiles[content.GetHashCode()].Add(this);
+                    }
+                }
             }
 
             public void addParsedLine(string a)
@@ -9541,7 +9601,9 @@ namespace JSharp
 
             public void addChild(File file)
             {
-                if (!(file.function != null && (file.function.isLoading || file.function.isTicking || file.function.tags.Count > 0 || file.function.isHelper)))
+                if (!(file.function != null && (file.function.isLoading || file.function.isTicking ||
+                    file.function.tags.Count > 0 || file.function.isHelper))
+                    && !((type == "if" || type == "if_empty") && file.function != null))
                     file.notUsed = notUsed;
                 if (file.function == null)
                     file.function = function;
@@ -9565,10 +9627,12 @@ namespace JSharp
             public void unuse()
             {
                 notUsed = true;
-
+                
                 foreach (File f in childs)
                 {
-                    if (!f.notUsed && !(f.function != null && (f.function.isLoading || f.function.isTicking || f.function.tags.Count > 0 || f.function.isHelper)))
+                    if (!f.notUsed && !(f.function != null && (f.function.isLoading || f.function.isTicking || 
+                        f.function.tags.Count > 0 || f.function.isHelper)) 
+                        && !((type=="if" || type == "if_empty") && f.function!=null))
                     {
                         f.unuse();
                     }
@@ -9615,6 +9679,12 @@ namespace JSharp
                 }
                 int i = 0;
                 foreach (string line in parsed)
+                {
+                    currentLine = i;
+                    preparseLine(line);
+                    i++;
+                }
+                foreach (string line in parsed_end)
                 {
                     currentLine = i;
                     preparseLine(line);

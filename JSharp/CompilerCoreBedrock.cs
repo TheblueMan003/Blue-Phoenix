@@ -104,6 +104,10 @@ namespace JSharp
         {
             return "function " + function.gameName.Replace(":", "/");
         }
+        public override string CallFunction(Compiler.File function)
+        {
+            return "function " + Compiler.Project + "/" + function.name;
+        }
         public override string[] FileNameSplitter()
         {
             return new string[] { "/", "/" };
@@ -159,14 +163,14 @@ namespace JSharp
                 }
                 else
                 {
-                    return var1.scoreboard();
+                    return "@e[type=tmbsvalue] "+var1.scoreboard().Split(' ')[0];
                 }
             }
         }
         private string GetSelectorEntity(Compiler.Variable var1, string val, string selector = "")
         {
             if (selector == "")
-                return "@s[scores={" + var1.scoreboard().Replace("@s ", "") + "=" + val + "}]";
+                return "@s[type=tbmsvalue,scores={" + var1.scoreboard().Split(' ')[0] + "=" + val + "}]";
             else
             {
                 if (selector.Contains("]"))
@@ -440,6 +444,15 @@ namespace JSharp
                 //throw new Exception("Not supported!");
             }
             return output;
+        }
+
+        public override string GetFunctionPath(string project, string file)
+        {
+            return "/data/functions/" + project.ToLower() + "/" + file + ".mcfunction";
+        }
+        public override string GetJsonPath(string project, string file)
+        {
+            return "/data/" + project.ToLower() + "/" + file;
         }
     }
 }

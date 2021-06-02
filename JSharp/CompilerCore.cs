@@ -34,10 +34,14 @@ namespace JSharp
 
         public abstract string DefineFunction(Compiler.Function function);
         public abstract string CallFunction(Compiler.Function function);
+        public abstract string CallFunction(Compiler.File function);
         public abstract string[] FileNameSplitter();
 
         public abstract bool isValidSelector(string selector);
         public abstract bool isValidSelectorArgument(string arg);
         public abstract string getLibraryFolder();
+
+        public abstract string GetFunctionPath(string project, string file);
+        public abstract string GetJsonPath(string project, string file);
     }
 }

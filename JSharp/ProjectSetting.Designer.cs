@@ -61,6 +61,8 @@
             this.ExportAsZip_Box = new System.Windows.Forms.CheckBox();
             this.label11 = new System.Windows.Forms.Label();
             this.PackFormat_Box = new System.Windows.Forms.TextBox();
+            this.CompilerCore_Box = new System.Windows.Forms.ComboBox();
+            this.label12 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -179,6 +181,8 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
+            this.groupBox1.Controls.Add(this.CompilerCore_Box);
+            this.groupBox1.Controls.Add(this.label12);
             this.groupBox1.Controls.Add(this.LibPaths);
             this.groupBox1.Controls.Add(this.label10);
             this.groupBox1.Controls.Add(this.PathTags);
@@ -215,7 +219,7 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(7, 151);
+            this.label10.Location = new System.Drawing.Point(7, 152);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(49, 13);
             this.label10.TabIndex = 24;
@@ -275,7 +279,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(7, 125);
+            this.label9.Location = new System.Drawing.Point(7, 126);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(54, 13);
             this.label9.TabIndex = 19;
@@ -284,7 +288,7 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(7, 99);
+            this.label8.Location = new System.Drawing.Point(7, 100);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(54, 13);
             this.label8.TabIndex = 18;
@@ -407,6 +411,29 @@
             this.PackFormat_Box.TabIndex = 18;
             this.PackFormat_Box.Text = "6";
             // 
+            // CompilerCore_Box
+            // 
+            this.CompilerCore_Box.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.CompilerCore_Box.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.CompilerCore_Box.ForeColor = System.Drawing.Color.White;
+            this.CompilerCore_Box.FormattingEnabled = true;
+            this.CompilerCore_Box.Items.AddRange(new object[] {
+            "java",
+            "bedrock"});
+            this.CompilerCore_Box.Location = new System.Drawing.Point(92, 175);
+            this.CompilerCore_Box.Name = "CompilerCore_Box";
+            this.CompilerCore_Box.Size = new System.Drawing.Size(176, 21);
+            this.CompilerCore_Box.TabIndex = 20;
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(6, 179);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(75, 13);
+            this.label12.TabIndex = 21;
+            this.label12.Text = "Compiler Core:";
+            // 
             // ProjectSetting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -478,5 +505,7 @@
         private System.Windows.Forms.CheckBox ExportAsZip_Box;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.TextBox PackFormat_Box;
+        private System.Windows.Forms.ComboBox CompilerCore_Box;
+        private System.Windows.Forms.Label label12;
     }
 }

@@ -25,6 +25,10 @@ namespace JSharp
         {
             return "function " + function.gameName;
         }
+        public override string CallFunction(Compiler.File function)
+        {
+            return "function " + Compiler.Project+":"+ function.name;
+        }
         public override string[] FileNameSplitter()
         {
             return new string[] { ":", "/" };
@@ -541,6 +545,15 @@ namespace JSharp
                 }
             }
             return output;
+        }
+
+        public override string GetFunctionPath(string project, string file)
+        {
+            return "/data/" + project.ToLower() + "/functions/" + file + ".mcfunction";
+        }
+        public override string GetJsonPath(string project, string file)
+        {
+            return "/data/" + project.ToLower() + "/" + file;
         }
     }
 }

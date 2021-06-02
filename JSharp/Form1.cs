@@ -23,6 +23,7 @@ namespace JSharp
     {
         public Dictionary<string, string> code = new Dictionary<string, string>();
         public Dictionary<string, string> resources = new Dictionary<string, string>();
+        public Dictionary<string, Dictionary<int, int>> collaspe = new Dictionary<string, Dictionary<int, int>>();
         public Dictionary<string, Dictionary<string, TagsList>> TagsList = new Dictionary<string, Dictionary<string, TagsList>>();
         public Dictionary<string, Dictionary<string, TagsList>> MCTagsList = new Dictionary<string, Dictionary<string, TagsList>>();
         public Dictionary<string, DateTime> moddificationFileTime = new Dictionary<string, DateTime>();
@@ -83,7 +84,7 @@ namespace JSharp
             InitializeComponent();
             CommandParser.loadDict();
             Formatter.loadDict();
-            CodeBox.SelectionTabs = new int[] { 50, 100, 150, 200 };
+            
             if (project != null)
             {
                 OpenFile(project);
@@ -185,7 +186,7 @@ namespace JSharp
         private void button1_Click(object sender, EventArgs e)
         {
             exporting = false;
-            CompileJava(true);
+            Compile(true);
             UpdateCodeBox();
         }
 
@@ -206,9 +207,6 @@ namespace JSharp
                     PreviousText.Add(CodeBox.Text);
                     index++;
                 }
-                AddLineNumbers();
-
-                Formatter.reformat(CodeBox, this, true);
             }
         }
         private void CodeBox_Leave(object sender, EventArgs e)
@@ -250,12 +248,6 @@ namespace JSharp
         {
             if (projectPath == null)
                 NewProject();
-
-            if (!CodeBox.AutoWordSelection)
-            {
-                CodeBox.AutoWordSelection = true;
-                CodeBox.AutoWordSelection = false;
-            }
         }
 
 
@@ -278,8 +270,6 @@ namespace JSharp
                 ErrorBox.AppendText("[" + DateTime.Now.ToString() + "] " + text + "\n");
             }
         }
-
-
 
         public void Save(string projectPath)
         {
@@ -375,9 +365,13 @@ namespace JSharp
             currentResourcesPack = project.resourcesPackDirectory;
             project.compilationSetting.isLibrary = project.isLibrary;
             compilerSetting = project.compilationSetting;
-
+            if (compilerSetting.libraryFolder.Count == 0)
+            {
+                compilerSetting.libraryFolder.Add("./lib/1_16_5/");
+                compilerSetting.libraryFolder.Add("./lib/shared/");
+            }
             previous = "$$$$$$$$$";
-            int i = 0;
+
             string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
             string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
             foreach (var file in project.files)
@@ -393,17 +387,6 @@ namespace JSharp
                 }
 
                 codeOrder.Add(file.name);
-                
-                if (i == 0)
-                {
-                    noReformat = true;
-                    CodeBox.Text = file.content;
-                    PreviousText.Clear();
-                    PreviousText.Add(CodeBox.Text);
-                    index = 0;
-                    previous = file.name;
-                }
-                i++;
             }
             
             if (project.resources != null)
@@ -421,8 +404,6 @@ namespace JSharp
                     }
 
                     resourceOrder.Add(file.name);
-
-                    i++;
                 }
             }
 
@@ -444,30 +425,21 @@ namespace JSharp
                     }
 
                     codeOrder.Add(file);
-
-                    if (i == 0)
-                    {
-                        noReformat = true;
-                        CodeBox.Text = code[file];
-                        PreviousText.Clear();
-                        PreviousText.Add(CodeBox.Text);
-                        index = 0;
-                        previous = file;
-                    }
-                    i++;
                 }
             }
             FetchFilesInDirectory();
 
             ReloadTree();
 
-            Debug("Project Loaded: " + projectPath+" ("+i.ToString()+" Files)", Color.Aqua);
+            Debug("Project Loaded: " + projectPath, Color.Aqua);
             noReformat = false;
             exporting = false;
-            CompileJava();
+            Compile();
             UpdateCodeBox();
             ignorNextListboxUpdate = false;
             projectDescription = project.description;
+
+            SelectFullPath("src/" + codeOrder[0]);
         }
 
         private void FetchFilesInDirectory()
@@ -588,7 +560,6 @@ namespace JSharp
                         if (previous == key)
                         {
                             CodeBox.Text = code[key];
-                            Formatter.reformat(CodeBox, this, false);
                         }
                     }
                     else
@@ -602,7 +573,6 @@ namespace JSharp
                             if (previous == key)
                             {
                                 CodeBox.Text = code[key];
-                                Formatter.reformat(CodeBox, this, false);
                             }
                         }
                         else
@@ -629,7 +599,6 @@ namespace JSharp
                         if (previous == key)
                         {
                             CodeBox.Text = resources[key];
-                            Formatter.reformat(CodeBox, this, false);
                         }
                     }
                     else
@@ -643,7 +612,6 @@ namespace JSharp
                             if (previous == key)
                             {
                                 CodeBox.Text = resources[key];
-                                Formatter.reformat(CodeBox, this, false);
                             }
                         }
                         else
@@ -820,7 +788,9 @@ namespace JSharp
             {
                 projectName = form.ProjectName;
                 compilerSetting.MCVersion = form.MCVersion;
-                compilerSetting.libraryFolder.Insert(0, "./lib/1_17/");
+                compilerSetting.libraryFolder.Add("./lib/1_17/");
+                compilerSetting.libraryFolder.Add("./lib/1_16_5/");
+                compilerSetting.libraryFolder.Add("./lib/shared/");
 
                 Text = projectName + " - TBMScript";
 
@@ -830,6 +800,7 @@ namespace JSharp
                 string libs = libForm2.import.Count() > 0 ? libForm2.import.Select(x => $"import {x}").Aggregate((x, y) => x + "\n" + y) : "";
                 code.Add("import", libs);
                 code.Add(projectName.ToLower(), "package "+ projectName.ToLower()+"\n");
+                SelectFullPath("src/" + projectName.ToLower());
 
                 codeOrder.Add("import");
                 codeOrder.Add(projectName.ToLower());
@@ -895,40 +866,11 @@ namespace JSharp
             CodeBox.Text = "";
         }
 
-        public void AddLineNumbers()
-        {
-            LineNumberTextBox.ZoomFactor = CodeBox.ZoomFactor;
-            LineNumberTextBox.Font = CodeBox.Font;
-            // create & set Point pt to (0,0)    
-            Point pt = new Point(0, 0);
-            // get First Index & First Line from richTextBox1    
-            int First_Index = CodeBox.GetCharIndexFromPosition(pt);
-            int First_Line = CodeBox.GetLineFromCharIndex(First_Index);
-            // set X & Y coordinates of Point pt to ClientRectangle Width & Height respectively    
-            pt.X = CodeBox.Width;
-            pt.Y = CodeBox.Height;
-            // get Last Index & Last Line from richTextBox1    
-            int Last_Index = CodeBox.GetCharIndexFromPosition(pt);
-            int Last_Line = CodeBox.GetLineFromCharIndex(Last_Index);
-            // set Center alignment to LineNumberTextBox    
-            
-            // set LineNumberTextBox text to null & width to getWidth() function value    
-            LineNumberTextBox.Text = (First_Line+1).ToString()+"\n";
-            LineNumberTextBox.SelectionAlignment = HorizontalAlignment.Center;
-            LineNumberTextBox.SelectionFont = CodeBox.Font;
-            
-            //LineNumberTextBox.Width = getWidth();
-            // now add each line number to LineNumberTextBox upto last line    
-            for (int i = First_Line+1; i <= Last_Line + 1; i++)
-            {
-                LineNumberTextBox.Text += i + 1 + "\n";
-            }
-        }
         public void UpdateCodeBox()
         {
-            Formatter.reformat(CodeBox, this, false);
+            
         }
-        public static void SafeCopy(string src, string dest)
+        public void SafeCopy(string src, string dest)
         {
             string filePath = Path.GetDirectoryName(dest);
             if (!Directory.Exists(filePath))
@@ -937,18 +879,21 @@ namespace JSharp
             }
             File.Copy(src, dest, true);
         }
-        public static void SafeWriteFile(string fileName, string content)
+        public void SafeWriteFile(string fileName, string content)
         {
-            Task.Factory.StartNew(() =>
+            string filePath = fileName.Substring(0, fileName.LastIndexOf('/'));
+            if (!Directory.Exists(filePath))
             {
-                string filePath = fileName.Substring(0, fileName.LastIndexOf('/'));
-                if (!Directory.Exists(filePath))
-                {
-                    Directory.CreateDirectory(filePath);
-                }
+                Directory.CreateDirectory(filePath);
+            }
+            try
+            {
                 File.WriteAllText(fileName, content);
             }
-            );
+            catch(Exception e)
+            {
+                Debug(e, Color.Red);
+            }
         }
         #region Compile & Export
         public void ExportDataPackThread()
@@ -962,7 +907,7 @@ namespace JSharp
             try
             {
                 string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-                string writePath = compilerSetting.ExportAsZip? ProjectPath +"tmp_dp": path;
+                string writePath = compilerSetting.ExportAsZip? ProjectPath + "tmp_dp": path;
 
                 if (File.Exists(writePath + "/pack.mcmeta"))
                 {
@@ -1017,8 +962,12 @@ namespace JSharp
             {
                 resourcesfiles.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
             }
+            CompilerCore core;
+            if (compilerSetting.CompilerCoreName == "java") { core = new CompilerCoreJava(); }
+            else if (compilerSetting.CompilerCoreName == "bedrock") { core = new CompilerCoreBedrock(); }
+            else { throw new Exception("Unknown Compiler Core"); }
 
-            List<Compiler.File> cFiles = Compiler.compile(new CompilerCoreJava(), projectName, files, resourcesfiles,
+            List<Compiler.File> cFiles = Compiler.compile(core, projectName, files, resourcesfiles,
                                         DebugThread, compilerSetting, projectVersion,
                                         Path.GetDirectoryName(projectPath));
             
@@ -1026,11 +975,11 @@ namespace JSharp
             {
                 string fileName;
                 if (f.type == "json" && f.name.Contains("json"))
-                    fileName = path + "/data/" + projectName.ToLower() + "/" + f.name;
+                    fileName = path + core.GetJsonPath(projectName, f.name);
                 else if (f.type == "json" && !f.name.Contains("json"))
-                    fileName = path + "/data/" + projectName.ToLower() + "/" + f.name + ".json";
+                    fileName = path + core.GetJsonPath(projectName, f.name+".json");
                 else
-                    fileName = path + "/data/" + projectName.ToLower() + "/functions/" + f.name + ".mcfunction";
+                    fileName = path + core.GetFunctionPath(projectName, f.name);
                 try
                 {
                     SafeWriteFile(fileName, f.content);
@@ -1103,20 +1052,41 @@ namespace JSharp
                         JsonConvert.SerializeObject(TagsList[key][file]));
                 }
             }
-            foreach (string key in Compiler.blockTags.Keys)
+            if (compilerSetting.tagsFolder)
             {
-                SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/blocks/" + key + ".json",
-                        JsonConvert.SerializeObject(Compiler.blockTags[key]));
+                foreach (string key in Compiler.blockTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/blocks/" + key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1).Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.blockTags[key]));
+                }
+                foreach (string key in Compiler.entityTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/entity_types/" + key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1).Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.entityTags[key]));
+                }
+                foreach (string key in Compiler.itemTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/items/" + key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1).Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.itemTags[key]));
+                }
             }
-            foreach (string key in Compiler.entityTags.Keys)
+            else
             {
-                SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/entity_types/" + key + ".json",
-                        JsonConvert.SerializeObject(Compiler.entityTags[key]));
-            }
-            foreach (string key in Compiler.itemTags.Keys)
-            {
-                SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/items/" + key + ".json",
-                        JsonConvert.SerializeObject(Compiler.itemTags[key]));
+                foreach (string key in Compiler.blockTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/blocks/" + key.Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.blockTags[key]));
+                }
+                foreach (string key in Compiler.entityTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/entity_types/" + key.Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.entityTags[key]));
+                }
+                foreach (string key in Compiler.itemTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + projectName.ToLower() + "/tags/items/" + key.Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.itemTags[key]));
+                }
             }
         }
         public void ExportReadMe(string path)
@@ -1190,7 +1160,7 @@ namespace JSharp
                 Debug("Compile Order Changed", Color.Aqua);
             }
         }
-        public void CompileJava(bool showForm = false)
+        public void Compile(bool showForm = false)
         {
             if (isCompiling > 0)
             {
@@ -1226,7 +1196,7 @@ namespace JSharp
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
 
-                CompileThread = new Task(CompileJavaThreaded, tokenSource2.Token);
+                CompileThread = new Task(CompileThreaded, tokenSource2.Token);
                 CompileThread.Start();
             }
         }
@@ -1255,79 +1225,25 @@ namespace JSharp
                 CompileThread.Start();
             }
         }
-        public void CompileBedrock(bool showForm = false)
-        {
-            if (isCompiling == 0)
-            {
-                this.showForm = showForm;
-                projectVersion.Build();
-                compileFile = new List<Compiler.File>();
 
-                recallFile();
-                foreach (string f in codeOrder)
-                {
-                    compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
-                }
-
-                compileResource = new List<Compiler.File>();
-                foreach (string f in resourceOrder)
-                {
-                    compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
-                }
-
-                CompileThread = new Task(CompileBedrockThreaded, tokenSource2.Token);
-                CompileThread.Start();
-            }
-        }
-
-        public void CompileJavaThreaded()
+        public void CompileThreaded()
         {
             try
             {
                 isCompiling = 1;
+                CompilerCore core;
+                if (compilerSetting.CompilerCoreName == "java") { core = new CompilerCoreJava(); }
+                else if (compilerSetting.CompilerCoreName == "bedrock") { core = new CompilerCoreBedrock(); }
+                else{ throw new Exception("Unknown Compiler Core"); }
                 if (exporting)
                 {
-                    compileFiled = Compiler.compile(new CompilerCoreJava(), projectName, compileFile, compileResource,
+                    compileFiled = Compiler.compile(core, projectName, compileFile, compileResource,
                         DebugThread, compilerSetting, projectVersion,
                         Path.GetDirectoryName(projectPath));
                 }
                 else
                 {
-                    compileFiled = Compiler.compile(new CompilerCoreJava(), projectName, compileFile, compileResource,
-                        DebugThread, compilerSetting.withoutOffuscation(), projectVersion,
-                        Path.GetDirectoryName(projectPath));
-                }
-
-                if (showForm)
-                {
-                    isCompiling = 2;
-                }
-                else
-                {
-                    isCompiling = 0;
-                }
-            }
-            catch (Exception er)
-            {
-                isCompiling = 0;
-                DebugThread(er, Color.Red);
-            }
-
-        }
-        public void CompileBedrockThreaded()
-        {
-            try
-            {
-                isCompiling = 1;
-                if (exporting)
-                {
-                    compileFiled = Compiler.compile(new CompilerCoreBedrock(), projectName, compileFile, compileResource,
-                        DebugThread, compilerSetting, projectVersion,
-                        Path.GetDirectoryName(projectPath));
-                }
-                else
-                {
-                    compileFiled = Compiler.compile(new CompilerCoreBedrock(), projectName, compileFile, compileResource,
+                    compileFiled = Compiler.compile(core, projectName, compileFile, compileResource,
                         DebugThread, compilerSetting.withoutOffuscation(), projectVersion,
                         Path.GetDirectoryName(projectPath));
                 }
@@ -1480,147 +1396,6 @@ namespace JSharp
             debugMSGsShowned.ForEach(x => DebugDisplay(x.msg, x.color));
         }
 
-        private void CodeBox_VScroll(object sender, EventArgs e)
-        {
-            AddLineNumbers();
-        }
-        
-        private void CodeBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (!ignorNextKey)
-            {
-                switch (e.KeyValue)
-                {
-                    // Enter
-                    case '\r':
-                        // On compte le nombre de 'tab' de la ligne précédente
-                        string temp = Convert.ToString(CodeBox.Lines.GetValue(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart - 1)));
-                        Regex tab = new Regex("\t");
-
-                        int indent = temp.TakeWhile(x => x == '\t').Count();
-                        if (temp.EndsWith("{"))
-                            // si la ligne finit par "{" (début de struct / class / etc...) on ajoute une indentation
-                            indent++;
-
-                        temp = Convert.ToString(CodeBox.Lines.GetValue(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)));
-                        if (temp.Contains("}") && !temp.Contains("{"))
-                            // si la ligne contient "}" (fin de struct / class / etc...) on enlève une indentation
-                            indent = Math.Max(0, indent - 1);
-
-                        // et on la place dans le texte
-                        string temp2 = "{TAB " + indent + "}";
-                        ignorNextKey = true;
-                        SendKeys.Send(temp2);
-                        ignorNextKey = false;
-                        break;
-
-                    case '\t':
-                        string line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)].Replace(" ", "").Replace("\t", "");
-                        if (line.StartsWith("for") && !line.Contains("("))
-                        {
-                            ignorNextKey = true;
-                            SendKeys.Send("{(}int i = 0;i < length;i{+}{+}{)}{{}{ENTER}{ENTER}{}}{UP}");
-                            ignorNextKey = false;
-                        }
-                        else if (line.StartsWith("dtm") && !line.Contains("("))
-                        {
-                            ignorNextKey = true;
-                            SendKeys.Send("{BACKSPACE}{BACKSPACE}{BACKSPACE}{BACKSPACE}def ticking main{(}{)}{{}{ENTER}{ENTER}{}}{UP}");
-                            ignorNextKey = false;
-                        }
-                        break;
-                    // '}'
-                    case '}':
-                        ignorNextKey = true;
-                        SendKeys.Send("{LEFT}{BACKSPACE}{RIGHT}");
-                        ignorNextKey = false;
-                        break;
-
-                    default:
-                        break;
-                }
-                switch (e.KeyCode)
-                {
-                    case Keys.End:
-                        string line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)];
-                        int start = CodeBox.GetFirstCharIndexFromLine(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart));
-                        int length = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)].Length;
-
-                        if (start + length != CodeBox.SelectionStart && e.Shift)
-                        {
-                            ignorNextKey = true;
-                            SendKeys.Send("{LEFT}");
-                            ignorNextKey = false;
-                        }
-                        break;
-
-                    case Keys.Home:
-                        line = CodeBox.Lines[CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart)];
-                        start = CodeBox.GetFirstCharIndexFromLine(CodeBox.GetLineFromCharIndex(CodeBox.SelectionStart));
-                        int shift = 0;
-                        string tmp2 = "";
-                        while (line.StartsWith("\t"))
-                        {
-                            tmp2 += "{RIGHT}";
-                            shift++;
-                            line = line.Substring(1, line.Length - 1);
-                        }
-                        if (start + shift != CodeBox.SelectionStart)
-                        {
-                            ignorNextKey = true;
-                            SendKeys.Send(tmp2);
-                            ignorNextKey = false;
-                        }
-                        break;
-
-                    case Keys.Left:
-                        if (e.Control && !selfShift)
-                        {
-                            int i = CodeBox.SelectionStart - 1;
-                            tmp2 = "";
-                            Regex reg = new Regex("[a-zA-Z0-9_\\$]");
-                            while (i > 0 && reg.Match(CodeBox.Text[i].ToString()).Success)
-                            {
-                                i--;
-                                if (CodeBox.Text[i] == '_')
-                                {
-                                    tmp2 += "{Left}{Left}";
-                                }
-                            }
-                            ignorNextKey = true;
-                            SendKeys.Send(tmp2);
-                            ignorNextKey = false;
-                            selfShift = true;
-                        }
-                        break;
-                    case Keys.Right:
-                        if (e.Control && !selfShift)
-                        {
-                            int i = CodeBox.SelectionStart;
-                            tmp2 = "";
-                            Regex reg = new Regex("[a-zA-Z0-9_\\$]");
-                            while (i < CodeBox.Text.Length && reg.Match(CodeBox.Text[i].ToString()).Success)
-                            {
-                                i++;
-                                if (CodeBox.Text[i] == '_')
-                                {
-                                    tmp2 += "{RIGHT}{RIGHT}";
-                                }
-                            }
-                            selfShift = true;
-                            ignorNextKey = true;
-                            SendKeys.Send(tmp2);
-                            ignorNextKey = false;
-                        }
-                        break;
-
-                    default:
-                        selfShift = false;
-                        break;
-                }
-            }
-        }
-
         public void DebugThread(object msg, Color c)
         {
             debugMSGs.Add(new DebugMessage(msg.ToString(), c));
@@ -1707,13 +1482,7 @@ namespace JSharp
         private void CompileJava_Click(object sender, EventArgs e)
         {
             exporting = false;
-            CompileJava(true);
-            UpdateCodeBox();
-        }
-        private void CompileBedrock_Click(object sender, EventArgs e)
-        {
-            exporting = false;
-            CompileBedrock(true);
+            Compile(true);
             UpdateCodeBox();
         }
         private void LibraryButton_Click(object sender, EventArgs e)
@@ -1727,7 +1496,6 @@ namespace JSharp
                 if (previous == "import")
                 {
                     CodeBox.Text = code["import"];
-                    Formatter.reformat(CodeBox, this, false);
                 }
             }
         }
@@ -1756,6 +1524,21 @@ namespace JSharp
             ShowInfoButton.FlatAppearance.BorderSize = showInfo ? 3 : 1;
             ShowInfoButton.ForeColor = showInfo ? Color.FromArgb(255,0, 165, 255) : Color.Gray;
             ReShowError();
+        }
+        private void SaveButton_Click(object sender, EventArgs e)
+        {
+            if (projectPath == null)
+            {
+                if (ProjectSave.ShowDialog() == DialogResult.OK)
+                {
+                    projectPath = ProjectSave.FileName;
+                }
+                else
+                    return;
+            }
+            Save(projectPath);
+            UpdateProjectList();
+            Debug("Project save as " + projectPath, Color.Aqua);
         }
         #endregion
 
@@ -1887,13 +1670,13 @@ namespace JSharp
         }
         private void findToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Find_and_Replace far = new Find_and_Replace(CodeBox);
-            far.Show();
+            //Find_and_Replace far = new Find_and_Replace(CodeBox);
+            //far.Show();
         }
         private void findAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Find_and_Replace far = new Find_and_Replace(CodeBox);
-            far.Show();
+            //Find_and_Replace far = new Find_and_Replace(CodeBox);
+            //far.Show();
         }
         private void undoToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1965,17 +1748,8 @@ namespace JSharp
         private void compileToolStripMenuItem_Click(object sender, EventArgs e)
         {
             exporting = false;
-            CompileJava(true);
+            Compile(true);
             UpdateCodeBox();
-        }
-        private void resourcesPackEditorToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            GenerateResourcesPackFolder();
-            if (ForceSave())
-            {
-                ResourcesPackEditor = new ResourcesPackEditor(Path.GetDirectoryName(projectPath) + "/resourcespack");
-                ResourcesPackEditor.Show();
-            }
         }
         private void getCallStackTraceToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -2419,13 +2193,11 @@ namespace JSharp
         {
             pictureBox1.Visible = false;
             CodeBox.Visible = true;
-            LineNumberTextBox.Visible = true;
         }
         public void ShowImageBox()
         {
             pictureBox1.Visible = true;
             CodeBox.Visible = false;
-            LineNumberTextBox.Visible = false;
         }
 
         private void SelectFullPath(string fullPath)
@@ -2503,10 +2275,21 @@ namespace JSharp
         }
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (tabControl1.SelectedIndex > -1)
+            if (tabControl1.SelectedIndex > -1 && tabControl1.SelectedIndex < openedFullPath.Count)
             {
                 SelectFullPath(openedFullPath[tabControl1.SelectedIndex]);
             }
+        }
+
+        private void fastColoredTextBox1_Enter(object sender, EventArgs e)
+        {
+            CodeBox.DescriptionFile = "";
+            CodeBox.DescriptionFile = "formating.xml";
+        }
+
+        private void CodeBox_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

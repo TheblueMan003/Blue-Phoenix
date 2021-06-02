@@ -43,7 +43,8 @@ namespace JSharp
             ConstScoreboardBox.Text = compilerSetting.scoreboardConst;
             TempScoreboardBox.Text = compilerSetting.scoreboardTmp;
             IsLibCheckbox.Checked = !compilerSetting.isLibrary;
-            LibPaths.Text = compilerSetting.libraryFolder.Aggregate((s1, s2) => (s1 +";"+ s2));
+            LibPaths.Text = compilerSetting.libraryFolder.Count > 0?compilerSetting.libraryFolder.Aggregate((s1, s2) => (s1 +";"+ s2)):"";
+            CompilerCore_Box.Text = compilerSetting.CompilerCoreName;
 
             ExportAsZip_Box.Checked = compilerSetting.ExportAsZip;
 
@@ -93,6 +94,8 @@ namespace JSharp
                 compilerSetting.isLibrary = !IsLibCheckbox.Checked;
 
                 compilerSetting.ExportAsZip = ExportAsZip_Box.Checked;
+
+                compilerSetting.CompilerCoreName = CompilerCore_Box.Text;
 
                 Formatter.showEnumValue = HighlighEnum_Box.Checked;
                 Formatter.showFunc = HighlighFunction_Box.Checked;

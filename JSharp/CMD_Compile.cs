@@ -97,8 +97,14 @@ namespace BluePhoenix
             {
                 resourcesfiles.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
             }
-            List<Compiler.File> cFiles = Compiler.compile(new CompilerCoreJava(), project.projectName, files, resourcesfiles,
-                                            CMD_Compile.Debug, project.compilationSetting, project.version,
+
+            CompilerCore core;
+            if (project.compilationSetting.CompilerCoreName == "java") { core = new CompilerCoreJava(); }
+            else if (project.compilationSetting.CompilerCoreName == "bedrock") { core = new CompilerCoreBedrock(); }
+            else { throw new Exception("Unknown Compiler Core"); }
+
+            List<Compiler.File> cFiles = Compiler.compile(core, project.projectName, files, resourcesfiles,
+                                            Debug, project.compilationSetting, project.version,
                                             Path.GetDirectoryName(projectPath));
             
             foreach (Compiler.File f in cFiles)
@@ -122,7 +128,6 @@ namespace BluePhoenix
 
             if (Directory.Exists(rpdir))
             {
-
                 string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
                 if (Directory.Exists(rpPath))
                 {
@@ -183,15 +188,41 @@ namespace BluePhoenix
                         JsonConvert.SerializeObject(project.TagsList[key][file]));
                 }
             }
-            foreach (string key in Compiler.blockTags.Keys)
+            if (project.compilationSetting.tagsFolder)
             {
-                SafeWriteFile(path + "/data/" + project.projectName.ToLower() + "/tags/blocks/" + key + ".json",
-                        JsonConvert.SerializeObject(Compiler.blockTags[key]));
+                foreach (string key in Compiler.blockTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + project.projectName.ToLower() + "/tags/blocks/" + key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1).Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.blockTags[key]));
+                }
+                foreach (string key in Compiler.entityTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + project.projectName.ToLower() + "/tags/entity_types/" + key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1).Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.entityTags[key]));
+                }
+                foreach (string key in Compiler.itemTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + project.projectName.ToLower() + "/tags/items/" + key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1).Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.itemTags[key]));
+                }
             }
-            foreach (string key in Compiler.entityTags.Keys)
+            else
             {
-                SafeWriteFile(path + "/data/" + project.projectName.ToLower() + "/tags/entity_types/" + key + ".json",
-                        JsonConvert.SerializeObject(Compiler.entityTags[key]));
+                foreach (string key in Compiler.blockTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + project.projectName.ToLower() + "/tags/blocks/" + key.Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.blockTags[key]));
+                }
+                foreach (string key in Compiler.entityTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + project.projectName.ToLower() + "/tags/entity_types/" + key.Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.entityTags[key]));
+                }
+                foreach (string key in Compiler.itemTags.Keys)
+                {
+                    SafeWriteFile(path + "/data/" + project.projectName.ToLower() + "/tags/items/" + key.Replace(".", "/") + ".json",
+                            JsonConvert.SerializeObject(Compiler.itemTags[key]));
+                }
             }
         }
         public void ExportReadMe(string path)

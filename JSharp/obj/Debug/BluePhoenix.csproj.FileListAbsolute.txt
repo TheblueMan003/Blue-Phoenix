@@ -30,3 +30,5 @@ F:\002_Software_dev\JSharp\JSharp\bin\Debug\Cyotek.Data.Nbt.dll
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.ResourcesPackEditor.resources
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.NewItem.resources
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.LibImport.resources
+F:\002_Software_dev\JSharp\JSharp\bin\Debug\FastColoredTextBox.dll
+F:\002_Software_dev\JSharp\JSharp\bin\Debug\FastColoredTextBox.xml

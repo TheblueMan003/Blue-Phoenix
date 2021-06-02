@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -27,7 +28,26 @@ namespace JSharp
         private void UpdateList(){
             if (files.Count > 0)
             {
-                filesDic = files.ToDictionary(x => x.type == "json" ? x.name : ("functions/" + x.name));
+                filesDic = new Dictionary<string, Compiler.File>();
+                files.ForEach(x => filesDic[(x.type == "json") ? x.name : ("functions/" + x.name)]=x);
+                foreach (string key in Compiler.blockTags.Keys)
+                {
+                    filesDic["tags/blocks/" + key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1)
+                        .Replace(".", "/")] = new Compiler.File("",
+                            JsonConvert.SerializeObject(Compiler.blockTags[key]));
+                }
+                foreach (string key in Compiler.entityTags.Keys)
+                {
+                    filesDic["tags/entity_types/" + key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1)
+                        .Replace(".", "/")] = new Compiler.File("",
+                            JsonConvert.SerializeObject(Compiler.entityTags[key]));
+                }
+                foreach (string key in Compiler.itemTags.Keys)
+                {
+                    filesDic["tags/items/" + key.Substring(key.IndexOf(".")+1, key.Length - key.IndexOf(".")-1)
+                        .Replace(".", "/")] = new Compiler.File("",
+                            JsonConvert.SerializeObject(Compiler.itemTags[key]));
+                }
                 ReloadTree();
                 richTextBox1.Text = files[0].content;
             }
@@ -78,7 +98,7 @@ namespace JSharp
         private void ReloadTree()
         {
             treeView1.Nodes.Clear();
-            var paths = files.Select(x => x.type == "json"?x.name:("functions/" +x.name)).Where(x=>x.Contains(textBox1.Text)).ToList();
+            var paths = filesDic.Select(x => x.Key).Where(x => x.Contains(textBox1.Text)).ToList();
             BuildTree(paths, "", treeView1.Nodes);
         }
 

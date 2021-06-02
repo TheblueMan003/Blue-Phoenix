@@ -39,11 +39,14 @@
     <Reference Include="Cyotek.Data.Nbt, Version=3.0.0.0, Culture=neutral, PublicKeyToken=f434ef8a8b637f5f, processorArchitecture=MSIL">
       <HintPath>..\packages\Cyotek.Data.Nbt.3.1.1\lib\net452\Cyotek.Data.Nbt.dll</HintPath>
     </Reference>
+    <Reference Include="FastColoredTextBox, Version=2.16.24.0, Culture=neutral, PublicKeyToken=fb8aa12b994ef61b, processorArchitecture=MSIL">
+      <HintPath>..\packages\FCTB.2.16.24\lib\FastColoredTextBox.dll</HintPath>
+    </Reference>
     <Reference Include="GraphVizWrapper, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\GraphViz.NET.1.0.0\lib\net40\GraphVizWrapper.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -282,6 +285,9 @@
     <None Include="bin\Debug\assets\error.png" />
     <None Include="bin\Debug\assets\info.png" />
     <None Include="bin\Debug\assets\warning.png" />
+    <None Include="bin\Debug\assets\new_file.png" />
+    <None Include="bin\Debug\assets\save.png" />
+    <None Include="bin\Debug\assets\run.png" />
     <Content Include="icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

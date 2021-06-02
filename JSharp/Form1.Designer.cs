@@ -30,8 +30,6 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            this.button1 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -51,7 +49,6 @@
             this.redoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.projectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.resourcesPackEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.compileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.compileOrderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -61,10 +58,10 @@
             this.settingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.getCallStackTraceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.generateResourcesPackToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ProjectSave = new System.Windows.Forms.SaveFileDialog();
             this.ProjectOpen = new System.Windows.Forms.OpenFileDialog();
             this.ExportSave = new System.Windows.Forms.SaveFileDialog();
-            this.LineNumberTextBox = new System.Windows.Forms.RichTextBox();
             this.ErrorBox = new System.Windows.Forms.RichTextBox();
             this.button5 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
@@ -72,10 +69,8 @@
             this.button6 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
-            this.CodeBox = new System.Windows.Forms.RichTextBox();
             this.button9 = new System.Windows.Forms.Button();
             this.button10 = new System.Windows.Forms.Button();
-            this.button11 = new System.Windows.Forms.Button();
             this.DatapackOpen = new System.Windows.Forms.OpenFileDialog();
             this.button12 = new System.Windows.Forms.Button();
             this.button13 = new System.Windows.Forms.Button();
@@ -90,52 +85,30 @@
             this.label7 = new System.Windows.Forms.Label();
             this.LibraryButton = new System.Windows.Forms.Button();
             this.treeView1 = new System.Windows.Forms.TreeView();
-            this.ShowErrorButton = new System.Windows.Forms.Button();
-            this.ShowWarningButton = new System.Windows.Forms.Button();
-            this.ShowInfoButton = new System.Windows.Forms.Button();
-            this.ClearLogButton = new System.Windows.Forms.Button();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.generateResourcesPackToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.CodeListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.newFileToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.newFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fileToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.folderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.animatedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.newFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.animatedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.SaveButton = new System.Windows.Forms.Button();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.ShowInfoButton = new System.Windows.Forms.Button();
+            this.ShowWarningButton = new System.Windows.Forms.Button();
+            this.ShowErrorButton = new System.Windows.Forms.Button();
+            this.ClearLogButton = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
+            this.CodeBox = new FastColoredTextBoxNS.FastColoredTextBox();
             this.menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.CodeListContextMenu.SuspendLayout();
             this.tabControl1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.CodeBox)).BeginInit();
             this.SuspendLayout();
-            // 
-            // button1
-            // 
-            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button1.ForeColor = System.Drawing.Color.Lime;
-            this.button1.Location = new System.Drawing.Point(1038, 31);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(142, 23);
-            this.button1.TabIndex = 3;
-            this.button1.Text = "Compile Java";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // button2
-            // 
-            this.button2.BackColor = System.Drawing.Color.Black;
-            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button2.ForeColor = System.Drawing.Color.White;
-            this.button2.Location = new System.Drawing.Point(12, 31);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(86, 23);
-            this.button2.TabIndex = 6;
-            this.button2.Text = "New";
-            this.button2.UseVisualStyleBackColor = false;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // timer1
             // 
@@ -149,6 +122,7 @@
             this.displayToolStripMenuItem,
             this.projectToolStripMenuItem,
             this.toolsToolStripMenuItem});
+            this.menuStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(1192, 24);
@@ -292,7 +266,6 @@
             // 
             this.projectToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newFileToolStripMenuItem,
-            this.resourcesPackEditorToolStripMenuItem,
             this.compileToolStripMenuItem,
             this.compileOrderToolStripMenuItem,
             this.tagsToolStripMenuItem,
@@ -307,23 +280,15 @@
             // 
             this.newFileToolStripMenuItem.Name = "newFileToolStripMenuItem";
             this.newFileToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-            this.newFileToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.newFileToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.newFileToolStripMenuItem.Text = "New File";
             this.newFileToolStripMenuItem.Click += new System.EventHandler(this.newFileToolStripMenuItem_Click);
-            // 
-            // resourcesPackEditorToolStripMenuItem
-            // 
-            this.resourcesPackEditorToolStripMenuItem.Name = "resourcesPackEditorToolStripMenuItem";
-            this.resourcesPackEditorToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.P)));
-            this.resourcesPackEditorToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
-            this.resourcesPackEditorToolStripMenuItem.Text = "Resources Pack Editor";
-            this.resourcesPackEditorToolStripMenuItem.Click += new System.EventHandler(this.resourcesPackEditorToolStripMenuItem_Click);
             // 
             // compileToolStripMenuItem
             // 
             this.compileToolStripMenuItem.Name = "compileToolStripMenuItem";
             this.compileToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F5;
-            this.compileToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.compileToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.compileToolStripMenuItem.Text = "Compile";
             this.compileToolStripMenuItem.Click += new System.EventHandler(this.compileToolStripMenuItem_Click);
             // 
@@ -331,7 +296,7 @@
             // 
             this.compileOrderToolStripMenuItem.Name = "compileOrderToolStripMenuItem";
             this.compileOrderToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.U)));
-            this.compileOrderToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.compileOrderToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.compileOrderToolStripMenuItem.Text = "Compile Order";
             this.compileOrderToolStripMenuItem.Click += new System.EventHandler(this.compileOrderToolStripMenuItem_Click);
             // 
@@ -341,7 +306,7 @@
             this.projectToolStripMenuItem1,
             this.minecraftToolStripMenuItem});
             this.tagsToolStripMenuItem.Name = "tagsToolStripMenuItem";
-            this.tagsToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.tagsToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.tagsToolStripMenuItem.Text = "Tags";
             this.tagsToolStripMenuItem.Click += new System.EventHandler(this.tagsToolStripMenuItem_Click);
             // 
@@ -362,14 +327,14 @@
             // structuresToolStripMenuItem
             // 
             this.structuresToolStripMenuItem.Name = "structuresToolStripMenuItem";
-            this.structuresToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.structuresToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.structuresToolStripMenuItem.Text = "Structures";
             this.structuresToolStripMenuItem.Click += new System.EventHandler(this.structuresToolStripMenuItem_Click);
             // 
             // settingToolStripMenuItem
             // 
             this.settingToolStripMenuItem.Name = "settingToolStripMenuItem";
-            this.settingToolStripMenuItem.Size = new System.Drawing.Size(230, 22);
+            this.settingToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.settingToolStripMenuItem.Text = "Setting";
             this.settingToolStripMenuItem.Click += new System.EventHandler(this.settingToolStripMenuItem_Click);
             // 
@@ -390,6 +355,13 @@
             this.getCallStackTraceToolStripMenuItem.Text = "Get Call Stack Trace";
             this.getCallStackTraceToolStripMenuItem.Click += new System.EventHandler(this.getCallStackTraceToolStripMenuItem_Click);
             // 
+            // generateResourcesPackToolStripMenuItem
+            // 
+            this.generateResourcesPackToolStripMenuItem.Name = "generateResourcesPackToolStripMenuItem";
+            this.generateResourcesPackToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.generateResourcesPackToolStripMenuItem.Text = "Generate Resources Pack";
+            this.generateResourcesPackToolStripMenuItem.Click += new System.EventHandler(this.generateResourcesPackToolStripMenuItem_Click);
+            // 
             // ProjectSave
             // 
             this.ProjectSave.Filter = "*.tbms|*.tbms";
@@ -399,24 +371,6 @@
             // 
             this.ProjectOpen.Filter = "*.tbms|*.tbms";
             this.ProjectOpen.Title = "OpenProject";
-            // 
-            // LineNumberTextBox
-            // 
-            this.LineNumberTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.LineNumberTextBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.LineNumberTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.LineNumberTextBox.Font = new System.Drawing.Font("Arial", 9.75F);
-            this.LineNumberTextBox.ForeColor = System.Drawing.Color.White;
-            this.LineNumberTextBox.Location = new System.Drawing.Point(237, 62);
-            this.LineNumberTextBox.Name = "LineNumberTextBox";
-            this.LineNumberTextBox.ReadOnly = true;
-            this.LineNumberTextBox.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.None;
-            this.LineNumberTextBox.Size = new System.Drawing.Size(67, 492);
-            this.LineNumberTextBox.TabIndex = 1;
-            this.LineNumberTextBox.Text = "1";
-            this.LineNumberTextBox.WordWrap = false;
-            this.LineNumberTextBox.ZoomFactor = 1.75F;
             // 
             // ErrorBox
             // 
@@ -516,32 +470,6 @@
             this.button8.UseVisualStyleBackColor = false;
             this.button8.Click += new System.EventHandler(this.EnumPreview_Click);
             // 
-            // CodeBox
-            // 
-            this.CodeBox.AcceptsTab = true;
-            this.CodeBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.CodeBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.CodeBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.CodeBox.DetectUrls = false;
-            this.CodeBox.Font = new System.Drawing.Font("Courier New", 10F);
-            this.CodeBox.ForeColor = System.Drawing.Color.White;
-            this.CodeBox.Location = new System.Drawing.Point(302, 62);
-            this.CodeBox.Name = "CodeBox";
-            this.CodeBox.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.ForcedBoth;
-            this.CodeBox.ShowSelectionMargin = true;
-            this.CodeBox.Size = new System.Drawing.Size(730, 492);
-            this.CodeBox.TabIndex = 0;
-            this.CodeBox.Text = "package main";
-            this.CodeBox.WordWrap = false;
-            this.CodeBox.ZoomFactor = 1.75F;
-            this.CodeBox.VScroll += new System.EventHandler(this.CodeBox_VScroll);
-            this.CodeBox.MouseClick += new System.Windows.Forms.MouseEventHandler(this.CodeBox_MouseClick);
-            this.CodeBox.TextChanged += new System.EventHandler(this.CodeBox_TextChanged);
-            this.CodeBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.CodeBox_KeyDown);
-            this.CodeBox.Leave += new System.EventHandler(this.CodeBox_Leave);
-            // 
             // button9
             // 
             this.button9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -569,19 +497,6 @@
             this.button10.Text = "Block/Item";
             this.button10.UseVisualStyleBackColor = false;
             this.button10.Click += new System.EventHandler(this.BlockPreview_Click);
-            // 
-            // button11
-            // 
-            this.button11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button11.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button11.ForeColor = System.Drawing.Color.Lime;
-            this.button11.Location = new System.Drawing.Point(890, 31);
-            this.button11.Name = "button11";
-            this.button11.Size = new System.Drawing.Size(142, 23);
-            this.button11.TabIndex = 18;
-            this.button11.Text = "Compile Bedrock";
-            this.button11.UseVisualStyleBackColor = true;
-            this.button11.Click += new System.EventHandler(this.CompileBedrock_Click);
             // 
             // button12
             // 
@@ -750,86 +665,6 @@
             this.treeView1.DoubleClick += new System.EventHandler(this.treeView1_DoubleClick);
             this.treeView1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.treeView1_KeyDown);
             // 
-            // ShowErrorButton
-            // 
-            this.ShowErrorButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.ShowErrorButton.BackColor = System.Drawing.Color.Black;
-            this.ShowErrorButton.FlatAppearance.BorderSize = 3;
-            this.ShowErrorButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ShowErrorButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.ShowErrorButton.Image = global::BluePhoenix.Properties.Resources.error;
-            this.ShowErrorButton.Location = new System.Drawing.Point(1152, 594);
-            this.ShowErrorButton.Name = "ShowErrorButton";
-            this.ShowErrorButton.Size = new System.Drawing.Size(28, 28);
-            this.ShowErrorButton.TabIndex = 35;
-            this.ShowErrorButton.UseVisualStyleBackColor = false;
-            this.ShowErrorButton.Click += new System.EventHandler(this.ErrorButton_Click);
-            // 
-            // ShowWarningButton
-            // 
-            this.ShowWarningButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.ShowWarningButton.BackColor = System.Drawing.Color.Black;
-            this.ShowWarningButton.FlatAppearance.BorderSize = 3;
-            this.ShowWarningButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ShowWarningButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.ShowWarningButton.Image = global::BluePhoenix.Properties.Resources.warning;
-            this.ShowWarningButton.Location = new System.Drawing.Point(1152, 625);
-            this.ShowWarningButton.Name = "ShowWarningButton";
-            this.ShowWarningButton.Size = new System.Drawing.Size(28, 28);
-            this.ShowWarningButton.TabIndex = 36;
-            this.ShowWarningButton.UseVisualStyleBackColor = false;
-            this.ShowWarningButton.Click += new System.EventHandler(this.WarningButton_Click);
-            // 
-            // ShowInfoButton
-            // 
-            this.ShowInfoButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.ShowInfoButton.BackColor = System.Drawing.Color.Black;
-            this.ShowInfoButton.FlatAppearance.BorderSize = 3;
-            this.ShowInfoButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ShowInfoButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.ShowInfoButton.Image = global::BluePhoenix.Properties.Resources.info;
-            this.ShowInfoButton.Location = new System.Drawing.Point(1152, 656);
-            this.ShowInfoButton.Name = "ShowInfoButton";
-            this.ShowInfoButton.Size = new System.Drawing.Size(28, 28);
-            this.ShowInfoButton.TabIndex = 37;
-            this.ShowInfoButton.UseVisualStyleBackColor = false;
-            this.ShowInfoButton.Click += new System.EventHandler(this.InfoButton_Click);
-            // 
-            // ClearLogButton
-            // 
-            this.ClearLogButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.ClearLogButton.BackColor = System.Drawing.Color.Black;
-            this.ClearLogButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ClearLogButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.ClearLogButton.Image = global::BluePhoenix.Properties.Resources.clear;
-            this.ClearLogButton.Location = new System.Drawing.Point(1152, 563);
-            this.ClearLogButton.Name = "ClearLogButton";
-            this.ClearLogButton.Size = new System.Drawing.Size(28, 28);
-            this.ClearLogButton.TabIndex = 34;
-            this.ClearLogButton.UseVisualStyleBackColor = false;
-            this.ClearLogButton.Click += new System.EventHandler(this.ClearLogButton_Click);
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pictureBox1.Location = new System.Drawing.Point(237, 62);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(795, 492);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.pictureBox1.TabIndex = 38;
-            this.pictureBox1.TabStop = false;
-            this.pictureBox1.Visible = false;
-            // 
-            // generateResourcesPackToolStripMenuItem
-            // 
-            this.generateResourcesPackToolStripMenuItem.Name = "generateResourcesPackToolStripMenuItem";
-            this.generateResourcesPackToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
-            this.generateResourcesPackToolStripMenuItem.Text = "Generate Resources Pack";
-            this.generateResourcesPackToolStripMenuItem.Click += new System.EventHandler(this.generateResourcesPackToolStripMenuItem_Click);
-            // 
             // CodeListContextMenu
             // 
             this.CodeListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -848,34 +683,19 @@
             this.newFileToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
             this.newFileToolStripMenuItem1.Text = "New";
             // 
-            // newFolderToolStripMenuItem
-            // 
-            this.newFolderToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.animatedToolStripMenuItem});
-            this.newFolderToolStripMenuItem.Name = "newFolderToolStripMenuItem";
-            this.newFolderToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
-            this.newFolderToolStripMenuItem.Text = "Resources Pack";
-            // 
             // fileToolStripMenuItem1
             // 
             this.fileToolStripMenuItem1.Name = "fileToolStripMenuItem1";
-            this.fileToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.fileToolStripMenuItem1.Size = new System.Drawing.Size(107, 22);
             this.fileToolStripMenuItem1.Text = "File";
             this.fileToolStripMenuItem1.Click += new System.EventHandler(this.fileToolStripMenuItem1_Click);
             // 
             // folderToolStripMenuItem
             // 
             this.folderToolStripMenuItem.Name = "folderToolStripMenuItem";
-            this.folderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.folderToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.folderToolStripMenuItem.Text = "Folder";
             this.folderToolStripMenuItem.Click += new System.EventHandler(this.folderToolStripMenuItem_Click);
-            // 
-            // animatedToolStripMenuItem
-            // 
-            this.animatedToolStripMenuItem.Name = "animatedToolStripMenuItem";
-            this.animatedToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.animatedToolStripMenuItem.Text = "Animated";
-            this.animatedToolStripMenuItem.Click += new System.EventHandler(this.animatedToolStripMenuItem_Click);
             // 
             // deleteToolStripMenuItem
             // 
@@ -884,13 +704,28 @@
             this.deleteToolStripMenuItem.Text = "Delete";
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
             // 
+            // newFolderToolStripMenuItem
+            // 
+            this.newFolderToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.animatedToolStripMenuItem});
+            this.newFolderToolStripMenuItem.Name = "newFolderToolStripMenuItem";
+            this.newFolderToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.newFolderToolStripMenuItem.Text = "Resources Pack";
+            // 
+            // animatedToolStripMenuItem
+            // 
+            this.animatedToolStripMenuItem.Name = "animatedToolStripMenuItem";
+            this.animatedToolStripMenuItem.Size = new System.Drawing.Size(126, 22);
+            this.animatedToolStripMenuItem.Text = "Animated";
+            this.animatedToolStripMenuItem.Click += new System.EventHandler(this.animatedToolStripMenuItem_Click);
+            // 
             // tabPage1
             // 
             this.tabPage1.ForeColor = System.Drawing.Color.Black;
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(639, 0);
+            this.tabPage1.Size = new System.Drawing.Size(787, 0);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -903,9 +738,167 @@
             this.tabControl1.Location = new System.Drawing.Point(237, 42);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(647, 19);
+            this.tabControl1.Size = new System.Drawing.Size(795, 19);
             this.tabControl1.TabIndex = 40;
             this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
+            // 
+            // SaveButton
+            // 
+            this.SaveButton.BackColor = System.Drawing.Color.Black;
+            this.SaveButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.SaveButton.ForeColor = System.Drawing.Color.White;
+            this.SaveButton.Image = global::BluePhoenix.Properties.Resources.save;
+            this.SaveButton.Location = new System.Drawing.Point(46, 31);
+            this.SaveButton.Name = "SaveButton";
+            this.SaveButton.Size = new System.Drawing.Size(28, 28);
+            this.SaveButton.TabIndex = 41;
+            this.SaveButton.UseVisualStyleBackColor = false;
+            this.SaveButton.Click += new System.EventHandler(this.SaveButton_Click);
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pictureBox1.Location = new System.Drawing.Point(237, 62);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(795, 492);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.pictureBox1.TabIndex = 38;
+            this.pictureBox1.TabStop = false;
+            this.pictureBox1.Visible = false;
+            // 
+            // ShowInfoButton
+            // 
+            this.ShowInfoButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ShowInfoButton.BackColor = System.Drawing.Color.Black;
+            this.ShowInfoButton.FlatAppearance.BorderSize = 3;
+            this.ShowInfoButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ShowInfoButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.ShowInfoButton.Image = global::BluePhoenix.Properties.Resources.info;
+            this.ShowInfoButton.Location = new System.Drawing.Point(1152, 656);
+            this.ShowInfoButton.Name = "ShowInfoButton";
+            this.ShowInfoButton.Size = new System.Drawing.Size(28, 28);
+            this.ShowInfoButton.TabIndex = 37;
+            this.ShowInfoButton.UseVisualStyleBackColor = false;
+            this.ShowInfoButton.Click += new System.EventHandler(this.InfoButton_Click);
+            // 
+            // ShowWarningButton
+            // 
+            this.ShowWarningButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ShowWarningButton.BackColor = System.Drawing.Color.Black;
+            this.ShowWarningButton.FlatAppearance.BorderSize = 3;
+            this.ShowWarningButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ShowWarningButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.ShowWarningButton.Image = global::BluePhoenix.Properties.Resources.warning;
+            this.ShowWarningButton.Location = new System.Drawing.Point(1152, 625);
+            this.ShowWarningButton.Name = "ShowWarningButton";
+            this.ShowWarningButton.Size = new System.Drawing.Size(28, 28);
+            this.ShowWarningButton.TabIndex = 36;
+            this.ShowWarningButton.UseVisualStyleBackColor = false;
+            this.ShowWarningButton.Click += new System.EventHandler(this.WarningButton_Click);
+            // 
+            // ShowErrorButton
+            // 
+            this.ShowErrorButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ShowErrorButton.BackColor = System.Drawing.Color.Black;
+            this.ShowErrorButton.FlatAppearance.BorderSize = 3;
+            this.ShowErrorButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ShowErrorButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.ShowErrorButton.Image = global::BluePhoenix.Properties.Resources.error;
+            this.ShowErrorButton.Location = new System.Drawing.Point(1152, 594);
+            this.ShowErrorButton.Name = "ShowErrorButton";
+            this.ShowErrorButton.Size = new System.Drawing.Size(28, 28);
+            this.ShowErrorButton.TabIndex = 35;
+            this.ShowErrorButton.UseVisualStyleBackColor = false;
+            this.ShowErrorButton.Click += new System.EventHandler(this.ErrorButton_Click);
+            // 
+            // ClearLogButton
+            // 
+            this.ClearLogButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ClearLogButton.BackColor = System.Drawing.Color.Black;
+            this.ClearLogButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ClearLogButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.ClearLogButton.Image = global::BluePhoenix.Properties.Resources.clear;
+            this.ClearLogButton.Location = new System.Drawing.Point(1152, 563);
+            this.ClearLogButton.Name = "ClearLogButton";
+            this.ClearLogButton.Size = new System.Drawing.Size(28, 28);
+            this.ClearLogButton.TabIndex = 34;
+            this.ClearLogButton.UseVisualStyleBackColor = false;
+            this.ClearLogButton.Click += new System.EventHandler(this.ClearLogButton_Click);
+            // 
+            // button2
+            // 
+            this.button2.BackColor = System.Drawing.Color.Black;
+            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button2.ForeColor = System.Drawing.Color.White;
+            this.button2.Image = global::BluePhoenix.Properties.Resources.new_file;
+            this.button2.Location = new System.Drawing.Point(12, 31);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(28, 28);
+            this.button2.TabIndex = 6;
+            this.button2.UseVisualStyleBackColor = false;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // button1
+            // 
+            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button1.ForeColor = System.Drawing.Color.Lime;
+            this.button1.Image = global::BluePhoenix.Properties.Resources.run;
+            this.button1.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.button1.Location = new System.Drawing.Point(1038, 31);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(142, 23);
+            this.button1.TabIndex = 3;
+            this.button1.Text = "Compile";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // CodeBox
+            // 
+            this.CodeBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.CodeBox.AutoCompleteBrackets = true;
+            this.CodeBox.AutoCompleteBracketsList = new char[] {
+        '(',
+        ')',
+        '{',
+        '}',
+        '[',
+        ']',
+        '\"',
+        '\"',
+        '\'',
+        '\''};
+            this.CodeBox.AutoScrollMinSize = new System.Drawing.Size(27, 14);
+            this.CodeBox.BackBrush = null;
+            this.CodeBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.CodeBox.CaretColor = System.Drawing.Color.White;
+            this.CodeBox.CharHeight = 14;
+            this.CodeBox.CharWidth = 8;
+            this.CodeBox.CurrentLineColor = System.Drawing.Color.DimGray;
+            this.CodeBox.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.CodeBox.DescriptionFile = "F:\\002_Software_dev\\JSharp\\JSharp\\bin\\Debug\\formating.xml";
+            this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this.CodeBox.Font = new System.Drawing.Font("Courier New", 9.75F);
+            this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.CodeBox.IsReplaceMode = false;
+            this.CodeBox.LineNumberColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.CodeBox.Location = new System.Drawing.Point(237, 62);
+            this.CodeBox.Name = "CodeBox";
+            this.CodeBox.Paddings = new System.Windows.Forms.Padding(0);
+            this.CodeBox.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+            this.CodeBox.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("CodeBox.ServiceColors")));
+            this.CodeBox.ServiceLinesColor = System.Drawing.Color.DimGray;
+            this.CodeBox.ShowFoldingLines = true;
+            this.CodeBox.Size = new System.Drawing.Size(795, 492);
+            this.CodeBox.TabIndex = 42;
+            this.CodeBox.Zoom = 100;
+            this.CodeBox.Load += new System.EventHandler(this.CodeBox_Load);
+            this.CodeBox.Enter += new System.EventHandler(this.fastColoredTextBox1_Enter);
             // 
             // Form1
             // 
@@ -913,6 +906,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(1192, 732);
+            this.Controls.Add(this.CodeBox);
+            this.Controls.Add(this.SaveButton);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.ShowInfoButton);
@@ -931,7 +926,6 @@
             this.Controls.Add(this.button14);
             this.Controls.Add(this.button13);
             this.Controls.Add(this.button12);
-            this.Controls.Add(this.button11);
             this.Controls.Add(this.button10);
             this.Controls.Add(this.button9);
             this.Controls.Add(this.button8);
@@ -941,8 +935,6 @@
             this.Controls.Add(this.button3);
             this.Controls.Add(this.ErrorBox);
             this.Controls.Add(this.button5);
-            this.Controls.Add(this.LineNumberTextBox);
-            this.Controls.Add(this.CodeBox);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.menuStrip1);
@@ -957,9 +949,10 @@
             this.Load += new System.EventHandler(this.Form1_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.CodeListContextMenu.ResumeLayout(false);
             this.tabControl1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.CodeBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -990,11 +983,9 @@
         private System.Windows.Forms.ToolStripMenuItem projectToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem minecraftToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem newDatapackToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem structuresToolStripMenuItem;
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button4;
-        private System.Windows.Forms.RichTextBox LineNumberTextBox;
         private System.Windows.Forms.RichTextBox ErrorBox;
         private System.Windows.Forms.Button button6;
         private System.Windows.Forms.Button button7;
@@ -1003,10 +994,8 @@
         private System.Windows.Forms.ToolStripMenuItem findAndReplaceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem undoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem redoToolStripMenuItem;
-        private System.Windows.Forms.RichTextBox CodeBox;
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.Button button10;
-        private System.Windows.Forms.Button button11;
         private System.Windows.Forms.ToolStripMenuItem settingToolStripMenuItem;
         private System.Windows.Forms.OpenFileDialog DatapackOpen;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
@@ -1014,7 +1003,6 @@
         private System.Windows.Forms.Button button12;
         private System.Windows.Forms.Button button13;
         private System.Windows.Forms.Button button14;
-        private System.Windows.Forms.ToolStripMenuItem resourcesPackEditorToolStripMenuItem;
         private System.Windows.Forms.SaveFileDialog ExportRP;
         private System.Windows.Forms.Button button15;
         private System.Windows.Forms.ToolStripMenuItem compileToolStripMenuItem;
@@ -1041,6 +1029,9 @@
         private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.Button SaveButton;
+        private System.Windows.Forms.ToolStripMenuItem structuresToolStripMenuItem;
+        private FastColoredTextBoxNS.FastColoredTextBox CodeBox;
     }
 }
 

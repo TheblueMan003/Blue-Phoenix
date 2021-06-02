@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -38,7 +39,7 @@ namespace JSharp
         private static Regex funcDocRegex = new Regex("(?s)\"\"\"[^\"\"\"]*\"\"\"");
         private static List<ColorCoding> colorCodings = new List<ColorCoding>();
         public static bool reformating = false;
-        public static bool showName = false;
+        public static bool showName = true;
         public static bool showFunc = true;
         public static bool showEnumValue = true;
 
@@ -50,44 +51,80 @@ namespace JSharp
             Color cKeyword = Color.FromArgb(255, 255, 200);
 
             colorCodings = new List<ColorCoding>();
-            colorCodings.Add(ColorCoding.GetSelector(selector, Color.LightBlue));
-            colorCodings.Add(ColorCoding.Get(blueWord, Color.Aqua));
-            colorCodings.Add(ColorCoding.Get(importWord, Color.FromArgb(74, 156, 199)));
-            colorCodings.Add(ColorCoding.Get(CommandParser.funcName, Color.FromArgb(0, 185, 255)));
-            colorCodings.Add(ColorCoding.Get(defWord, Color.FromArgb(74, 156, 199)));
-            colorCodings.Add(ColorCoding.Get(defWordMore1.Distinct().ToArray(), Color.FromArgb(74, 156, 199)));
-            if (showFunc)
-            {
-                colorCodings.Add(ColorCoding.Get(funKeyword.Distinct().ToArray(), Color.Magenta));
-            }
-            colorCodings.Add(ColorCoding.Get(typKeyword.Distinct().ToArray(), Color.Orange));
-            colorCodings.Add(ColorCoding.Get(compKeyword.Distinct().ToArray(), Color.Magenta));
-            colorCodings.Add(ColorCoding.GetSelector(tags.ToArray(), Color.Magenta));
+            colorCodings.Add(ColorCoding.GetSelector(selector, Color.LightBlue, ""));
+            colorCodings.Add(ColorCoding.Get(blueWord, Color.Aqua, "Bold"));
+
+            colorCodings.Add(ColorCoding.Get(CommandParser.funcName, Color.FromArgb(0, 185, 255), ""));
+            colorCodings.Add(ColorCoding.Get(defWord.Concat(importWord).Concat(defWordMore1.Distinct()).ToArray(), Color.FromArgb(74, 156, 199), "Bold"));
+
+            colorCodings.Add(ColorCoding.Get(funKeyword
+                                            .Concat(compKeyword)
+                                            .Concat(tags.ToArray()).Distinct()
+                                            .ToArray(), Color.Magenta, "Bold"));
+            
+            colorCodings.Add(ColorCoding.Get(typKeyword.Distinct().ToArray(), Color.Orange, "Bold"));
 
             if (showName)
             {
-                colorCodings.Add(ColorCoding.Get(CommandParser.names.Distinct().ToArray(), cKeyword));
-                colorCodings.Add(ColorCoding.Get(CommandParser.scoreboards.Distinct().ToArray(), cKeyword));
-                colorCodings.Add(ColorCoding.Get(CommandParser.effects, cKeyword));
-                colorCodings.Add(ColorCoding.Get(CommandParser.gamerules.Distinct().ToArray(), cKeyword));
-                colorCodings.Add(ColorCoding.Get(CommandParser.sounds.Distinct().ToArray(), cKeyword));
+                colorCodings.Add(ColorCoding.Get(CommandParser.names.Distinct()
+                    .Concat(CommandParser.scoreboards.Distinct())
+                    .Concat(CommandParser.effects)
+                    .Concat(CommandParser.gamerules.Distinct())
+                    .Concat(CommandParser.sounds.Distinct())
+                    .ToArray(), cKeyword, ""));
             }
             
 
-            colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex));
-            colorCodings.Add(ColorCoding.Get(structs.Distinct().ToArray(), cClass));
-            colorCodings.Add(ColorCoding.Get(defWordMore2.Distinct().ToArray(), cFunction));
-            colorCodings.Add(ColorCoding.GetPackage(package.Distinct().ToArray(), Color.LightSteelBlue));
-            colorCodings.Add(ColorCoding.Get(enums.Distinct().ToArray(), cClass));
+            colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex, @"(-?\b)(\d+\.\d+|\d+)[bldsf]?\b", ""));
+            colorCodings.Add(ColorCoding.Get(structs.Concat(enums).Distinct().ToArray(), cClass, "Bold"));
+            colorCodings.Add(ColorCoding.Get(defWordMore2.Distinct().ToArray(), cFunction, ""));
+            colorCodings.Add(ColorCoding.GetPackage(package.Distinct().ToArray(), Color.LightSteelBlue, "Bold"));
+
             if (showEnumValue)
             {
-                colorCodings.Add(ColorCoding.Get(enumsValue.Distinct().ToArray(), Color.LightGreen));
+                colorCodings.Add(ColorCoding.Get(enumsValue.Distinct().ToArray(), Color.LightGreen, ""));
             }
 
-            colorCodings.Add(new ColorCoding(Color.Gray, commentRegex));
-            colorCodings.Add(new ColorCoding(cString, wordRegex));
-            colorCodings.Add(new ColorCoding(Color.LightYellow, funcDocRegex));
+            colorCodings.Add(new ColorCoding(Color.Gray, commentRegex, @"(?s)(//[^\n]*|/\*[^*]*\*/)", "Italic"));
+            colorCodings.Add(new ColorCoding(cString, wordRegex, "\"[^\"]*\"", "Italic"));
+            colorCodings.Add(new ColorCoding(Color.LightYellow, funcDocRegex, "(?s)\"\"\"[^\"\"\"]*\"\"\"","Italic"));
+            generateXML();
         }
+        private static String HexConverter(System.Drawing.Color c)
+        {
+            return "#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
+        }
+        public static void generateXML()
+        {
+            string doc = "<doc>\n";
+            doc += "<brackets left=\"\\{\" right=\"\\}\"/>\n";
+            doc += "<brackets left=\"\\[\" right=\"\\]\"/>\n";
+            doc += "<brackets left=\"\\(\" right=\"\\)\"/>\n";
+
+            int index = 0;
+            colorCodings.Reverse();
+            foreach (var c in colorCodings)
+            {
+                string pattern = c.pattern.Replace("&", "&amp;")
+                                          .Replace(">", "&gt;")
+                                          .Replace("<", "&lt;")
+                                          .Replace("'", "&apos;")
+                                          .Replace("\"", "&quot;");
+                if (pattern!=null && pattern != "§§§§§§§§§§§")
+                {
+                    if (c.fontStyle=="")
+                        doc += $"<style name=\"s_{index}\" color=\"{HexConverter(c.c)}\" />\n";
+                    else
+                        doc += $"<style name=\"s_{index}\" color=\"{HexConverter(c.c)}\" fontStyle=\"{c.fontStyle}\" />\n";
+                    doc += $"<rule style=\"s_{index}\" options=\"Singleline,IgnoreCase\">{pattern}</rule>\n";
+                }
+                index++;
+            }
+            colorCodings.Reverse();
+            doc += "<folding start=\"\\{\" finish=\"\\}\" options=\"IgnoreCase\"/></doc>\n";
+            File.WriteAllText("formating.xml", doc);
+        }
+
         public static void setEnum(List<string> keys)
         {
             enums = keys;
@@ -143,7 +180,7 @@ namespace JSharp
                     f.ActiveControl = null;
                     hadFocus = true;
                 }
-
+                
                 int start = partial ? Math.Max(lineCharIndex, 0) : 0;
                 if (lineIndex < CodeBox.Lines.Length)
                 {
@@ -169,6 +206,7 @@ namespace JSharp
             reformating = false;
             }
         }
+
         private static List<List<Word>> smartReplace(string t, int start, int length)
         {
 
@@ -208,6 +246,7 @@ namespace JSharp
 
              return words;
         }
+
 
         private static void CheckWords(RichTextBox CodeBox, int startIndex, int endIndex)
         {
@@ -274,14 +313,18 @@ namespace JSharp
         {
             public Color c;
             public Regex r;
+            public string pattern;
+            public string fontStyle;
 
-            public ColorCoding(Color c, Regex r)
+            public ColorCoding(Color c, Regex r, string pattern, string fontStyle)
             {
                 this.c = c;
                 this.r = r;
+                this.pattern = pattern;
+                this.fontStyle = fontStyle;
             }
 
-            public static ColorCoding Get(string[] lst, Color c)
+            public static ColorCoding Get(string[] lst, Color c, string fontStyle)
             {
                 string s = "(?i)(";
                 foreach(string p in lst)
@@ -293,9 +336,9 @@ namespace JSharp
                 {
                     s = "§§§§§§§§§§§";
                 }
-                return new ColorCoding(c, new Regex(s));
+                return new ColorCoding(c, new Regex(s), s, fontStyle);
             }
-            public static ColorCoding GetPackage(string[] lst, Color c)
+            public static ColorCoding GetPackage(string[] lst, Color c, string fontStyle)
             {
                 string s = "(?i)(";
                 foreach (string p in lst)
@@ -307,14 +350,14 @@ namespace JSharp
                 {
                     s = "§§§§§§§§§§§";
                 }
-                return new ColorCoding(c, new Regex(s));
+                return new ColorCoding(c, new Regex(s), s, fontStyle);
             }
-            public static ColorCoding GetSelector(string[] lst, Color c)
+            public static ColorCoding GetSelector(string[] lst, Color c, string fontStyle)
             {
                 string s = "(?i)(";
                 foreach (string p in lst)
                 {
-                    s += p.Replace("|", "\\|").Replace("@", "\\@") +@"\[.*\]" + @"|";
+                    s += p.Replace("|", "\\|").Replace("@", "\\@") +@"\[[^\n]*\]" + @"|";
                     s += p.Replace("|", "\\|").Replace("@", "\\@") + @"\b|";
                 }
                 s = s.Substring(0, s.Length - 1) + ")";
@@ -322,7 +365,7 @@ namespace JSharp
                 {
                     s = "§§§§§§§§§§§";
                 }
-                return new ColorCoding(c, new Regex(s));
+                return new ColorCoding(c, new Regex(s), s, fontStyle);
             }
         }
     }
