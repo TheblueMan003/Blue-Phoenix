@@ -20,14 +20,15 @@ namespace BluePhoenix
         private Dictionary<string, string> code = new Dictionary<string, string>();
         private string path;
         public static StringBuilder consoleText;
-        public CMD_Compile(string project, string path)
+        public bool zipForce;
+        public CMD_Compile(string project, string path, bool zipForce = false)
         {
             consoleText = new StringBuilder();
             projectPath = project;
             this.project = JsonConvert.DeserializeObject<ProjectSave>(File.ReadAllText(project));
             
             this.path = path;
-            
+            this.zipForce = zipForce;
             OpenFile();
         }
         public string Export()
@@ -38,7 +39,7 @@ namespace BluePhoenix
         public void ExportDataPack(string path, string rpPath)
         {
             string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-            string writePath = project.compilationSetting.ExportAsZip ? ProjectPath + "tmp_dp" : path;
+            string writePath = project.compilationSetting.ExportAsZip || zipForce ? ProjectPath + "tmp_dp" : path;
 
             if (File.Exists(writePath + "/pack.mcmeta"))
             {
@@ -55,7 +56,7 @@ namespace BluePhoenix
                             project.projectName + " - " + project.description,
                             project.compilationSetting.packformat)));
 
-            if (project.compilationSetting.ExportAsZip)
+            if (project.compilationSetting.ExportAsZip || zipForce)
             {
                 if (!path.EndsWith(".zip")) path += ".zip";
                 if (File.Exists(path)) { File.Delete(path); }

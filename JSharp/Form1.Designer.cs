@@ -894,9 +894,10 @@
             this.CodeBox.CharWidth = 8;
             this.CodeBox.CurrentLineColor = System.Drawing.Color.DimGray;
             this.CodeBox.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.CodeBox.DescriptionFile = "F:\\002_Software_dev\\JSharp\\JSharp\\bin\\Debug\\formating.xml";
+            this.CodeBox.DescriptionFile = "";
             this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.CodeBox.FoldingIndicatorColor = System.Drawing.Color.Chartreuse;
+            this.CodeBox.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.CodeBox.IsReplaceMode = false;
             this.CodeBox.LineNumberColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));

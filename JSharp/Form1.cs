@@ -79,6 +79,7 @@ namespace JSharp
 
         public Form1(string project = null)
         {
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             InitializeComponent();
             CommandParser.loadDict();
             Formatter.loadDict();
@@ -88,7 +89,6 @@ namespace JSharp
                 OpenFile(project);
             }
 
-            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             minusPath =   Image.FromFile(path + "assets/folder_open.png");
             plusPath =    Image.FromFile(path + "assets/folder_closed.png");
             filePath =    Image.FromFile(path + "assets/file.png");
@@ -2350,12 +2350,9 @@ namespace JSharp
         private void fastColoredTextBox1_Enter(object sender, EventArgs e)
         {
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-            //CodeBox.DescriptionFile = "";
-            //CodeBox.DescriptionFile = path+"formating.xml";
-            CodeBox.SyntaxHighlighter = new FastColoredTextBoxNS.SyntaxHighlighter(CodeBox);
-            CodeBox.SyntaxHighlighter.AddXmlDescription(path + "formating.xml", new System.Xml.XmlDocument());
+            //CodeBox.SyntaxHighlighter = null;
+            CodeBox.DescriptionFile = path+"formating.xml";
             autocompleteMenu1.Items = Formatter.getAutoComplete(CodeBox.Text);
-            
         }
         
 

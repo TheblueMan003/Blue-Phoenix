@@ -19,6 +19,7 @@ namespace JSharp
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             bool compiling = false;
+            bool zip = false;
             string path="";
             if (args != null)
             {
@@ -30,18 +31,22 @@ namespace JSharp
                         path = args[i + 1];
                         i++;
                     }
+                    if (args[i] == "-zip")
+                    {
+                        zip = true;
+                    }
                 }
             }
             if (compiling)
             {
                 try
                 {
-                    CMD_Compile compiler = new CMD_Compile(args[0], path);
+                    CMD_Compile compiler = new CMD_Compile(args[0], path, zip);
                     compiler.Export();
                 }
                 catch (Exception e)
                 {
-                    CMD_Compile.SafeWriteFile(path+"/console.log", CMD_Compile.consoleText.ToString()+"\n\n\n"+e.ToString());
+                    CMD_Compile.SafeWriteFile(Directory.GetParent(path)+"/console.log", CMD_Compile.consoleText.ToString()+"\n\n\n"+e.ToString());
                     return 1;
                 }
             }
