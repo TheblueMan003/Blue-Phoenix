@@ -128,7 +128,6 @@ namespace JSharp
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             string fullPath = treeView1.SelectedNode.FullPath;
-            int l = 0;
             
             if (filesDic.ContainsKey(fullPath))
             {

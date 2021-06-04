@@ -10,17 +10,24 @@ namespace JSharp
 {
     public static class EnumConverter
     {
-        public static Compiler.Enum GetEnum(string enums, string text, string type, bool final)
+        public static Compiler.Enum GetEnum(string enums, string text, string type, bool final, bool isPrivate)
         {
+            Compiler.Enum en;
             if (type.ToLower() == "init")
             {
-                return GetEnumINT(enums, text, final);
+                en = GetEnumINT(enums, text, final);
             }
-            if (type.ToLower() == "csv")
+            else if (type.ToLower() == "csv")
             {
-                return GetEnumCSV(enums, text, final);
+                en = GetEnumCSV(enums, text, final);
             }
-            throw new NotImplementedException("File Type: "+ type+" is not implemented");
+            else
+            {
+                throw new Exception($"Unknown format: {type}");
+            }
+            en.isPrivate = isPrivate;
+            en.privateContext = Compiler.context.GetVar();
+            return en;
         }
 
         private static string GetType(string value, string type)
@@ -86,7 +93,7 @@ namespace JSharp
             List<string> values = new List<string>();
             List<string> fields = new List<string>();
             List<string> types = new List<string>();
-            string type = "";
+            
             int i = 0;
             foreach (string line in text.Split('\n'))
             {

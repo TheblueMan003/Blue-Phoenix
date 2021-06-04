@@ -32,3 +32,9 @@ F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.NewItem.resources
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.LibImport.resources
 F:\002_Software_dev\JSharp\JSharp\bin\Debug\FastColoredTextBox.dll
 F:\002_Software_dev\JSharp\JSharp\bin\Debug\FastColoredTextBox.xml
+F:\002_Software_dev\JSharp\JSharp\bin\Debug\AutocompleteMenu.dll
+F:\002_Software_dev\JSharp\JSharp\obj\Debug\Interop.WMPLib.dll
+F:\002_Software_dev\JSharp\JSharp\obj\Debug\AxInterop.WMPLib.dll
+F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.csproj.ResolveComReference.cache
+F:\002_Software_dev\JSharp\JSharp\bin\Debug\Interop.WMPLib.dll
+F:\002_Software_dev\JSharp\JSharp\bin\Debug\AxInterop.WMPLib.dll

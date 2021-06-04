@@ -45,7 +45,6 @@ namespace JSharp
         public bool ignorNextListboxUpdate = false;
         public bool ignorNextKey = false;
         private List<string> openedFullPath = new List<string>();
-        public bool isLibrary;
         public int isCompiling = 0;
 
         private Task CompileThread;
@@ -65,7 +64,6 @@ namespace JSharp
         private bool exporting;
         private string resourceSelected = "src";
         private int index = 0;
-        private bool selfShift;
 
         private Image minusPath;
         private Image plusPath;
@@ -379,7 +377,7 @@ namespace JSharp
                 ignorNextListboxUpdate = true;
                 try
                 {
-                    code.Add(file.name, file.content);
+                    code.Add(file.name, file.content.Replace("\r", ""));
                 }
                 catch
                 {
@@ -396,7 +394,7 @@ namespace JSharp
                     ignorNextListboxUpdate = true;
                     try
                     {
-                        resources.Add(file.name, file.content);
+                        resources.Add(file.name, file.content.Replace("\r", ""));
                     }
                     catch
                     {
@@ -415,9 +413,9 @@ namespace JSharp
                     try
                     {
                         if (!file.Contains('.'))
-                            code.Add(file, File.ReadAllText(dir + file + ".bps"));
+                            code.Add(file, File.ReadAllText(dir + file + ".bps").Replace("\r", ""));
                         else
-                            code.Add(file, File.ReadAllText(dir + file));
+                            code.Add(file, File.ReadAllText(dir + file).Replace("\r", ""));
                     }
                     catch (Exception e)
                     {
@@ -906,6 +904,8 @@ namespace JSharp
         {
             try
             {
+                recallFile();
+
                 string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
                 string writePath = compilerSetting.ExportAsZip? ProjectPath + "tmp_dp": path;
 
@@ -1307,7 +1307,7 @@ namespace JSharp
                 Stack<char> chars = new Stack<char>();
                 string[] textArr = CodeBox.Text.Split('\n');
                 string text = "";
-                int softCond = 0;
+                
                 for (int i = 0; i < textArr.Length; i++)
                 {
                     int shift = 0;
@@ -1805,15 +1805,32 @@ namespace JSharp
                 DeleteSelectedFile();
             }
         }
+        private void libraryToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<string> imported = code["import"].Split('\n').Where(x => x.StartsWith("import")).Select(x => x.Replace("import ", "")).ToList();
+            LibImport libForm2 = new LibImport(compilerSetting.libraryFolder, imported);
+            if (libForm2.ShowDialog() == DialogResult.OK)
+            {
+                string libs = libForm2.import.Count() > 0 ? libForm2.import.Select(x => $"import {x}").Aggregate((x, y) => x + "\n" + y) : "";
+                code["import"] = libs;
+                if (previous == "import")
+                {
+                    CodeBox.Text = code["import"];
+                }
+            }
+        }
         #endregion
-        
+
         #region codetree
         private void ReloadTree()
         {
-            treeView1.Nodes.Clear();
+            HashSet<string> allPath = new HashSet<string>();
             var paths = codeOrder.Select(x => x.Replace("\\", "/")).ToList();
-            var root = treeView1.Nodes.Add("src").Nodes;
+            var root = GetNodeByName(treeView1.Nodes, "", "src").Nodes;
+
+            paths.ForEach(x => { if (!allPath.Contains(x)) allPath.Add("src/"+x); });
             BuildTree(paths, "src", root);
+
             string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
             if (Directory.Exists(dir))
             {
@@ -1823,11 +1840,16 @@ namespace JSharp
             else
             {
                 paths.Clear();
+                paths.Add("src");
             }
+
+            paths.ForEach(x => { if (!allPath.Contains(x)) allPath.Add(x); });
             BuildTree(paths, "src", root, false);
 
             paths = resourceOrder.Select(x => x.Replace("\\", "/")).ToList();
-            root = treeView1.Nodes.Add("resources").Nodes;
+            root = GetNodeByName(treeView1.Nodes, "", "resources").Nodes;
+
+            paths.ForEach(x => { if (!allPath.Contains(x)) allPath.Add("resources/" + x); });
             BuildTree(paths, "resources", root);
 
             dir = Path.GetDirectoryName(projectPath) + "/resources/";
@@ -1839,7 +1861,10 @@ namespace JSharp
             else
             {
                 paths.Clear();
+                paths.Add("resources");
             }
+
+            paths.ForEach(x => { if (!allPath.Contains(x)) allPath.Add(x); });
             BuildTree(paths, "resources", root, false);
 
 
@@ -1847,7 +1872,7 @@ namespace JSharp
             folders.ToList().ForEach(folder =>
             {
                 dir = Path.GetDirectoryName(projectPath) + $"/{folder}/";
-                root = treeView1.Nodes.Add(folder).Nodes;
+                root = GetNodeByName(treeView1.Nodes, "", folder).Nodes;
                 if (Directory.Exists(dir))
                 {
                     paths = Directory.EnumerateFiles(dir, "*.*", SearchOption.AllDirectories)
@@ -1856,9 +1881,11 @@ namespace JSharp
                 else
                 {
                     paths.Clear();
+                    paths.Add(folder);
                 }
+                paths.ForEach(x => { if (!allPath.Contains(x)) allPath.Add(folder + "/" + x); });
                 BuildTree(paths, folder, root);
-                
+
                 if (Directory.Exists(dir))
                 {
                     paths = Directory.EnumerateDirectories(dir, "*.*", SearchOption.AllDirectories)
@@ -1867,11 +1894,13 @@ namespace JSharp
                 else
                 {
                     paths.Clear();
+                    paths.Add(folder);
                 }
+                paths.ForEach(x => { if (!allPath.Contains(x)) allPath.Add(x); });
                 BuildTree(paths, folder, root, false);
             });
-           
-            treeView1.ExpandAll();
+
+            TreeRM(allPath, treeView1.Nodes);
         }
         private void BuildTree(List<string> paths, string parent, TreeNodeCollection addInMe, bool isFile = true, int rec = 0)
         {
@@ -1915,6 +1944,33 @@ namespace JSharp
                         addInMe.Add(x).Checked = isFile;
                     });
             }
+        }
+        private void TreeRM(HashSet<string> paths, TreeNodeCollection addInMe, int height = 0)
+        {
+            foreach(TreeNode n in addInMe)
+            {
+                if (n != null && n.Nodes != null)
+                    TreeRM(paths, n.Nodes, height++);
+                if (n != null && n.FullPath != null && !paths.Contains(n.FullPath) && n.Nodes.Count == 0 && height > 0)
+                {
+                    addInMe.Remove(n);
+                }
+            }
+        }
+        private TreeNode GetNodeByName(TreeNodeCollection addInMe, string path, string key)
+        {
+            TreeNode curNode = null;
+
+            foreach (TreeNode n in addInMe)
+            {
+                if ((path == "" && n.FullPath == key) || n.FullPath == path + "/" + key)
+                {
+                    curNode = n;
+                }
+            }
+            if (curNode == null)
+                curNode = addInMe.Add(key);
+            return curNode;
         }
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
@@ -2199,6 +2255,11 @@ namespace JSharp
             pictureBox1.Visible = true;
             CodeBox.Visible = false;
         }
+        public void ShowMediaBox()
+        {
+            pictureBox1.Visible = false;
+            CodeBox.Visible = false;
+        }
 
         private void SelectFullPath(string fullPath)
         {
@@ -2248,6 +2309,11 @@ namespace JSharp
                         pictureBox1.Image = DisplayImage(img, ratio);
                         AddTabBar(fullPath);
                     }
+                    if (path.EndsWith(".ogg"))
+                    {
+                        ShowMediaBox();
+                        
+                    }
                 }
             }
         }
@@ -2283,13 +2349,34 @@ namespace JSharp
 
         private void fastColoredTextBox1_Enter(object sender, EventArgs e)
         {
-            CodeBox.DescriptionFile = "";
-            CodeBox.DescriptionFile = "formating.xml";
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            //CodeBox.DescriptionFile = "";
+            //CodeBox.DescriptionFile = path+"formating.xml";
+            CodeBox.SyntaxHighlighter = new FastColoredTextBoxNS.SyntaxHighlighter(CodeBox);
+            CodeBox.SyntaxHighlighter.AddXmlDescription(path + "formating.xml", new System.Xml.XmlDocument());
+            autocompleteMenu1.Items = Formatter.getAutoComplete(CodeBox.Text);
+            
         }
+        
 
         private void CodeBox_Load(object sender, EventArgs e)
         {
 
         }
+
+        private void autocompleteMenu1_Selected(object sender, AutocompleteMenuNS.SelectedEventArgs e)
+        {
+            if (e.Item.Text.Contains("^"))
+            {
+                string text = "";
+                for (int i = 0; i < e.Item.Text.Length - e.Item.Text.IndexOf('^'); i++)
+                {
+                    text += "{LEFT}";
+                }
+                text += "{DELETE}";
+                SendKeys.Send(text);
+            }
+        }
+
     }
 }

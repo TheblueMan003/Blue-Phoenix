@@ -55,6 +55,7 @@
             this.projectToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.minecraftToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.structuresToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.libraryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.getCallStackTraceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -103,6 +104,7 @@
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.CodeBox = new FastColoredTextBoxNS.FastColoredTextBox();
+            this.autocompleteMenu1 = new AutocompleteMenuNS.AutocompleteMenu();
             this.menuStrip1.SuspendLayout();
             this.CodeListContextMenu.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -146,7 +148,7 @@
             // newProjectToolStripMenuItem
             // 
             this.newProjectToolStripMenuItem.Name = "newProjectToolStripMenuItem";
-            this.newProjectToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newProjectToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.newProjectToolStripMenuItem.Text = "New Project";
             this.newProjectToolStripMenuItem.Click += new System.EventHandler(this.newProjectToolStripMenuItem_Click);
             // 
@@ -154,7 +156,7 @@
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.saveToolStripMenuItem.Text = "Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
@@ -163,7 +165,7 @@
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
             this.saveAsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt) 
             | System.Windows.Forms.Keys.S)));
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.saveAsToolStripMenuItem.Text = "Save as";
             this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
@@ -171,7 +173,7 @@
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
             this.openToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
@@ -181,7 +183,7 @@
             this.datapackToolStripMenuItem,
             this.newDatapackToolStripMenuItem});
             this.exportToolStripMenuItem.Name = "exportToolStripMenuItem";
-            this.exportToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exportToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.exportToolStripMenuItem.Text = "Export";
             // 
             // datapackToolStripMenuItem
@@ -205,7 +207,7 @@
             // 
             this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
             this.closeToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            this.closeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.closeToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.closeToolStripMenuItem.Text = "Close";
             this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
             // 
@@ -270,6 +272,7 @@
             this.compileOrderToolStripMenuItem,
             this.tagsToolStripMenuItem,
             this.structuresToolStripMenuItem,
+            this.libraryToolStripMenuItem,
             this.settingToolStripMenuItem});
             this.projectToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
             this.projectToolStripMenuItem.Name = "projectToolStripMenuItem";
@@ -331,6 +334,14 @@
             this.structuresToolStripMenuItem.Text = "Structures";
             this.structuresToolStripMenuItem.Click += new System.EventHandler(this.structuresToolStripMenuItem_Click);
             // 
+            // libraryToolStripMenuItem
+            // 
+            this.libraryToolStripMenuItem.Name = "libraryToolStripMenuItem";
+            this.libraryToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
+            this.libraryToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.libraryToolStripMenuItem.Text = "Library";
+            this.libraryToolStripMenuItem.Click += new System.EventHandler(this.libraryToolStripMenuItem_Click);
+            // 
             // settingToolStripMenuItem
             // 
             this.settingToolStripMenuItem.Name = "settingToolStripMenuItem";
@@ -376,6 +387,7 @@
             // 
             this.ErrorBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.autocompleteMenu1.SetAutocompleteMenu(this.ErrorBox, null);
             this.ErrorBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.ErrorBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ErrorBox.ForeColor = System.Drawing.Color.White;
@@ -873,6 +885,7 @@
         '\"',
         '\'',
         '\''};
+            this.autocompleteMenu1.SetAutocompleteMenu(this.CodeBox, this.autocompleteMenu1);
             this.CodeBox.AutoScrollMinSize = new System.Drawing.Size(27, 14);
             this.CodeBox.BackBrush = null;
             this.CodeBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
@@ -883,7 +896,7 @@
             this.CodeBox.Cursor = System.Windows.Forms.Cursors.IBeam;
             this.CodeBox.DescriptionFile = "F:\\002_Software_dev\\JSharp\\JSharp\\bin\\Debug\\formating.xml";
             this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
-            this.CodeBox.Font = new System.Drawing.Font("Courier New", 9.75F);
+            this.CodeBox.FoldingIndicatorColor = System.Drawing.Color.Chartreuse;
             this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.CodeBox.IsReplaceMode = false;
             this.CodeBox.LineNumberColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
@@ -899,6 +912,23 @@
             this.CodeBox.Zoom = 100;
             this.CodeBox.Load += new System.EventHandler(this.CodeBox_Load);
             this.CodeBox.Enter += new System.EventHandler(this.fastColoredTextBox1_Enter);
+            // 
+            // autocompleteMenu1
+            // 
+            this.autocompleteMenu1.AllowsTabKey = true;
+            this.autocompleteMenu1.AppearInterval = 100;
+            this.autocompleteMenu1.Colors = ((AutocompleteMenuNS.Colors)(resources.GetObject("autocompleteMenu1.Colors")));
+            this.autocompleteMenu1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.autocompleteMenu1.ImageList = null;
+            this.autocompleteMenu1.Items = new string[] {
+        "public void ^ (){\\n\\n}",
+        "public class ^ (){\\n\\n}",
+        "public struct ^ (){\\n\\n}",
+        "public enum ^{\\n\\n}"};
+            this.autocompleteMenu1.MaximumSize = new System.Drawing.Size(300, 200);
+            this.autocompleteMenu1.SearchPattern = "[\\$\\w\\.\\:\\@]";
+            this.autocompleteMenu1.TargetControlWrapper = null;
+            this.autocompleteMenu1.Selected += new System.EventHandler<AutocompleteMenuNS.SelectedEventArgs>(this.autocompleteMenu1_Selected);
             // 
             // Form1
             // 
@@ -1032,6 +1062,8 @@
         private System.Windows.Forms.Button SaveButton;
         private System.Windows.Forms.ToolStripMenuItem structuresToolStripMenuItem;
         private FastColoredTextBoxNS.FastColoredTextBox CodeBox;
+        private AutocompleteMenuNS.AutocompleteMenu autocompleteMenu1;
+        private System.Windows.Forms.ToolStripMenuItem libraryToolStripMenuItem;
     }
 }
 

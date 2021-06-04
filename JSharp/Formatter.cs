@@ -25,6 +25,26 @@ namespace JSharp
             "ticking", "loading", "helper", "void", "null", "enum", "blocktags","entitytags","itemtags", "public", "private",
             "new", "external", "jsonfile", "require", "indexed", "predicate", "let", "var", "val", "extension"};
 
+        private static string[] autoCompleteTools ={
+            "public void ^(){\n\n}",
+            "public class ^{\n\n}",
+            "public struct ^{\n\n}",
+            "public enum ^{\n\n}",
+            "private void ^(){\n\n}",
+            "private class ^{\n\n}",
+            "private struct ^{\n\n}",
+            "private enum ^{\n\n}",
+            "for(int i=0;i < ^;i++){\n\n}",
+            "def ticking main(){\n\t^\n}",
+            "minecraft:",
+            "switch(^){\n\n}",
+            "switch(^){\nforgenerate(){\n\n}\n}",
+            "blocktags ^{\n\n}",
+            "itemtags ^{\n\n}",
+            "entitytags ^{\n\n}",
+            "jsonfile ^{\n\n}"
+        };
+
         private static List<string> enums = new List<string>();
         private static List<string> structs = new List<string>();
         private static List<string> enumsValue = new List<string>();
@@ -55,7 +75,8 @@ namespace JSharp
             colorCodings.Add(ColorCoding.Get(blueWord, Color.Aqua, "Bold"));
 
             colorCodings.Add(ColorCoding.Get(CommandParser.funcName, Color.FromArgb(0, 185, 255), ""));
-            colorCodings.Add(ColorCoding.Get(defWord.Concat(importWord).Concat(defWordMore1.Distinct()).ToArray(), Color.FromArgb(74, 156, 199), "Bold"));
+            colorCodings.Add(ColorCoding.Get(defWord.Concat(importWord).Concat(defWordMore1.Distinct()).ToArray(), 
+                Color.FromArgb(74, 156, 199), "Bold"));
 
             colorCodings.Add(ColorCoding.Get(funKeyword
                                             .Concat(compKeyword)
@@ -78,7 +99,7 @@ namespace JSharp
             colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex, @"(-?\b)(\d+\.\d+|\d+)[bldsf]?\b", ""));
             colorCodings.Add(ColorCoding.Get(structs.Concat(enums).Distinct().ToArray(), cClass, "Bold"));
             colorCodings.Add(ColorCoding.Get(defWordMore2.Distinct().ToArray(), cFunction, ""));
-            colorCodings.Add(ColorCoding.GetPackage(package.Distinct().ToArray(), Color.LightSteelBlue, "Bold"));
+            colorCodings.Add(ColorCoding.GetPackage(package.Distinct().ToArray(), Color.FromArgb(74, 156, 199), ""));
 
             if (showEnumValue)
             {
@@ -122,7 +143,29 @@ namespace JSharp
             }
             colorCodings.Reverse();
             doc += "<folding start=\"\\{\" finish=\"\\}\" options=\"IgnoreCase\"/></doc>\n";
-            File.WriteAllText("formating.xml", doc);
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            File.WriteAllText(path+"formating.xml", doc);
+        }
+        public static string[] getAutoComplete(string text)
+        {
+            var lst = autoCompleteTools.Concat(funKeyword.Select(x => $"{x}(^)"))
+                      .Concat(typKeyword)
+                      .Concat(compKeyword)
+                      .Concat(blueWord)
+                      .Concat(importWord)
+                      .Concat(selector.Select(x => $"{x}[^]"))
+                      .Concat(defWord)
+                      .Concat(enums)
+                      .Concat(structs.Select(x => $"{x} ^ = {x}()"))
+                      .Concat(package)
+                      .Concat(CommandParser.names.Select(x => $"minecraft:{x}"))
+                      .Concat(CommandParser.sounds.Select(x => $"minecraft:{x}"))
+                      .Concat(defWordMore1.Select(x => $"{x}(^)"))
+                      .Concat(defWordMore2.Select(x => $"{x}(^)"))
+                      .Concat(Compiler.smartSplitJson(text.Replace("\n"," "), ' '))
+                      .Distinct().ToList();
+            lst.Sort();
+            return lst.ToArray();
         }
 
         public static void setEnum(List<string> keys)

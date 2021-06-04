@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(EffectForm));
-            this.richTextBox1 = new ColorTextBox();
+            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.EffectTextbox = new System.Windows.Forms.ComboBox();
             this.DurationTextbox = new System.Windows.Forms.TextBox();
             this.AmplierTextbox = new System.Windows.Forms.TextBox();
@@ -215,7 +215,7 @@
 
         #endregion
 
-        private ColorTextBox richTextBox1;
+        private System.Windows.Forms.RichTextBox richTextBox1;
         private System.Windows.Forms.ComboBox EffectTextbox;
         private System.Windows.Forms.TextBox DurationTextbox;
         private System.Windows.Forms.TextBox AmplierTextbox;
