@@ -17,6 +17,7 @@ namespace JSharp
         public CompileOrder(List<string> order, int fixedFile)
         {
             InitializeComponent();
+            Content = new List<string>();
             order.ForEach(x=>listBox1.Items.Add(x));
             this.fixedFile = fixedFile;
         }

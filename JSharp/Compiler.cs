@@ -96,10 +96,10 @@ namespace JSharp
         #region Regexs
         private static Regex funcReg = new Regex(@"^(@?[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])*\s+)+[\w\.]+\s*\(.*\)");
         private static Regex nullReg = new Regex(@"\s*null\s*");
-        private static Regex outterReg = new Regex(@"(?s)\[.*\]");
-        private static Regex getReg = new Regex(@"\w*\s*=[ a-z\.A-Z0-9]*\[.*\]");
-        private static Regex oppReg = new Regex(@"[a-zA-Z0-9\._]+\[.*\]\s*[+\-/\*%]=");
-        private static Regex setReg = new Regex(@"\[.*\]\s*=\s*.*");
+        private static Regex outterReg = new Regex(@"(?s)\[[\w\s\.\/\*\-\+\^]*\]");
+        private static Regex getReg = new Regex(@"\w+\s*=[ a-z\.A-Z0-9]*\[[\w\s\.\/\*\-\+\^]*\]");
+        private static Regex oppReg = new Regex(@"[a-zA-Z0-9\._]+\[[\w\s\.\/\*\-\+\^]*\]\s*[+\-/\*%]=");
+        private static Regex setReg = new Regex(@"\[[\w\s\.\/\*\-\+\^]*\]\s*=\s*.*");
         private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9\- ,_=:/\\\.""'!\[\]]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9/\\\- ,_=:\.""'!:\[\]\(\)]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9/\\\- ,_=""'\[\]!:\(\)]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9/\\\- ,_=:\.""'\[\]!\(\)]*\))?,?\s*)*\})");
         private static Regex blocktagsDesugarReg = new Regex(@"(?s)(blocktags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|blocktags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex entitytagsDesugarReg = new Regex(@"(?s)(entitytags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|entitytags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
@@ -150,6 +150,7 @@ namespace JSharp
         private static Regex shortFuncReg = new Regex(@"\b[\w\.]+\{");
         private static Regex structReg = new Regex(@"(\w+\s+)*struct \w+");
         private static Regex classReg = new Regex(@"(\w+\s+)*class \w+");
+        private static Regex defineReg = new Regex(@"(?s)^define ");
 
         private static string ConditionAlwayTrue = "=$=TRUE=$=";
         private static string ConditionAlwayFalse = "=$=False=$=";
@@ -505,7 +506,7 @@ namespace JSharp
         {
             string line = line2;
 
-            if (context.compVal.Count > 0 && line.Contains("$") && !(dualCompVar.Match(line).Success && structInstCompVar)) {
+            if (context.compVal.Count > 0 && line.Contains("$") && !(dualCompVar.Match(line).Success && structInstCompVar) && !defineReg.Match(line).Success) {
                 line = compVarReplace(line);
             }
             if (jsonIndent > 0 && isInLazyCompile == 0)
@@ -793,7 +794,7 @@ namespace JSharp
                     return InstItemTag(text);
                 }
                 //comp int set
-                else if (compVarInstReg.Match(text).Success || dualCompVar.Match(text).Success)
+                else if (compVarInstReg.Match(text).Success || dualCompVar.Match(text).Success || defineReg.Match(text).Success)
                 {
                     return InstCompilerVar(text);
                 }
@@ -2445,7 +2446,7 @@ namespace JSharp
                     return new string[] { ConditionAlwayFalse, "" };
                 }
             }
-            else if (context.GetPredicate(text, true) != null)
+            else if (context.GetPredicate(text, true) != null && text.Contains("(") && text.Contains(")"))
             {
                 Predicate pred = GetPredicate(context.GetPredicate(text), getArgs(text));
                 return new string[] { "if predicate " + pred.get(getArg(text)) +" " ,""};
@@ -3346,13 +3347,25 @@ namespace JSharp
         #region instantiation
         public static string InstCompilerVar(string text)
         {
+            string[] operations = new string[] { "^", "|", "&", "+", "-", "%", "/", "*" };
+            string op = "=";
             string[] splited = smartSplit(text, '=', 1);
-            string[] field = smartSplit(smartExtract(splited[0]), ' ');
+            foreach(string c in operations)
+            {
+                if (text.Contains(c) && text.IndexOf(c) == text.IndexOf("=")-1)
+                {
+                    splited = smartSplit(text.Replace(c+"=","="), '=', 1);
+                    op = c;
+                }
+            }
+            string[] field = smartSplit(smartExtract(splited[0].Replace("define ","")), ' ');
             string name = field[field.Length - 1];
             string value = smartExtract(splited[1]);
-
+            
             if (value.StartsWith("fromenum"))
             {
+                if (text.ToLower().StartsWith("define"))
+                    value = compVarReplace(value);
                 string[] argget = getArgs(value);
                 Enum enu = enums[getEnum(argget[0])];
                 List<string> sortedField = new List<string>();
@@ -3367,6 +3380,8 @@ namespace JSharp
             }
             else if (value.StartsWith("fromconst"))
             {
+                if (text.ToLower().StartsWith("define"))
+                    value = compVarReplace(value);
                 string[] argget = getArgs(value);
                 var var = GetVariableByName(argget[0]);
                 context.compVal[context.compVal.Count - 1].Add(name, var.constValue);
@@ -3374,6 +3389,8 @@ namespace JSharp
             }
             else if (value.StartsWith("(") && field[0] != "json")
             {
+                if (text.ToLower().StartsWith("define"))
+                    value = compVarReplace(value);
                 string[] argget = getArgs(value);
                 for (int i = 0; i < argget.Length; i++)
                 {
@@ -3383,7 +3400,7 @@ namespace JSharp
                 context.compVal[context.compVal.Count - 1].Add(name, value);
                 return "";
             }
-            else if (value.StartsWith("$"))
+            else if (value.StartsWith("$") && ((structStack.Count > 0 && !isInStructMethod) || structCompVarPointer != null))
             {
                 if (structCompVarPointer != null)
                 {
@@ -3397,17 +3414,21 @@ namespace JSharp
                 }
                 return "";
             }
+            else if (value.StartsWith("$"))
+            {
+                value = compVarReplace(value);
+            }
             
             Type type;
             try
             {
-                type = getType(text);
+                type = getType(text.ToLower().Replace("define ",""));
             }
             catch
             {
                 type = Type.DEFINE;
             }
-
+            
             if (structStack.Count > 0 && !isInStructMethod)
             {
                 structStack.Peek().compField.Add(name,value);
@@ -3439,10 +3460,38 @@ namespace JSharp
                 }
                 else if (type == Type.JSON)
                 {
-                    context.compVal[context.compVal.Count - 1].Add(name, value);
+                    if (op == "=")
+                        context.compVal[context.compVal.Count - 1].Add(name, value);
+                    if (op == "+")
+                    {
+                        for (int i = context.compVal.Count - 1; i >= 0; i--)
+                        {
+                            if (context.compVal[i].ContainsKey(name))
+                            {
+                                string src = context.compVal[i][name];
+                                context.compVal[i][name] = jsonAppend(src, value);
+                                break;
+                            }
+                        }
+                    }
                 }
                 else if (type == Type.STRING)
-                    context.compVal[context.compVal.Count - 1].Add(name, value);
+                {
+                    if (op == "=")
+                        context.compVal[context.compVal.Count - 1].Add(name, value);
+                    if (op == "+")
+                    {
+                        for (int i = context.compVal.Count - 1; i >= 0; i--)
+                        {
+                            if (context.compVal[i].ContainsKey(name))
+                            {
+                                string src = context.compVal[i][name];
+                                context.compVal[i][name] = src + value;
+                                break;
+                            }
+                        }
+                    }
+                }
                 else
                 {
                     Variable valVar = GetVariableByName(value);
@@ -3775,6 +3824,7 @@ namespace JSharp
             if (typeArg.Length > 1)
             {
                 int i = 0;
+                
                 foreach (string s in getArgs(typeArg[1]))
                 {
                     Type type = getType(s + " ");
@@ -6625,7 +6675,8 @@ namespace JSharp
                 }
                 else if (text[i] == '>' && c == ',' && !inString)
                 {
-                    ind -= 1;
+                    if (!(i > 0 && text[i-1] == '='))
+                        ind -= 1;
                     stringBuilder.Append(text[i]);
                 }
                 else if (text[i] == '"')
@@ -6839,8 +6890,15 @@ namespace JSharp
         }
         public static string getArg(string text)
         {
-            int opIndex = getOpenCharIndex(text, '(');
-            return text.Substring(opIndex + 1, getCloseCharIndex(text,')') - opIndex - 1);
+            try
+            {
+                int opIndex = getOpenCharIndex(text, '(');
+                return text.Substring(opIndex + 1, getCloseCharIndex(text, ')') - opIndex - 1);
+            }
+            catch
+            {
+                throw new Exception($"Invalid arg: {text}");
+            }
         }
         public static string[] getArgs(string text)
         {
@@ -7075,6 +7133,17 @@ namespace JSharp
             }
 
             return lst;
+        }
+
+        public static string jsonAppend(string src, string text)
+        {
+            src = smartExtract(src);
+            text = smartExtract(text);
+            if (src == "" || src == null || src == "{}")
+            {
+                return text;
+            }
+            return src.Substring(0, src.Length - 1) + "," + text.Substring(1, text.Length - 1);
         }
         #endregion
 
@@ -8298,9 +8367,17 @@ namespace JSharp
                 variable.privateContext = context.GetVar();
 
                 AddVariable(newName, variable);
-                
+
                 if (this.type == Type.ENUM)
+                {
                     variable.SetEnum(this.enums);
+                    var c = context;
+                    context = new Context(Project, new File("", ""));
+                    var dest = variable.gameName.Substring(0, variable.gameName.LastIndexOf('.'));
+                    context.GoTo(dest + ".", true);
+                    Compiler.enums[this.enums].GenerateVariable(variable.name);
+                    context = c;
+                }
 
                 if (this.type == Type.ARRAY)
                 {
@@ -8762,17 +8839,20 @@ namespace JSharp
 
             public void GenerateVariable(string name)
             {
-                context.Sub(name, new File("",""));
-                foreach(EnumField field in fields)
+                if (structStack.Count == 0)
                 {
-                    if (field.type != "json")
+                    context.Sub(name, new File("", ""));
+                    foreach (EnumField field in fields)
                     {
-                        preparseLine("def lazy " + field.name + "():" + field.type + "{");
-                        preparseLine("return(" + field.functionGet.gameName.Replace("/", ".").Replace(":", ".") + "(" + name + "))");
-                        preparseLine("}");
+                        if (field.type != "json")
+                        {
+                            preparseLine("def lazy " + field.name + "():" + field.type + "{");
+                            preparseLine("return(" + field.functionGet.gameName.Replace("/", ".").Replace(":", ".") + "(" + name + "))");
+                            preparseLine("}");
+                        }
                     }
+                    context.Parent();
                 }
-                context.Parent();
             }
             public List<string> Values()
             {

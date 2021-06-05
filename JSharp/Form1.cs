@@ -47,7 +47,7 @@ namespace JSharp
         private List<string> openedFullPath = new List<string>();
         public int isCompiling = 0;
 
-        private Task CompileThread;
+        private Thread CompileThread;
         private CancellationTokenSource tokenSource2 = new CancellationTokenSource();
 
         public List<Compiler.File> compileFile;
@@ -124,10 +124,14 @@ namespace JSharp
 
             index = 0;
             if (code.ContainsKey(file))
+            {
                 CodeBox.Text = code[file];
+                CodeBox.ClearUndo();
+            }
             else
             {
                 CodeBox.Text = "";
+                CodeBox.ClearUndo();
             }
 
             PreviousText.Add(CodeBox.Text);
@@ -150,10 +154,14 @@ namespace JSharp
 
             index = 0;
             if (resources.ContainsKey(file))
+            {
                 CodeBox.Text = resources[file];
+                CodeBox.ClearUndo();
+            }
             else
             {
                 CodeBox.Text = "";
+                CodeBox.ClearUndo();
             }
             PreviousText.Add(CodeBox.Text);
             previous = file;
@@ -174,7 +182,8 @@ namespace JSharp
             index = 0;
             
             CodeBox.Text = File.ReadAllText(dir+file);
-            
+            CodeBox.ClearUndo();
+
             PreviousText.Add(CodeBox.Text);
             previous = file;
             noReformat = false;
@@ -558,6 +567,7 @@ namespace JSharp
                         if (previous == key)
                         {
                             CodeBox.Text = code[key];
+                            CodeBox.ClearUndo();
                         }
                     }
                     else
@@ -571,6 +581,7 @@ namespace JSharp
                             if (previous == key)
                             {
                                 CodeBox.Text = code[key];
+                                CodeBox.ClearUndo();
                             }
                         }
                         else
@@ -597,6 +608,7 @@ namespace JSharp
                         if (previous == key)
                         {
                             CodeBox.Text = resources[key];
+                            CodeBox.ClearUndo();
                         }
                     }
                     else
@@ -610,6 +622,7 @@ namespace JSharp
                             if (previous == key)
                             {
                                 CodeBox.Text = resources[key];
+                                CodeBox.ClearUndo();
                             }
                         }
                         else
@@ -862,6 +875,7 @@ namespace JSharp
             MCTagsList.Clear();
             TagsList.Clear();
             CodeBox.Text = "";
+            CodeBox.ClearUndo();
         }
 
         public void UpdateCodeBox()
@@ -1195,8 +1209,10 @@ namespace JSharp
                 {
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
+                if (CompileThread != null && CompileThread.IsAlive)
+                    CompileThread.Abort();
 
-                CompileThread = new Task(CompileThreaded, tokenSource2.Token);
+                CompileThread = new Thread(CompileThreaded);
                 CompileThread.Start();
             }
         }
@@ -1220,8 +1236,9 @@ namespace JSharp
                 {
                     compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
                 }
-
-                CompileThread = new Task(GetCallStackTraceThreaded, tokenSource2.Token);
+                if (CompileThread != null && CompileThread.IsAlive)
+                    CompileThread.Abort();
+                CompileThread = new Thread(GetCallStackTraceThreaded);
                 CompileThread.Start();
             }
         }
@@ -1380,6 +1397,7 @@ namespace JSharp
                     }*/
                 }
                 CodeBox.Text = text;
+                CodeBox.ClearUndo();
             }
             catch(Exception e)
             {
@@ -1496,6 +1514,7 @@ namespace JSharp
                 if (previous == "import")
                 {
                     CodeBox.Text = code["import"];
+                    CodeBox.ClearUndo();
                 }
             }
         }
@@ -1684,6 +1703,7 @@ namespace JSharp
             {
                 ignoreMod = true;
                 CodeBox.Text = PreviousText[--index];
+                CodeBox.ClearUndo();
                 ignoreMod = false;
             }
         }
@@ -1693,6 +1713,7 @@ namespace JSharp
             {
                 ignoreMod = true;
                 CodeBox.Text = PreviousText[++index];
+                CodeBox.ClearUndo();
                 ignoreMod = false;
             }
         }
@@ -1816,6 +1837,7 @@ namespace JSharp
                 if (previous == "import")
                 {
                     CodeBox.Text = code["import"];
+                    CodeBox.ClearUndo();
                 }
             }
         }
@@ -2374,6 +2396,29 @@ namespace JSharp
                 SendKeys.Send(text);
             }
         }
-
+        
+        private void CodeBox_CustomAction(object sender, FastColoredTextBoxNS.CustomActionEventArgs e)
+        {
+            string text = Clipboard.GetText();
+            // Special Paste
+            if (e.Action == FastColoredTextBoxNS.FCTBAction.CustomAction1)
+            {
+                if (new Regex(@"^/setblock [\d]+ [\d]+ [\d]+").Match(text).Success)
+                {
+                    Regex reg2 = new Regex(@"[\d]+ [\d]+ [\d]+");
+                    CodeBox.InsertText(reg2.Match(text).Value.Replace(" ",","));
+                }
+                else if (new Regex(@"^/summon [\w\.\:]+ [\d\.~]+ [\d\.~]+ [\d\.~]+ \{.+\}").Match(text).Success)
+                {
+                    Regex reg2 = new Regex(@"\{.+\}");
+                    CodeBox.InsertText(reg2.Match(text).Value);
+                }
+                else if (new Regex(@"tp [\d\.]+ [\d\.]+ [\d\.]+ [\d\.]+ [\d\.]+").Match(text).Success)
+                {
+                    Regex reg2 = new Regex(@"[\d\.]+ [\d\.]+ [\d\.]+ [\d\.]+ [\d\.]+");
+                    CodeBox.InsertText(reg2.Match(text).Value.Replace(" ",","));
+                }
+            }
+        }
     }
 }
