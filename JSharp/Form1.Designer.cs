@@ -220,7 +220,7 @@
             // 
             this.reformatToolStripMenuItem.Name = "reformatToolStripMenuItem";
             this.reformatToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.R)));
-            this.reformatToolStripMenuItem.Size = new System.Drawing.Size(207, 22);
+            this.reformatToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.reformatToolStripMenuItem.Text = "Reformat";
             this.reformatToolStripMenuItem.Click += new System.EventHandler(this.reformatToolStripMenuItem_Click_1);
             // 
@@ -872,6 +872,7 @@
             this.CodeBox.Size = new System.Drawing.Size(795, 492);
             this.CodeBox.TabIndex = 42;
             this.CodeBox.Zoom = 100;
+            this.CodeBox.ToolTipNeeded += new System.EventHandler<FastColoredTextBoxNS.ToolTipNeededEventArgs>(this.CodeBox_ToolTipNeeded);
             this.CodeBox.CustomAction += new System.EventHandler<FastColoredTextBoxNS.CustomActionEventArgs>(this.CodeBox_CustomAction);
             this.CodeBox.Load += new System.EventHandler(this.CodeBox_Load);
             this.CodeBox.Enter += new System.EventHandler(this.fastColoredTextBox1_Enter);

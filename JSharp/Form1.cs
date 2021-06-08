@@ -372,6 +372,7 @@ namespace JSharp
             currentResourcesPack = project.resourcesPackDirectory;
             project.compilationSetting.isLibrary = project.isLibrary;
             compilerSetting = project.compilationSetting;
+
             if (compilerSetting.libraryFolder.Count == 0)
             {
                 compilerSetting.libraryFolder.Add("./lib/1_16_5/");
@@ -387,6 +388,7 @@ namespace JSharp
                 try
                 {
                     code.Add(file.name, file.content.Replace("\r", ""));
+                    project.compilationSetting.isLibrary = false;
                 }
                 catch
                 {
@@ -2403,21 +2405,62 @@ namespace JSharp
             // Special Paste
             if (e.Action == FastColoredTextBoxNS.FCTBAction.CustomAction1)
             {
-                if (new Regex(@"^/setblock [\d]+ [\d]+ [\d]+").Match(text).Success)
+                if (new Regex(@"/setblock [\-\d]+ [\-\d]+ [\-\d]+").Match(text).Success)
                 {
-                    Regex reg2 = new Regex(@"[\d]+ [\d]+ [\d]+");
+                    Regex reg2 = new Regex(@"[\-\d]+ [\-\d]+ [\-\d]+");
                     CodeBox.InsertText(reg2.Match(text).Value.Replace(" ",","));
                 }
-                else if (new Regex(@"^/summon [\w\.\:]+ [\d\.~]+ [\d\.~]+ [\d\.~]+ \{.+\}").Match(text).Success)
+                else if (new Regex(@"^/summon [\w\.\:]+ [\-\d\.~]+ [\-\d\.~]+ [\-\d\.~]+ \{.+\}").Match(text).Success)
                 {
                     Regex reg2 = new Regex(@"\{.+\}");
                     CodeBox.InsertText(reg2.Match(text).Value);
                 }
-                else if (new Regex(@"tp [\d\.]+ [\d\.]+ [\d\.]+ [\d\.]+ [\d\.]+").Match(text).Success)
+                else if (new Regex(@"tp [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+").Match(text).Success)
                 {
-                    Regex reg2 = new Regex(@"[\d\.]+ [\d\.]+ [\d\.]+ [\d\.]+ [\d\.]+");
+                    Regex reg2 = new Regex(@"[\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+");
                     CodeBox.InsertText(reg2.Match(text).Value.Replace(" ",","));
                 }
+                else if (new Regex(@"([\-\d\.]+\s)+").Match(text).Success)
+                {
+                    Regex reg2 = new Regex(@"([\-\d\.]+\s)+");
+                    CodeBox.InsertText(reg2.Match(text).Value.Replace(" ", ","));
+                }
+                else
+                {
+                    CodeBox.InsertText(text);
+                }
+            }
+        }
+
+        private void CodeBox_ToolTipNeeded(object sender, FastColoredTextBoxNS.ToolTipNeededEventArgs e)
+        {
+            Regex reg = new Regex(@"[\w\._\:]+");
+            string word = "";
+            foreach(Match m in reg.Matches(CodeBox.Text.Split('\n')[e.Place.iLine]))
+            {
+                if (m.Index <= e.Place.iChar && m.Index+m.Length >= e.Place.iChar)
+                {
+                    word = m.Value;
+                }
+            }
+            if (word != "")
+            {
+                string text = "";
+                try
+                {
+                    text = Compiler.functions
+                            .Keys
+                            .Where(x => x.EndsWith(word.ToLower()))
+                            .Select(x => Compiler.functions[x])
+                            .Aggregate((x, y) => x.Concat(y).ToList())
+                            .Where(x => !x.gameName.Contains("__struct__"))
+                            .Select(x => $"{((x.outputs.Count > 0) ? (x.outputs.Select(arg => arg.GetFancyTypeString()).Aggregate((s1, s2) => s1 + ", " + s2)) : "void")} {x.gameName.Replace("/",".").Replace(":",".")}({((x.args.Count > 0)?(x.args.Select(arg => arg.GetFancyTypeString() + " " + arg.name).Aggregate((s1, s2) => s1 + ", " + s2)):"")})\n{x.desc}\n\n")
+                            .Aggregate((x, y) => x + y);
+                    e.ToolTipText = text;
+                    e.ToolTipTitle = "Function";
+                    e.ToolTipIcon = ToolTipIcon.None;
+                }
+                catch { }
             }
         }
     }
