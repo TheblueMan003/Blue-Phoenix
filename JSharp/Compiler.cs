@@ -9404,8 +9404,10 @@ namespace JSharp
             public string Compile()
             {
                 bool createVar = casesUnit.TrueForAll(x => !x.cmd.Contains("function") 
+                                                        && !(x.cmd.StartsWith("scoreboard") && x.cmd.Contains(copyFrom.scoreboard()))) &&
+                                 casesRange.TrueForAll(x => !x.cmd.Contains("function")
                                                         && !(x.cmd.StartsWith("scoreboard") && x.cmd.Contains(copyFrom.scoreboard())));
-                GlobalDebug(createVar, Color.Yellow);
+                
                 if (createVar)
                     variable = copyFrom;
                 return Compile(!createVar);
