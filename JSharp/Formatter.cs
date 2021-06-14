@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -12,11 +11,11 @@ namespace JSharp
 {
     public static class Formatter
     {
-        private static string[] funKeyword = { "debug" ,"print"};
-        private static string[] typKeyword = { "int", "float", "entity", "string", "bool", "function", "selector"};
-        private static string[] compKeyword = { "json", "params", "implicite", "define"};
+        private static string[] funKeyword = { "debug", "print" };
+        private static string[] typKeyword = { "int", "float", "entity", "string", "bool", "function", "selector" };
+        private static string[] compKeyword = { "json", "params", "implicite", "define" };
         private static string[] blueWord = { "true", "false" };
-        private static string[] importWord = { "import", "package", "using","as" };
+        private static string[] importWord = { "import", "package", "using", "as" };
         private static string[] selector = { "@a", "@e", "@p", "@s", "@r" };
         private static string[] defWord = { "def", "class", "initer", "object", "if", "ifs", "then", "else", "elseif", "elif", "elsif",
             "while", "for", "with", "forgenerate", "interface", "foreach" , "return", "&&", "||", "at",
@@ -37,6 +36,7 @@ namespace JSharp
             "private enum ^{\n\n}",
             "for(int i=0;i < ^;i++){\n\n}",
             "def ticking main(){\n\t^\n}",
+            "def __init__(){\n\t^\n}",
             "minecraft:",
             "switch(^){\n\n}",
             "switch(^){\nforgenerate(){\n\n}\n}",
@@ -51,8 +51,9 @@ namespace JSharp
         private static List<string> enumsValue = new List<string>();
         private static List<string> package = new List<string>();
         private static List<string> tags = new List<string>();
-        private static List<string> defWordMore1 = new List<string>();
-        private static List<string> defWordMore2 = new List<string>();
+        public static List<string> defWordMore1 = new List<string>();
+        public static List<string> defWordMore1F = new List<string>();
+        public static List<string> defWordMore2 = new List<string>();
 
         private static Regex numberRegex = new Regex(@"(-?\b)(\d+\.\d+|\d+)[bldsf]?\b");
         private static Regex wordRegex = new Regex("\"[^\"]*\"");//= new Regex("\"(([^\\n\"]+)*(\\\\\")*)*\"");
@@ -66,7 +67,7 @@ namespace JSharp
 
         public static void loadDict()
         {
-            Color cClass = Color.FromArgb(68,201,162);
+            Color cClass = Color.FromArgb(68, 201, 162);
             Color cFunction = Color.FromArgb(124, 220, 240);
             Color cString = Color.FromArgb(218, 105, 26);
             Color cKeyword = Color.FromArgb(255, 255, 200);
@@ -76,14 +77,14 @@ namespace JSharp
             colorCodings.Add(ColorCoding.Get(blueWord, Color.Aqua, "Bold"));
 
             colorCodings.Add(ColorCoding.Get(CommandParser.funcName, Color.FromArgb(0, 185, 255), ""));
-            colorCodings.Add(ColorCoding.Get(defWord.Concat(importWord).Concat(defWordMore1.Distinct()).ToArray(), 
+            colorCodings.Add(ColorCoding.Get(defWord.Concat(importWord).Concat(defWordMore1.Distinct()).Concat(defWordMore1F.Distinct()).ToArray(),
                 Color.FromArgb(74, 156, 199), "Bold"));
 
             colorCodings.Add(ColorCoding.Get(funKeyword
                                             .Concat(compKeyword)
                                             .Concat(tags.ToArray()).Distinct()
                                             .ToArray(), Color.Magenta, "Bold"));
-            
+
             colorCodings.Add(ColorCoding.Get(typKeyword.Distinct().ToArray(), Color.Orange, "Bold"));
 
             if (showName)
@@ -95,7 +96,7 @@ namespace JSharp
                     .Concat(CommandParser.sounds.Distinct())
                     .ToArray(), cKeyword, ""));
             }
-            
+
 
             colorCodings.Add(new ColorCoding(Color.Magenta, numberRegex, @"(-?\b)(\d+\.\d+|\d+)[bldsf]?\b", ""));
             colorCodings.Add(ColorCoding.Get(structs.Concat(enums).Distinct().ToArray(), cClass, "Bold"));
@@ -109,7 +110,7 @@ namespace JSharp
 
             colorCodings.Add(new ColorCoding(Color.Gray, commentRegex, @"(?s)(//[^\n]*|/\*[^*]*\*/)", "Italic"));
             colorCodings.Add(new ColorCoding(cString, wordRegex, "\"[^\"]*\"", "Italic"));
-            colorCodings.Add(new ColorCoding(Color.LightYellow, funcDocRegex, "(?s)\"\"\"[^\"\"\"]*\"\"\"","Italic"));
+            colorCodings.Add(new ColorCoding(Color.LightYellow, funcDocRegex, "(?s)\"\"\"[^\"\"\"]*\"\"\"", "Italic"));
             generateXML();
         }
         private static String HexConverter(System.Drawing.Color c)
@@ -132,9 +133,9 @@ namespace JSharp
                                           .Replace("<", "&lt;")
                                           .Replace("'", "&apos;")
                                           .Replace("\"", "&quot;");
-                if (pattern!=null && pattern != "§§§§§§§§§§§")
+                if (pattern != null && pattern != "§§§§§§§§§§§")
                 {
-                    if (c.fontStyle=="")
+                    if (c.fontStyle == "")
                         doc += $"<style name=\"s_{index}\" color=\"{HexConverter(c.c)}\" />\n";
                     else
                         doc += $"<style name=\"s_{index}\" color=\"{HexConverter(c.c)}\" fontStyle=\"{c.fontStyle}\" />\n";
@@ -145,7 +146,7 @@ namespace JSharp
             colorCodings.Reverse();
             doc += "<folding start=\"\\{\" finish=\"\\}\" options=\"IgnoreCase\"/></doc>\n";
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-            File.WriteAllText(path+"formating.xml", doc);
+            File.WriteAllText(path + "formating.xml", doc);
         }
         public static string[] getAutoComplete(string text)
         {
@@ -162,8 +163,8 @@ namespace JSharp
                       .Concat(CommandParser.names.Select(x => $"minecraft:{x}"))
                       .Concat(CommandParser.sounds.Select(x => $"minecraft:{x}"))
                       .Concat(defWordMore1.Select(x => $"{x}(^)"))
+                      .Concat(defWordMore1F.Select(x => $"{x}" + "{\n^\n} "))
                       .Concat(defWordMore2.Select(x => $"{x}(^)"))
-                      .Concat(Compiler.smartSplitJson(text.Replace("\n"," "), ' '))
                       .Distinct().ToList();
             lst.Sort();
             return lst.ToArray();
@@ -188,9 +189,9 @@ namespace JSharp
         public static void setTags(List<string> keys)
         {
             tags = new List<string>();
-            foreach(string tag in keys)
+            foreach (string tag in keys)
             {
-                tags.Add("@"+tag);
+                tags.Add("@" + tag);
             }
         }
         public static void setDefWord(List<string> keys)
@@ -206,7 +207,7 @@ namespace JSharp
             }
         }
 
-        public static void reformat(RichTextBox CodeBox,Form f, bool partial)
+        public static void reformat(RichTextBox CodeBox, Form f, bool partial)
         {
             if (!reformating)
             {
@@ -224,11 +225,11 @@ namespace JSharp
                     f.ActiveControl = null;
                     hadFocus = true;
                 }
-                
+
                 int start = partial ? Math.Max(lineCharIndex, 0) : 0;
                 if (lineIndex < CodeBox.Lines.Length)
                 {
-                    int end = start + CodeBox.Lines[lineIndex].Length+1;
+                    int end = start + CodeBox.Lines[lineIndex].Length + 1;
                     if (!partial)
                     {
                         end = CodeBox.TextLength;
@@ -246,8 +247,8 @@ namespace JSharp
 
                 if (hadFocus)
                     CodeBox.Focus();
-            
-            reformating = false;
+
+                reformating = false;
             }
         }
 
@@ -256,18 +257,19 @@ namespace JSharp
 
             List<List<Word>> words = new List<List<Word>>();
             words.Add(new List<Word>(2000));
-            foreach (ColorCoding colorCoding in colorCodings) {
+            foreach (ColorCoding colorCoding in colorCodings)
+            {
                 foreach (Match match in colorCoding.r.Matches(t.Substring(start, length)))
                 {
-                    words[0].Add(new Word(colorCoding.c, start+match.Index, match.Length));
+                    words[0].Add(new Word(colorCoding.c, start + match.Index, match.Length));
                 }
             }
-            
+
             return words;
         }
         private static List<List<Word>> smartReplaceThreaded(string t, int start, int length)
         {
-            List<Task<List< Word>>> tasks = new List<Task<List<Word>>> (colorCodings.Count);
+            List<Task<List<Word>>> tasks = new List<Task<List<Word>>>(colorCodings.Count);
             List<List<Word>> words = new List<List<Word>>();
 
             foreach (ColorCoding colorCoding in colorCodings)
@@ -288,7 +290,7 @@ namespace JSharp
                 words.Add(task.Result);
             }
 
-             return words;
+            return words;
         }
 
 
@@ -296,8 +298,8 @@ namespace JSharp
         {
             try
             {
-                List<List<Word>> words = endIndex - startIndex > 1000?
-                    smartReplaceThreaded(CodeBox.Text+"\n", startIndex, endIndex-startIndex):
+                List<List<Word>> words = endIndex - startIndex > 1000 ?
+                    smartReplaceThreaded(CodeBox.Text + "\n", startIndex, endIndex - startIndex) :
                     smartReplace(CodeBox.Text + "\n", startIndex, endIndex - startIndex);
 
                 int selectStart = CodeBox.SelectionStart;
@@ -371,9 +373,9 @@ namespace JSharp
             public static ColorCoding Get(string[] lst, Color c, string fontStyle)
             {
                 string s = "(?i)(";
-                foreach(string p in lst)
+                foreach (string p in lst)
                 {
-                    s += @"\b"+p.Replace("|","\\|").Replace(".", "\\.") + @"\b|";
+                    s += @"\b" + p.Replace("|", "\\|").Replace(".", "\\.") + @"\b|";
                 }
                 s = s.Substring(0, s.Length - 1) + ")";
                 if (s == "(?i))")
@@ -401,7 +403,7 @@ namespace JSharp
                 string s = "(?i)(";
                 foreach (string p in lst)
                 {
-                    s += p.Replace("|", "\\|").Replace("@", "\\@") +@"\[[^\n]*\]" + @"|";
+                    s += p.Replace("|", "\\|").Replace("@", "\\@") + @"\[[^\n]*\]" + @"|";
                     s += p.Replace("|", "\\|").Replace("@", "\\@") + @"\b|";
                 }
                 s = s.Substring(0, s.Length - 1) + ")";

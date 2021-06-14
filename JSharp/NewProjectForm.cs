@@ -1,12 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -32,7 +25,7 @@ namespace JSharp
         private void NewProjectForm_Load(object sender, EventArgs e)
         {
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-            if (File.Exists(path+"project.old"))
+            if (File.Exists(path + "project.old"))
             {
                 foreach (string s in File.ReadAllLines(path + "project.old")) listBox1.Items.Add(s);
             }

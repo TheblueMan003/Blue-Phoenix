@@ -7,8 +7,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace BluePhoenix
 {
@@ -21,19 +19,20 @@ namespace BluePhoenix
         private string path;
         public static StringBuilder consoleText;
         public bool zipForce;
+
         public CMD_Compile(string project, string path, bool zipForce = false)
         {
             consoleText = new StringBuilder();
             projectPath = project;
             this.project = JsonConvert.DeserializeObject<ProjectSave>(File.ReadAllText(project));
-            
+
             this.path = path;
             this.zipForce = zipForce;
             OpenFile();
         }
         public string Export()
         {
-            ExportDataPack(path, path+"rp.zip");
+            ExportDataPack(path, path + "rp.zip");
             return consoleText.ToString();
         }
         public void ExportDataPack(string path, string rpPath)
@@ -107,7 +106,7 @@ namespace BluePhoenix
             List<Compiler.File> cFiles = Compiler.compile(core, project.projectName, files, resourcesfiles,
                                             Debug, project.compilationSetting, project.version,
                                             Path.GetDirectoryName(projectPath));
-            
+
             foreach (Compiler.File f in cFiles)
             {
                 string fileName;
@@ -228,28 +227,33 @@ namespace BluePhoenix
         }
         public void ExportReadMe(string path)
         {
-            string readme = "This Datapack was made using TheblueMan003's Compiler.\n" +
+            if (project.compilationSetting.generateMAPSFile || project.compilationSetting.generateREADMEFile)
+            {
+                string readme = "This Datapack was made using TheblueMan003's Compiler.\n" +
                             "Therefor all variables & functions might have wierd name.\n" +
                             "Please refers to MAPS.txt";
-            string offuscation = "#==================================#\n" +
-                                    "In order to compile each variable to a unique scoreboard name the compiler use an offuscation map\n" +
-                                    "#==================================#\n";
-            offuscation += "variable count = " + Compiler.offuscationMap.Keys.Count + "\n";
-            offuscation += "alphabet = " + Compiler.alphabet + "\n\n";
-            foreach (string key in Compiler.offuscationMap.Keys)
-            {
-                offuscation += key + " <===> " + Compiler.offuscationMap[key] + "\n";
-            }
-            string fileNameReadMe = path + "/README.txt";
-            string fileNameOffuscation = path + "/MAPS.txt";
-            try
-            {
-                SafeWriteFile(fileNameReadMe, readme);
-                SafeWriteFile(fileNameOffuscation, offuscation);
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Notice " + e.ToString());
+                string offuscation = "#==================================#\n" +
+                                        "In order to compile each variable to a unique scoreboard name the compiler use an offuscation map\n" +
+                                        "#==================================#\n";
+                offuscation += "variable count = " + Compiler.offuscationMap.Keys.Count + "\n";
+                offuscation += "alphabet = " + Compiler.alphabet + "\n\n";
+                foreach (string key in Compiler.offuscationMap.Keys)
+                {
+                    offuscation += key + " <===> " + Compiler.offuscationMap[key] + "\n";
+                }
+                string fileNameReadMe = path + "/README.txt";
+                string fileNameOffuscation = path + "/MAPS.txt";
+                try
+                {
+                    if (project.compilationSetting.generateREADMEFile)
+                        SafeWriteFile(fileNameReadMe, readme);
+                    if (project.compilationSetting.generateMAPSFile)
+                        SafeWriteFile(fileNameOffuscation, offuscation);
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Notice " + e.ToString());
+                }
             }
         }
         public void ExportStructures(string path)
@@ -270,7 +274,8 @@ namespace BluePhoenix
             {
                 string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
                 SafeWriteFile(rpPath + "/pack.mcmeta",
-                                JsonConvert.SerializeObject(new ResourcePackMeta(project.projectName + " - " + project.description)));
+                                JsonConvert.SerializeObject(new ResourcePackMeta(project.projectName + " - " + project.description,
+                                project.compilationSetting.rppackformat)));
 
                 if (Directory.Exists(rpPath))
                 {
@@ -306,13 +311,13 @@ namespace BluePhoenix
         {
             string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
             string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
-            
-            if (Path.GetDirectoryName(projectPath)== "")
+
+            if (Path.GetDirectoryName(projectPath) == "")
             {
                 dir = "." + dir;
                 dirRes = "." + dirRes;
             }
-            
+
             if (project.resources != null)
             {
                 foreach (var file in project.resources)
@@ -353,7 +358,7 @@ namespace BluePhoenix
                     if (file.EndsWith(".bps"))
                         fname = file.Substring(dir.Length, file.Length - dir.Length - Path.GetExtension(file).Length);
                     else
-                        fname = file.Substring(dir.Length, file.Length - dir.Length);                    
+                        fname = file.Substring(dir.Length, file.Length - dir.Length);
 
                     if (!code.ContainsKey(fname.ToLower()) && fname != "desktop.ini")
                     {

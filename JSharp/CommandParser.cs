@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+using System.Text.RegularExpressions;
 
 namespace JSharp
 {
@@ -23,14 +20,14 @@ namespace JSharp
         public static List<string> gamerules = new List<string>();
         public static List<Gamerule> gamerulesObj = new List<Gamerule>();
         private static bool loaded;
-        
+
         public static void loadDict()
         {
             if (!loaded)
             {
                 loaded = true;
-                string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)+"/";
-                difficulties = File.ReadAllLines(path+"cmd_data/difficulty.txt");
+                string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+                difficulties = File.ReadAllLines(path + "cmd_data/difficulty.txt");
                 effects = File.ReadAllLines(path + "cmd_data/effect.txt");
                 gamemodes = File.ReadAllLines(path + "cmd_data/gamemode.txt");
                 names = File.ReadAllLines(path + "cmd_data/names.txt");
@@ -51,10 +48,9 @@ namespace JSharp
         }
         public static bool canBeParse(string text)
         {
-            while(text.StartsWith(" "))text = text.Substring(1, text.Length - 1);
             foreach (string fun in funcName)
             {
-                if (text.StartsWith(fun+"("))
+                if (text.StartsWith(fun + "("))
                 {
                     return true;
                 }
@@ -111,13 +107,13 @@ namespace JSharp
 
             throw new NotImplementedException(text.Split(' ')[0] + " is not implemented");
         }
-        
+
         public static string parseTellraw(string[] args, Compiler.Context context, string text)
         {
             string output = "tellraw " + context.GetEntitySelector(args[0]) + " ";
             string[] json = Compiler.Core.FormatJson(args, context, 1);
-            output = json[1]+ output+ json[0]+"\n"+ json[2];
- 
+            output = json[1] + output + json[0] + "\n" + json[2];
+
             return output + '\n';
         }
         public static string parseTitle(string[] args, Compiler.Context context, string text)
@@ -125,7 +121,7 @@ namespace JSharp
             string titleType = Compiler.smartEmpty(args[1]);
             if (titleType != "actionbar" && titleType != "title" && titleType != "subtitle")
                 throw new Exception("Invalid Title type: " + titleType);
-            
+
             string output = "title " + context.GetEntitySelector(args[0]) + " " + titleType + " ";
             string[] json = Compiler.Core.FormatJson(args, context, 2);
             output = json[1] + output + json[0] + "\n" + json[2];
@@ -141,15 +137,15 @@ namespace JSharp
                 argIndex = 0;
             }
 
-            string titleType = Compiler.smartEmpty(args[argIndex+2]);
+            string titleType = Compiler.smartEmpty(args[argIndex + 2]);
             if (titleType != "actionbar" && titleType != "title" && titleType != "subtitle")
                 throw new Exception("Invalid Title type: " + titleType);
 
-            string titleLine = "title " + context.GetEntitySelector(args[argIndex+1]) + " " + titleType + " ";
+            string titleLine = "title " + context.GetEntitySelector(args[argIndex + 1]) + " " + titleType + " ";
             string output = "";
             int time = 0;
 
-            for (int i = argIndex+3; i < args.Length; i++)
+            for (int i = argIndex + 3; i < args.Length; i++)
             {
                 string arg = Compiler.smartEmpty(args[i]).StartsWith("(") ? Compiler.smartEmpty(args[i].Substring(args[i].IndexOf('(') + 1, args[i].LastIndexOf(')') - args[i].IndexOf('(') - 1)) : args[i];
                 string[] subargs = Compiler.smartSplit(arg, ',');
@@ -158,10 +154,11 @@ namespace JSharp
                 {
                     for (int j = 1; j < subargs[0].Length - 1; j++)
                     {
-                        if (subargs[0][j] == '\\'){
-                            if (subargs[0][j+1] == 'u')
+                        if (subargs[0][j] == '\\')
+                        {
+                            if (subargs[0][j + 1] == 'u')
                             {
-                                while(Char.IsHighSurrogate((char)Convert.ToInt32(subargs[0].Substring(j, 6).ToUpper().Replace("\\U", "0x"), 16)))
+                                while (Char.IsHighSurrogate((char)Convert.ToInt32(subargs[0].Substring(j, 6).ToUpper().Replace("\\U", "0x"), 16)))
                                 {
                                     j += 6;
                                 }
@@ -172,9 +169,9 @@ namespace JSharp
                                 j++;
                             }
                         }
-                        
+
                         string[] json = new string[i - 2 - argIndex];
-                        for (int k = argIndex+3; k < i; k++)
+                        for (int k = argIndex + 3; k < i; k++)
                         {
                             json[k - 3 - argIndex] = args[k];
                         }
@@ -192,27 +189,28 @@ namespace JSharp
                 else
                 {
                     string[] json = new string[i - 2];
-                    for (int k = argIndex+3; k <= i; k++)
+                    for (int k = argIndex + 3; k <= i; k++)
                     {
                         json[k - 3 - argIndex] = args[k];
                     }
-                    
+
                     string[] jsonParsed = Compiler.Core.FormatJson(json, context, 0);
                     output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + " run " + titleLine + jsonParsed[0] + "\n";
                     time++;
                 }
             }
-            string[] jsonParsedGlobal = Compiler.Core.FormatJson(args, context, 3 +argIndex);
-            output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + ".. run " +titleLine + jsonParsedGlobal[0] + "\n";
+            string[] jsonParsedGlobal = Compiler.Core.FormatJson(args, context, 3 + argIndex);
+            output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + ".. run " + titleLine + jsonParsedGlobal[0] + "\n";
             if (maxTime > -1)
             {
-                output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + (time+ maxTime).ToString() + ".. run scoreboard players set " + Compiler.GetVariableByName(args[0]).scoreboard() + " -100000\n";
+                output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + (time + maxTime).ToString() + ".. run scoreboard players set " + Compiler.GetVariableByName(args[0]).scoreboard() + " -100000\n";
             }
-            return jsonParsedGlobal[1]+output+ jsonParsedGlobal[2] + '\n';
+            return jsonParsedGlobal[1] + output + jsonParsedGlobal[2] + '\n';
         }
         public static string parseSay(string[] args, Compiler.Context context, string text)
         {
-            if (args.Length == 1) {
+            if (args.Length == 1)
+            {
                 string output = "say ";
 
                 for (int i = 0; i < args.Length; i++)
@@ -229,7 +227,8 @@ namespace JSharp
         }
         public static string parseClear(string[] args, Compiler.Context context, string text)
         {
-            if (args.Length > 0 && args.Length < 3) {
+            if (args.Length > 0 && args.Length < 3)
+            {
                 string output = "clear ";
                 if (context.isEntity(args[0]))
                     output += context.GetEntitySelector(args[0]);
@@ -351,7 +350,8 @@ namespace JSharp
         }
         public static string parseGamerule(string[] args, Compiler.Context context, string text)
         {
-            if (args.Length == 2) {
+            if (args.Length == 2)
+            {
                 string output = "gamerule " + Compiler.smartEmpty(args[0]) + " " + Compiler.smartEmpty(args[1]);
 
                 return output + '\n';
@@ -360,16 +360,20 @@ namespace JSharp
             {
                 return Compiler.functionEval(text);
             }
-}
+        }
         public static string parseFill(string[] args, Compiler.Context context, string text)
         {
             if (args.Length == 1)
             {
                 string output = "fill";
-
+                Regex r = new Regex(@"#[\w\.]+");
                 for (int i = 0; i < args.Length; i++)
                 {
-                    output += " " + args[i].Replace("replace #", "replace #" + Compiler.Project.ToLower() + ":");
+                    Match m = r.Match(args[i]);
+                    if (m.Success)
+                        output += " " + Compiler.regReplace(args[i], m, "#" + Compiler.Core.FormatTagsPath(context.GetBlockTags(m.Value.Replace("#", ""))));
+                    else
+                        output += " " + args[i];
                 }
 
                 return output + '\n';
@@ -456,11 +460,11 @@ namespace JSharp
             {
                 return Compiler.functionEval(text);
             }
-}
+        }
         private static string getParameter(string subargs)
         {
             string link = subargs;
-            link = link.Substring(link.IndexOf("=")+1, link.Length - link.IndexOf("=")-1);
+            link = link.Substring(link.IndexOf("=") + 1, link.Length - link.IndexOf("=") - 1);
             while (link.StartsWith(" "))
             {
                 link = link.Substring(1, link.Length - 1);
@@ -473,7 +477,7 @@ namespace JSharp
             return link;
         }
 
-        
+
 
         public class Gamerule
         {

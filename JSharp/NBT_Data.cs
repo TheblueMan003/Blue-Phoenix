@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace JSharp
 {
@@ -20,7 +16,7 @@ namespace JSharp
             if (!dicLoaded)
             {
                 dicLoaded = true;
-                foreach (string l in File.ReadAllLines(path+"nbt_map.txt"))
+                foreach (string l in File.ReadAllLines(path + "nbt_map.txt"))
                 {
                     if (l.Contains("="))
                     {
@@ -133,7 +129,7 @@ namespace JSharp
             }
             else
             {
-                throw new Exception("Unknown " + value+" in context: "+Compiler.context.GetVar());
+                throw new Exception("Unknown " + value + " in context: " + Compiler.context.GetVar());
             }
         }
         public static string limitedEntity(string entity)

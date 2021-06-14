@@ -40,6 +40,8 @@
             this.label4 = new System.Windows.Forms.Label();
             this.FloatPrecBox = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.CompilerCore_Box = new System.Windows.Forms.ComboBox();
+            this.label12 = new System.Windows.Forms.Label();
             this.LibPaths = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
             this.PathTags = new System.Windows.Forms.CheckBox();
@@ -61,9 +63,14 @@
             this.ExportAsZip_Box = new System.Windows.Forms.CheckBox();
             this.label11 = new System.Windows.Forms.Label();
             this.PackFormat_Box = new System.Windows.Forms.TextBox();
-            this.CompilerCore_Box = new System.Windows.Forms.ComboBox();
-            this.label12 = new System.Windows.Forms.Label();
+            this.label13 = new System.Windows.Forms.Label();
+            this.RPPackFormat_Box = new System.Windows.Forms.TextBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.AuthorsBox = new System.Windows.Forms.TextBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.FunctionTagOptiBox = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -109,7 +116,7 @@
             // button1
             // 
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button1.Location = new System.Drawing.Point(153, 234);
+            this.button1.Location = new System.Drawing.Point(153, 244);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 5;
@@ -194,24 +201,45 @@
             this.groupBox1.Controls.Add(this.label8);
             this.groupBox1.Controls.Add(this.label7);
             this.groupBox1.Controls.Add(this.RMFileBox);
-            this.groupBox1.Controls.Add(this.label6);
-            this.groupBox1.Controls.Add(this.TreeSizeBox);
             this.groupBox1.Controls.Add(this.label5);
             this.groupBox1.Controls.Add(this.FloatPrecBox);
             this.groupBox1.ForeColor = System.Drawing.Color.White;
             this.groupBox1.Location = new System.Drawing.Point(376, 9);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(314, 248);
+            this.groupBox1.Size = new System.Drawing.Size(277, 258);
             this.groupBox1.TabIndex = 12;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Compiler Setting";
+            // 
+            // CompilerCore_Box
+            // 
+            this.CompilerCore_Box.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.CompilerCore_Box.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.CompilerCore_Box.ForeColor = System.Drawing.Color.White;
+            this.CompilerCore_Box.FormattingEnabled = true;
+            this.CompilerCore_Box.Items.AddRange(new object[] {
+            "java",
+            "bedrock"});
+            this.CompilerCore_Box.Location = new System.Drawing.Point(92, 147);
+            this.CompilerCore_Box.Name = "CompilerCore_Box";
+            this.CompilerCore_Box.Size = new System.Drawing.Size(176, 21);
+            this.CompilerCore_Box.TabIndex = 20;
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(6, 151);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(75, 13);
+            this.label12.TabIndex = 21;
+            this.label12.Text = "Compiler Core:";
             // 
             // LibPaths
             // 
             this.LibPaths.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.LibPaths.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.LibPaths.ForeColor = System.Drawing.Color.White;
-            this.LibPaths.Location = new System.Drawing.Point(92, 149);
+            this.LibPaths.Location = new System.Drawing.Point(92, 121);
             this.LibPaths.Name = "LibPaths";
             this.LibPaths.Size = new System.Drawing.Size(176, 20);
             this.LibPaths.TabIndex = 25;
@@ -219,7 +247,7 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(7, 152);
+            this.label10.Location = new System.Drawing.Point(7, 124);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(49, 13);
             this.label10.TabIndex = 24;
@@ -228,7 +256,7 @@
             // PathTags
             // 
             this.PathTags.AutoSize = true;
-            this.PathTags.Location = new System.Drawing.Point(10, 199);
+            this.PathTags.Location = new System.Drawing.Point(10, 214);
             this.PathTags.Name = "PathTags";
             this.PathTags.Size = new System.Drawing.Size(87, 17);
             this.PathTags.TabIndex = 23;
@@ -238,7 +266,7 @@
             // button5
             // 
             this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button5.Location = new System.Drawing.Point(207, 218);
+            this.button5.Location = new System.Drawing.Point(167, 229);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(101, 23);
             this.button5.TabIndex = 13;
@@ -251,7 +279,7 @@
             this.TempScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.TempScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.TempScoreboardBox.ForeColor = System.Drawing.Color.White;
-            this.TempScoreboardBox.Location = new System.Drawing.Point(92, 123);
+            this.TempScoreboardBox.Location = new System.Drawing.Point(92, 95);
             this.TempScoreboardBox.Name = "TempScoreboardBox";
             this.TempScoreboardBox.Size = new System.Drawing.Size(176, 20);
             this.TempScoreboardBox.TabIndex = 22;
@@ -261,7 +289,7 @@
             this.ConstScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.ConstScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ConstScoreboardBox.ForeColor = System.Drawing.Color.White;
-            this.ConstScoreboardBox.Location = new System.Drawing.Point(92, 97);
+            this.ConstScoreboardBox.Location = new System.Drawing.Point(92, 69);
             this.ConstScoreboardBox.Name = "ConstScoreboardBox";
             this.ConstScoreboardBox.Size = new System.Drawing.Size(176, 20);
             this.ConstScoreboardBox.TabIndex = 21;
@@ -271,7 +299,7 @@
             this.ValueScoreboardBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.ValueScoreboardBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.ValueScoreboardBox.ForeColor = System.Drawing.Color.White;
-            this.ValueScoreboardBox.Location = new System.Drawing.Point(92, 70);
+            this.ValueScoreboardBox.Location = new System.Drawing.Point(92, 42);
             this.ValueScoreboardBox.Name = "ValueScoreboardBox";
             this.ValueScoreboardBox.Size = new System.Drawing.Size(176, 20);
             this.ValueScoreboardBox.TabIndex = 20;
@@ -279,7 +307,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(7, 126);
+            this.label9.Location = new System.Drawing.Point(7, 98);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(54, 13);
             this.label9.TabIndex = 19;
@@ -288,7 +316,7 @@
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(7, 100);
+            this.label8.Location = new System.Drawing.Point(7, 72);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(54, 13);
             this.label8.TabIndex = 18;
@@ -297,7 +325,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(7, 72);
+            this.label7.Location = new System.Drawing.Point(7, 44);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(54, 13);
             this.label7.TabIndex = 17;
@@ -306,7 +334,7 @@
             // RMFileBox
             // 
             this.RMFileBox.AutoSize = true;
-            this.RMFileBox.Location = new System.Drawing.Point(10, 222);
+            this.RMFileBox.Location = new System.Drawing.Point(10, 237);
             this.RMFileBox.Name = "RMFileBox";
             this.RMFileBox.Size = new System.Drawing.Size(130, 17);
             this.RMFileBox.TabIndex = 16;
@@ -316,7 +344,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(7, 44);
+            this.label6.Location = new System.Drawing.Point(9, 21);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(55, 13);
             this.label6.TabIndex = 14;
@@ -327,7 +355,7 @@
             this.TreeSizeBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.TreeSizeBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.TreeSizeBox.ForeColor = System.Drawing.Color.White;
-            this.TreeSizeBox.Location = new System.Drawing.Point(92, 42);
+            this.TreeSizeBox.Location = new System.Drawing.Point(94, 19);
             this.TreeSizeBox.Name = "TreeSizeBox";
             this.TreeSizeBox.Size = new System.Drawing.Size(176, 20);
             this.TreeSizeBox.TabIndex = 13;
@@ -344,7 +372,7 @@
             // IsLibCheckbox
             // 
             this.IsLibCheckbox.AutoSize = true;
-            this.IsLibCheckbox.Location = new System.Drawing.Point(197, 130);
+            this.IsLibCheckbox.Location = new System.Drawing.Point(197, 179);
             this.IsLibCheckbox.Name = "IsLibCheckbox";
             this.IsLibCheckbox.Size = new System.Drawing.Size(68, 17);
             this.IsLibCheckbox.TabIndex = 13;
@@ -354,7 +382,7 @@
             // HighlightName_Box
             // 
             this.HighlightName_Box.AutoSize = true;
-            this.HighlightName_Box.Location = new System.Drawing.Point(8, 135);
+            this.HighlightName_Box.Location = new System.Drawing.Point(8, 181);
             this.HighlightName_Box.Name = "HighlightName_Box";
             this.HighlightName_Box.Size = new System.Drawing.Size(103, 17);
             this.HighlightName_Box.TabIndex = 14;
@@ -364,7 +392,7 @@
             // HighlighEnum_Box
             // 
             this.HighlighEnum_Box.AutoSize = true;
-            this.HighlighEnum_Box.Location = new System.Drawing.Point(8, 156);
+            this.HighlighEnum_Box.Location = new System.Drawing.Point(8, 202);
             this.HighlighEnum_Box.Name = "HighlighEnum_Box";
             this.HighlighEnum_Box.Size = new System.Drawing.Size(127, 17);
             this.HighlighEnum_Box.TabIndex = 15;
@@ -374,7 +402,7 @@
             // HighlighFunction_Box
             // 
             this.HighlighFunction_Box.AutoSize = true;
-            this.HighlighFunction_Box.Location = new System.Drawing.Point(8, 177);
+            this.HighlighFunction_Box.Location = new System.Drawing.Point(8, 223);
             this.HighlighFunction_Box.Name = "HighlighFunction_Box";
             this.HighlighFunction_Box.Size = new System.Drawing.Size(141, 17);
             this.HighlighFunction_Box.TabIndex = 16;
@@ -384,7 +412,7 @@
             // ExportAsZip_Box
             // 
             this.ExportAsZip_Box.AutoSize = true;
-            this.ExportAsZip_Box.Location = new System.Drawing.Point(197, 150);
+            this.ExportAsZip_Box.Location = new System.Drawing.Point(197, 199);
             this.ExportAsZip_Box.Name = "ExportAsZip_Box";
             this.ExportAsZip_Box.Size = new System.Drawing.Size(89, 17);
             this.ExportAsZip_Box.TabIndex = 17;
@@ -394,7 +422,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(194, 58);
+            this.label11.Location = new System.Drawing.Point(12, 137);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(70, 13);
             this.label11.TabIndex = 19;
@@ -405,41 +433,85 @@
             this.PackFormat_Box.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.PackFormat_Box.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.PackFormat_Box.ForeColor = System.Drawing.Color.White;
-            this.PackFormat_Box.Location = new System.Drawing.Point(194, 74);
+            this.PackFormat_Box.Location = new System.Drawing.Point(12, 153);
             this.PackFormat_Box.Name = "PackFormat_Box";
             this.PackFormat_Box.Size = new System.Drawing.Size(176, 20);
             this.PackFormat_Box.TabIndex = 18;
             this.PackFormat_Box.Text = "6";
             // 
-            // CompilerCore_Box
+            // label13
             // 
-            this.CompilerCore_Box.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.CompilerCore_Box.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.CompilerCore_Box.ForeColor = System.Drawing.Color.White;
-            this.CompilerCore_Box.FormattingEnabled = true;
-            this.CompilerCore_Box.Items.AddRange(new object[] {
-            "java",
-            "bedrock"});
-            this.CompilerCore_Box.Location = new System.Drawing.Point(92, 175);
-            this.CompilerCore_Box.Name = "CompilerCore_Box";
-            this.CompilerCore_Box.Size = new System.Drawing.Size(176, 21);
-            this.CompilerCore_Box.TabIndex = 20;
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(197, 137);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(88, 13);
+            this.label13.TabIndex = 21;
+            this.label13.Text = "RP Pack Format:";
             // 
-            // label12
+            // RPPackFormat_Box
             // 
-            this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(6, 179);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(75, 13);
-            this.label12.TabIndex = 21;
-            this.label12.Text = "Compiler Core:";
+            this.RPPackFormat_Box.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.RPPackFormat_Box.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.RPPackFormat_Box.ForeColor = System.Drawing.Color.White;
+            this.RPPackFormat_Box.Location = new System.Drawing.Point(197, 153);
+            this.RPPackFormat_Box.Name = "RPPackFormat_Box";
+            this.RPPackFormat_Box.Size = new System.Drawing.Size(176, 20);
+            this.RPPackFormat_Box.TabIndex = 20;
+            this.RPPackFormat_Box.Text = "6";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(194, 58);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(46, 13);
+            this.label14.TabIndex = 23;
+            this.label14.Text = "Authors:";
+            // 
+            // AuthorsBox
+            // 
+            this.AuthorsBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.AuthorsBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.AuthorsBox.ForeColor = System.Drawing.Color.White;
+            this.AuthorsBox.Location = new System.Drawing.Point(194, 74);
+            this.AuthorsBox.Name = "AuthorsBox";
+            this.AuthorsBox.Size = new System.Drawing.Size(176, 20);
+            this.AuthorsBox.TabIndex = 22;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.FunctionTagOptiBox);
+            this.groupBox2.Controls.Add(this.TreeSizeBox);
+            this.groupBox2.Controls.Add(this.label6);
+            this.groupBox2.ForeColor = System.Drawing.Color.White;
+            this.groupBox2.Location = new System.Drawing.Point(659, 9);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(277, 258);
+            this.groupBox2.TabIndex = 26;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Optimisation";
+            // 
+            // FunctionTagOptiBox
+            // 
+            this.FunctionTagOptiBox.AutoSize = true;
+            this.FunctionTagOptiBox.Location = new System.Drawing.Point(6, 229);
+            this.FunctionTagOptiBox.Name = "FunctionTagOptiBox";
+            this.FunctionTagOptiBox.Size = new System.Drawing.Size(137, 17);
+            this.FunctionTagOptiBox.TabIndex = 24;
+            this.FunctionTagOptiBox.Text = "Function Tags Replace";
+            this.FunctionTagOptiBox.UseVisualStyleBackColor = true;
             // 
             // ProjectSetting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
-            this.ClientSize = new System.Drawing.Size(696, 262);
+            this.ClientSize = new System.Drawing.Size(941, 273);
+            this.Controls.Add(this.groupBox2);
+            this.Controls.Add(this.label14);
+            this.Controls.Add(this.AuthorsBox);
+            this.Controls.Add(this.label13);
+            this.Controls.Add(this.RPPackFormat_Box);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.PackFormat_Box);
             this.Controls.Add(this.ExportAsZip_Box);
@@ -465,6 +537,8 @@
             this.Load += new System.EventHandler(this.ProjectSetting_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -507,5 +581,11 @@
         private System.Windows.Forms.TextBox PackFormat_Box;
         private System.Windows.Forms.ComboBox CompilerCore_Box;
         private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.TextBox RPPackFormat_Box;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.TextBox AuthorsBox;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.CheckBox FunctionTagOptiBox;
     }
 }

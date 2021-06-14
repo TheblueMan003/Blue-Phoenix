@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -31,7 +28,7 @@ namespace JSharp
         public static void loadDict()
         {
             colorCodings = new List<ColorCoding>();
-            
+
             colorCodings.Add(ColorCoding.Get(CommandParser.cmds, Color.FromArgb(0, 185, 255)));
             colorCodings.Add(ColorCoding.Get(CommandParser.grp2, Color.MediumAquamarine));
             colorCodings.Add(ColorCoding.Get(CommandParser.names, Color.OrangeRed));
@@ -39,7 +36,7 @@ namespace JSharp
             colorCodings.Add(ColorCoding.Get(CommandParser.effects, Color.OrangeRed));
             colorCodings.Add(ColorCoding.Get(CommandParser.gamerules.ToArray(), Color.OrangeRed));
             colorCodings.Add(ColorCoding.Get(CommandParser.sounds, Color.OrangeRed));
-            
+
             colorCodings.Add(ColorCoding.GetPackage(package.ToArray(), Color.LightSteelBlue));
 
             colorCodings.Add(ColorCoding.GetSelector(selector, Color.LightBlue));

@@ -1,13 +1,10 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -25,11 +22,12 @@ namespace JSharp
         private Image fileINIPath;
         private Image fileTXTPath;
 
-        private void UpdateList(){
+        private void UpdateList()
+        {
             if (files.Count > 0)
             {
                 filesDic = new Dictionary<string, Compiler.File>();
-                files.ForEach(x => filesDic[(x.type == "json") ? x.name : ("functions/" + x.name)]=x);
+                files.ForEach(x => filesDic[(x.type == "json") ? x.name : ("functions/" + x.name)] = x);
                 foreach (string key in Compiler.blockTags.Keys)
                 {
                     filesDic["tags/blocks/" + key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1)
@@ -44,7 +42,7 @@ namespace JSharp
                 }
                 foreach (string key in Compiler.itemTags.Keys)
                 {
-                    filesDic["tags/items/" + key.Substring(key.IndexOf(".")+1, key.Length - key.IndexOf(".")-1)
+                    filesDic["tags/items/" + key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1)
                         .Replace(".", "/")] = new Compiler.File("",
                             JsonConvert.SerializeObject(Compiler.itemTags[key]));
                 }
@@ -128,7 +126,7 @@ namespace JSharp
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             string fullPath = treeView1.SelectedNode.FullPath;
-            
+
             if (filesDic.ContainsKey(fullPath))
             {
                 richTextBox1.Text = filesDic[fullPath].content;

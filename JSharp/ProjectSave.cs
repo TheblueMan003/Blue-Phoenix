@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace JSharp
 {
@@ -14,7 +10,7 @@ namespace JSharp
         public bool offuscate;
         public bool isLibrary;
         public string description = "Made With BluePhoenix";
-        
+
         public FileSave[] files;
         public FileSave[] resources;
         public Dictionary<string, Dictionary<string, TagsList>> TagsList;
@@ -52,7 +48,7 @@ namespace JSharp
         public void Build() { build++; }
         public override string ToString()
         {
-            return major.ToString()+"."+minor.ToString()+"."+patch.ToString()+"."+build.ToString();
+            return major.ToString() + "." + minor.ToString() + "." + patch.ToString() + "." + build.ToString();
         }
     }
 }

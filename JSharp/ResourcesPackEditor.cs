@@ -2,12 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BluePhoenix
@@ -110,7 +106,7 @@ namespace BluePhoenix
         {
             string fName = treeView1.SelectedNode.Name;
             string fullPath = treeView1.SelectedNode.FullPath;
-            
+
             if (fName.EndsWith(".jpeg") || fName.EndsWith(".png"))
             {
                 Select(FileType.Image, fName);
@@ -123,7 +119,7 @@ namespace BluePhoenix
             {
                 Select(FileType.Text, fName);
             }
-            else if (Directory.Exists(parentPath + "/"+ fullPath))
+            else if (Directory.Exists(parentPath + "/" + fullPath))
             {
                 Select(FileType.Directory, parentPath + "/" + fullPath);
             }
@@ -146,7 +142,7 @@ namespace BluePhoenix
         {
             if (currentFileType == FileType.Image)
             {
-                System.Diagnostics.Process.Start("\"C:\\Program Files\\Paint.NET\\PaintDotNet.exe\"",currentFile);
+                System.Diagnostics.Process.Start("\"C:\\Program Files\\Paint.NET\\PaintDotNet.exe\"", currentFile);
             }
         }
 

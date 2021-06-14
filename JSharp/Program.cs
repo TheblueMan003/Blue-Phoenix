@@ -1,9 +1,6 @@
 ﻿using BluePhoenix;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -20,7 +17,7 @@ namespace JSharp
             Application.SetCompatibleTextRenderingDefault(false);
             bool compiling = false;
             bool zip = false;
-            string path="";
+            string path = "";
             if (args != null)
             {
                 for (int i = 0; i < args.Length; i++)
@@ -46,7 +43,7 @@ namespace JSharp
                 }
                 catch (Exception e)
                 {
-                    CMD_Compile.SafeWriteFile(Directory.GetParent(path)+"/console.log", CMD_Compile.consoleText.ToString()+"\n\n\n"+e.ToString());
+                    CMD_Compile.SafeWriteFile(Directory.GetParent(path) + "/console.log", CMD_Compile.consoleText.ToString() + "\n\n\n" + e.ToString());
                     return 1;
                 }
             }
@@ -60,7 +57,7 @@ namespace JSharp
                     {
                         Application.Run(new Form1(args[0]));
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         MessageBox.Show(e.ToString());
                         return 1;

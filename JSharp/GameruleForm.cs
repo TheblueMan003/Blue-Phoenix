@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -26,7 +19,7 @@ namespace JSharp
 
         private void richTextBox1_TextChanged(object sender, EventArgs e)
         {
-            Formatter.reformat(richTextBox1,this,false);
+            Formatter.reformat(richTextBox1, this, false);
         }
 
         private void GameruleTextbox_SelectedIndexChanged(object sender, EventArgs e)

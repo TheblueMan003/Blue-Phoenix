@@ -56,6 +56,7 @@
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.getCallStackTraceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.generateResourcesPackToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.inspectorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ProjectSave = new System.Windows.Forms.SaveFileDialog();
             this.ProjectOpen = new System.Windows.Forms.OpenFileDialog();
             this.ExportSave = new System.Windows.Forms.SaveFileDialog();
@@ -297,7 +298,7 @@
             // libraryToolStripMenuItem
             // 
             this.libraryToolStripMenuItem.Name = "libraryToolStripMenuItem";
-            this.libraryToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
+            this.libraryToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.L)));
             this.libraryToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.libraryToolStripMenuItem.Text = "Library";
             this.libraryToolStripMenuItem.Click += new System.EventHandler(this.libraryToolStripMenuItem_Click);
@@ -313,7 +314,8 @@
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.getCallStackTraceToolStripMenuItem,
-            this.generateResourcesPackToolStripMenuItem});
+            this.generateResourcesPackToolStripMenuItem,
+            this.inspectorToolStripMenuItem});
             this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
@@ -332,6 +334,14 @@
             this.generateResourcesPackToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
             this.generateResourcesPackToolStripMenuItem.Text = "Generate Resources Pack";
             this.generateResourcesPackToolStripMenuItem.Click += new System.EventHandler(this.generateResourcesPackToolStripMenuItem_Click);
+            // 
+            // inspectorToolStripMenuItem
+            // 
+            this.inspectorToolStripMenuItem.Name = "inspectorToolStripMenuItem";
+            this.inspectorToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.I)));
+            this.inspectorToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.inspectorToolStripMenuItem.Text = "Inspector";
+            this.inspectorToolStripMenuItem.Click += new System.EventHandler(this.inspectorToolStripMenuItem_Click);
             // 
             // ProjectSave
             // 
@@ -857,7 +867,6 @@
             this.CodeBox.DescriptionFile = "";
             this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.CodeBox.FoldingIndicatorColor = System.Drawing.Color.Chartreuse;
-            this.CodeBox.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.CodeBox.Hotkeys = resources.GetString("CodeBox.Hotkeys");
             this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.CodeBox.IsReplaceMode = false;
@@ -1024,6 +1033,7 @@
         private FastColoredTextBoxNS.FastColoredTextBox CodeBox;
         private AutocompleteMenuNS.AutocompleteMenu autocompleteMenu1;
         private System.Windows.Forms.ToolStripMenuItem libraryToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem inspectorToolStripMenuItem;
     }
 }
 

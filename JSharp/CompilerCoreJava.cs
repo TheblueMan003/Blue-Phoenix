@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace JSharp
 {
@@ -27,7 +25,7 @@ namespace JSharp
         }
         public override string CallFunction(Compiler.File function)
         {
-            return "function " + Compiler.Project+":"+ function.name;
+            return "function " + Compiler.Project + ":" + function.name;
         }
         public override string[] FileNameSplitter()
         {
@@ -38,7 +36,7 @@ namespace JSharp
             throw new NotImplementedException();
         }
 
-        private string GetSelector(Compiler.Variable var1, string selector="")
+        private string GetSelector(Compiler.Variable var1, string selector = "")
         {
             if (var1.entity)
             {
@@ -66,17 +64,17 @@ namespace JSharp
 
         public override string DefineScoreboard(Compiler.Scoreboard var)
         {
-            return "scoreboard objectives add " + var.name + " " + var.property+"\n";
+            return "scoreboard objectives add " + var.name + " " + var.property + "\n";
         }
 
         public override string VariableOperation(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
         {
-            return "scoreboard players operation " + GetSelector(var1, selector1) + " "+op+" " + GetSelector(var2, selector2)+"\n";
+            return "scoreboard players operation " + GetSelector(var1, selector1) + " " + op + " " + GetSelector(var2, selector2) + "\n";
         }
         public override string VariableOperation(Compiler.Variable var, int value, string op, string selector = "")
         {
             if (op == "=")
-                return "scoreboard players set "+ GetSelector(var, selector)+ " " + value.ToString()+"\n";
+                return "scoreboard players set " + GetSelector(var, selector) + " " + value.ToString() + "\n";
             if (op == "+=")
                 return "scoreboard players add " + GetSelector(var, selector) + " " + value.ToString() + "\n";
             if (op == "-=")
@@ -91,14 +89,14 @@ namespace JSharp
         }
         public override string VariableSetNull(Compiler.Variable var, string selector = "")
         {
-            return "scoreboard players reset " + GetSelector(var, selector)+"\n";
+            return "scoreboard players reset " + GetSelector(var, selector) + "\n";
         }
 
         public override string[] CompareVariable(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
         {
             if (op == "==")
                 op = "=";
-            return new string[] { "if score " + GetSelector(var1, selector1) + " " + op + " " + GetSelector(var2, selector2) + " " ,""};
+            return new string[] { "if score " + GetSelector(var1, selector1) + " " + op + " " + GetSelector(var2, selector2) + " ", "" };
         }
         public override string[] CompareVariable(Compiler.Variable var1, int value, string op, string selector1 = "")
         {
@@ -112,7 +110,7 @@ namespace JSharp
             }
             else if (op == "<")
             {
-                return new string[] { "if score " + GetSelector(var1, selector1) + " matches .." + (value-1).ToString() + " ", "" };
+                return new string[] { "if score " + GetSelector(var1, selector1) + " matches .." + (value - 1).ToString() + " ", "" };
             }
             else if (op == ">=")
             {
@@ -120,7 +118,7 @@ namespace JSharp
             }
             else if (op == ">")
             {
-                return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + (value+1).ToString() + ".. ", "" };
+                return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + (value + 1).ToString() + ".. ", "" };
             }
             else if (op == "!=")
             {
@@ -128,29 +126,29 @@ namespace JSharp
             }
             else
             {
-                throw new Exception("Unundelled Operation: "+op);
+                throw new Exception("Unundelled Operation: " + op);
             }
         }
         public override string[] CompareVariable(Compiler.Variable var1, int value1, int value2, string selector1 = "")
         {
-            return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + value1.ToString() + ".."+ value2.ToString()+" ", "" };
+            return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + value1.ToString() + ".." + value2.ToString() + " ", "" };
         }
         public override string[] ConditionEntity(string entity)
         {
-            return new string[] { "if entity " + entity+" ", "" };
+            return new string[] { "if entity " + entity + " ", "" };
         }
         public override string[] ConditionInverse(string[] val)
         {
             if (val[0].StartsWith("if "))
             {
-                return new string[] { "unless " + val[0].Substring(3, val[0].Length - 3),val[1]};
+                return new string[] { "unless " + val[0].Substring(3, val[0].Length - 3), val[1] };
             }
             else if (val[0].StartsWith("unless "))
             {
-                return new string[] { "if " + val[0].Substring(7, val[0].Length - 7),val[1]};
+                return new string[] { "if " + val[0].Substring(7, val[0].Length - 7), val[1] };
             }
             else
-                throw new Exception("Invalid Condition"+val[0]+";"+val[1]);
+                throw new Exception("Invalid Condition" + val[0] + ";" + val[1]);
         }
         public override string[] ConditionBlock(string val)
         {
@@ -158,13 +156,13 @@ namespace JSharp
             {
                 val = "~ ~ ~ " + val;
             }
-            return new string[] { "if block " + val+" ", "" };
+            return new string[] { "if block " + val + " ", "" };
         }
         public override string[] ConditionBlocks(string val)
         {
             if (!val.EndsWith("all") && !val.EndsWith("masked"))
                 val += " all";
-            return new string[] { "if blocks " + val+" ", "" };
+            return new string[] { "if blocks " + val + " ", "" };
         }
         public override string Condition(string val)
         {
@@ -183,14 +181,14 @@ namespace JSharp
             if (cond == "")
                 return "execute as " + entity + " at @s run ";
             else
-                return "execute as " + entity + " at @s "+cond+"run ";
+                return "execute as " + entity + " at @s " + cond + "run ";
         }
         public override string As(string entity, string cond = "")
         {
             if (cond == "")
                 return "execute as " + entity + " run ";
             else
-                return "execute as " + entity + " "+cond+"run ";
+                return "execute as " + entity + " " + cond + "run ";
         }
         public override string At(string entity, string cond = "")
         {
@@ -201,11 +199,11 @@ namespace JSharp
         }
         public override string Positioned(string value)
         {
-            return "execute positioned " + value+" run ";
+            return "execute positioned " + value + " run ";
         }
         public override string Align(string value)
         {
-            return "execute align " + value+" run ";
+            return "execute align " + value + " run ";
         }
 
         public override bool isValidSelector(string selector)
@@ -286,7 +284,7 @@ namespace JSharp
 
         public override string FormatTagsPath(string path)
         {
-            return ReplaceFirst(path.Replace(".", "/"), "/", ":");
+            return ReplaceFirst(path.Replace(".", "/"), "/", ":").ToLower();
         }
         public static string ReplaceFirst(string text, string search, string replace)
         {
@@ -470,7 +468,7 @@ namespace JSharp
                 else
                 {
                     string[] v = Compiler.GetVariableByName(subargs[0]).scoreboard().Split(' ');
-                    output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] +"\"}";
+                    output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
                 }
                 if (!ignoreFormat)
                     output += jsonSubArg(subargs, context);
@@ -527,11 +525,11 @@ namespace JSharp
 
                 else if (subargs[j].StartsWith("color"))
                 {
-                    string c = Compiler.smartSplit(subargs[j], '=',1)[1];
+                    string c = Compiler.smartSplit(subargs[j], '=', 1)[1];
                     c = c.Contains("\"") ? Compiler.extractString(c) : c;
                     if (!c.StartsWith("#") && !validColor.Contains(c))
                         throw new Exception($"Invalid Color: {c}");
-                    
+
                     output += $",\"color\":\"{ c }\"";
                 }
                 else

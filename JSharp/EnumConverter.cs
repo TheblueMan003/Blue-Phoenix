@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace JSharp
 {
@@ -71,7 +68,7 @@ namespace JSharp
         {
             List<string> values = new List<string>();
             string type = "";
-            foreach(string line in text.Split('\n'))
+            foreach (string line in text.Split('\n'))
             {
                 if (line.Contains('=') && !line.StartsWith("#") && !line.StartsWith("//"))
                 {
@@ -86,14 +83,14 @@ namespace JSharp
                         values.Add(Compiler.smartExtract(fields[0]).ToLower() + "(" + Compiler.smartExtract(fields[1]) + ")");
                 }
             }
-            return new Compiler.Enum(name, new string[] { type+" value" }, values.ToArray(), final);
+            return new Compiler.Enum(name, new string[] { type + " value" }, values.ToArray(), final);
         }
         private static Compiler.Enum GetEnumCSV(string name, string text, bool final)
         {
             List<string> values = new List<string>();
             List<string> fields = new List<string>();
             List<string> types = new List<string>();
-            
+
             int i = 0;
             foreach (string line in text.Split('\n'))
             {

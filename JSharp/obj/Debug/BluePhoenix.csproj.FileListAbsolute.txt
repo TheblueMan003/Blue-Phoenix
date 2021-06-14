@@ -1,6 +1,5 @@
 F:\002_Software_dev\JSharp\JSharp\bin\Debug\Newtonsoft.Json.dll
 F:\002_Software_dev\JSharp\JSharp\bin\Debug\Newtonsoft.Json.xml
-F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.csprojAssemblyReference.cache
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\JSharp.CompileOrder.resources
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\JSharp.EffectForm.resources
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\JSharp.FilePreview.resources
@@ -38,3 +37,7 @@ F:\002_Software_dev\JSharp\JSharp\obj\Debug\AxInterop.WMPLib.dll
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.csproj.ResolveComReference.cache
 F:\002_Software_dev\JSharp\JSharp\bin\Debug\Interop.WMPLib.dll
 F:\002_Software_dev\JSharp\JSharp\bin\Debug\AxInterop.WMPLib.dll
+F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.InspectorForm.resources
+F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.csproj.AssemblyReference.cache
+F:\002_Software_dev\JSharp\JSharp\bin\Debug\QuikGraph.dll
+F:\002_Software_dev\JSharp\JSharp\bin\Debug\QuikGraph.xml

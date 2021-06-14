@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows.Input;
 
 namespace JSharp
 {
@@ -15,7 +9,7 @@ namespace JSharp
     {
         public ProjectVersion version;
         public Compiler.CompilerSetting compilerSetting;
-        public Dictionary<string,Compiler.Variable> variables;
+        public Dictionary<string, Compiler.Variable> variables;
         public object Keyboard { get; private set; }
         public string ProjectName;
         public string description;
@@ -33,6 +27,7 @@ namespace JSharp
             label3.Text = version.ToString();
             textBox2.Text = description;
             PackFormat_Box.Text = compilerSetting.packformat.ToString();
+            RPPackFormat_Box.Text = compilerSetting.rppackformat.ToString();
 
             TreeSizeBox.Text = compilerSetting.TreeMaxSize.ToString();
             FloatPrecBox.Text = compilerSetting.FloatPrecision.ToString();
@@ -43,10 +38,12 @@ namespace JSharp
             ConstScoreboardBox.Text = compilerSetting.scoreboardConst;
             TempScoreboardBox.Text = compilerSetting.scoreboardTmp;
             IsLibCheckbox.Checked = !compilerSetting.isLibrary;
-            LibPaths.Text = compilerSetting.libraryFolder.Count > 0?compilerSetting.libraryFolder.Aggregate((s1, s2) => (s1 +";"+ s2)):"";
+            LibPaths.Text = compilerSetting.libraryFolder.Count > 0 ? compilerSetting.libraryFolder.Aggregate((s1, s2) => (s1 + ";" + s2)) : "";
             CompilerCore_Box.Text = compilerSetting.CompilerCoreName;
 
             ExportAsZip_Box.Checked = compilerSetting.ExportAsZip;
+            AuthorsBox.Text = compilerSetting.Authors;
+            FunctionTagOptiBox.Checked = compilerSetting.opti_FunctionTagsReplace;
 
             HighlighEnum_Box.Checked = Formatter.showEnumValue;
             HighlighFunction_Box.Checked = Formatter.showFunc;
@@ -83,10 +80,11 @@ namespace JSharp
                 compilerSetting.TreeMaxSize = int.Parse(TreeSizeBox.Text);
                 compilerSetting.FloatPrecision = int.Parse(FloatPrecBox.Text);
                 compilerSetting.packformat = int.Parse(PackFormat_Box.Text);
+                compilerSetting.rppackformat = int.Parse(RPPackFormat_Box.Text);
                 compilerSetting.removeUselessFile = RMFileBox.Checked;
                 compilerSetting.tagsFolder = PathTags.Checked;
 
-                compilerSetting.scoreboardValue = ValueScoreboardBox.Text.Replace(" ","").Replace("\t", "");
+                compilerSetting.scoreboardValue = ValueScoreboardBox.Text.Replace(" ", "").Replace("\t", "");
                 compilerSetting.scoreboardConst = ConstScoreboardBox.Text.Replace(" ", "").Replace("\t", "");
                 compilerSetting.scoreboardTmp = TempScoreboardBox.Text.Replace(" ", "").Replace("\t", "");
 
@@ -96,12 +94,15 @@ namespace JSharp
                 compilerSetting.ExportAsZip = ExportAsZip_Box.Checked;
 
                 compilerSetting.CompilerCoreName = CompilerCore_Box.Text;
+                compilerSetting.Authors = AuthorsBox.Text;
+
+                compilerSetting.opti_FunctionTagsReplace = FunctionTagOptiBox.Checked;
 
                 Formatter.showEnumValue = HighlighEnum_Box.Checked;
                 Formatter.showFunc = HighlighFunction_Box.Checked;
                 Formatter.showName = HighlightName_Box.Checked;
             }
-            catch(Exception exc)
+            catch (Exception exc)
             {
                 MessageBox.Show(exc.ToString());
             }

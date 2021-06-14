@@ -1,11 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -13,12 +7,12 @@ namespace JSharp
     public partial class TagsForm : Form
     {
         public Dictionary<string, Dictionary<string, TagsList>> data;
-        
+
         public TagsForm(Dictionary<string, Dictionary<string, TagsList>> data)
         {
             InitializeComponent();
             this.data = data;
-            foreach(string key in data.Keys)
+            foreach (string key in data.Keys)
             {
                 comboBox1.Items.Add(key);
             }

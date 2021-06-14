@@ -1,21 +1,17 @@
-﻿using Newtonsoft.Json;
+﻿using BluePhoenix;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Media;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using BluePhoenix;
-using System.Drawing.Drawing2D;
 
 namespace JSharp
 {
@@ -34,9 +30,9 @@ namespace JSharp
         public ProjectVersion projectVersion = new ProjectVersion();
         public Compiler.CompilerSetting compilerSetting = new Compiler.CompilerSetting();
         public ResourcesPackEditor ResourcesPackEditor;
-        
+
         public string projectDescription;
-        
+
         private string previous = "load";
         private string projectName = "default";
         private string currentDataPack;
@@ -77,21 +73,23 @@ namespace JSharp
         private bool showWarning = true;
         private bool showInfo = true;
 
+        private bool debugOffuscate = false;
+
         public Form1(string project = null)
         {
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             InitializeComponent();
             CommandParser.loadDict();
             Formatter.loadDict();
-            
+
             if (project != null)
             {
                 OpenFile(project);
             }
 
-            minusPath =   Image.FromFile(path + "assets/folder_open.png");
-            plusPath =    Image.FromFile(path + "assets/folder_closed.png");
-            filePath =    Image.FromFile(path + "assets/file.png");
+            minusPath = Image.FromFile(path + "assets/folder_open.png");
+            plusPath = Image.FromFile(path + "assets/folder_closed.png");
+            filePath = Image.FromFile(path + "assets/file.png");
             fileCSVPath = Image.FromFile(path + "assets/file_csv.png");
             fileINIPath = Image.FromFile(path + "assets/file_ini.png");
             fileTXTPath = Image.FromFile(path + "assets/file_txt.png");
@@ -110,7 +108,7 @@ namespace JSharp
             else if (resourceSelected == "respack")
             {
                 string dir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
-                File.WriteAllText(dir+previous, CodeBox.Text);
+                File.WriteAllText(dir + previous, CodeBox.Text);
             }
         }
         public void ReloadCodeBoxFileCode(string file)
@@ -180,8 +178,8 @@ namespace JSharp
             PreviousText.Clear();
 
             index = 0;
-            
-            CodeBox.Text = File.ReadAllText(dir+file);
+
+            CodeBox.Text = File.ReadAllText(dir + file);
             CodeBox.ClearUndo();
 
             PreviousText.Add(CodeBox.Text);
@@ -193,6 +191,7 @@ namespace JSharp
         private void button1_Click(object sender, EventArgs e)
         {
             exporting = false;
+            debugOffuscate = ModifierKeys == Keys.Shift;
             Compile(true);
             UpdateCodeBox();
         }
@@ -222,7 +221,7 @@ namespace JSharp
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
-            while(lastSeen < debugMSGs.Count-1)
+            while (lastSeen < debugMSGs.Count - 1)
             {
                 lastSeen++;
                 Debug(debugMSGs[lastSeen].msg, debugMSGs[lastSeen].color);
@@ -248,7 +247,7 @@ namespace JSharp
 
         private void CodeBox_MouseClick(object sender, MouseEventArgs e)
         {
-            
+
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -296,14 +295,15 @@ namespace JSharp
             project.compileOrder = new List<string>();
             project.datapackDirectory = currentDataPack;
             project.resourcesPackDirectory = currentResourcesPack;
-            string dir = Path.GetDirectoryName(projectPath)+"/scripts/";
+            string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
             string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
 
             foreach (string file in codeOrder)
             {
                 if (project.compilationSetting.isLibrary)
                 {
-                    if (!file.Contains('.')) {
+                    if (!file.Contains('.'))
+                    {
                         SafeWriteFile(dir + file + ".bps", code[file]);
                         moddificationFileTime[file] = DateTime.Now.AddSeconds(5);
                         project.compileOrder.Add(file);
@@ -336,7 +336,7 @@ namespace JSharp
             project.resources = lstRes.ToArray();
             project.description = projectDescription;
 
-            File.WriteAllText(projectPath,JsonConvert.SerializeObject(project));
+            File.WriteAllText(projectPath, JsonConvert.SerializeObject(project));
         }
         public void OpenFile(string name)
         {
@@ -392,12 +392,12 @@ namespace JSharp
                 }
                 catch
                 {
-                    Debug("Duplicated " +file.name+"-"+file.content+"////"+code[file.name], Color.Red);
+                    Debug("Duplicated " + file.name + "-" + file.content + "////" + code[file.name], Color.Red);
                 }
 
                 codeOrder.Add(file.name);
             }
-            
+
             if (project.resources != null)
             {
                 foreach (var file in project.resources)
@@ -556,7 +556,7 @@ namespace JSharp
             keys.AddRange(moddificationFileTime.Keys);
             foreach (string key in keys)
             {
-                if (File.Exists(dir+key + ".bps") && moddificationFileTime[key] < File.GetLastWriteTime(dir+ key + ".bps"))
+                if (File.Exists(dir + key + ".bps") && moddificationFileTime[key] < File.GetLastWriteTime(dir + key + ".bps"))
                 {
                     if (prev == UpdateFile.Result.NoForAll)
                     {
@@ -642,9 +642,9 @@ namespace JSharp
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
 
             List<string> lst = new List<string>();
-            if (File.Exists(path+"project.old"))
+            if (File.Exists(path + "project.old"))
             {
-                foreach (string s in File.ReadAllLines(path+"project.old")) lst.Add(s);
+                foreach (string s in File.ReadAllLines(path + "project.old")) lst.Add(s);
             }
 
             if (lst.Contains(projectPath))
@@ -657,7 +657,7 @@ namespace JSharp
                 lst.RemoveAt(20);
             }
 
-            File.WriteAllLines(path+"project.old", lst.ToArray());
+            File.WriteAllLines(path + "project.old", lst.ToArray());
         }
         public string GenerateDatapackLink(string path)
         {
@@ -671,7 +671,7 @@ namespace JSharp
                 {
                     foreach (string file in Directory.GetFiles(path + "/data/" + names + "/functions", "*.mcfunction", SearchOption.AllDirectories))
                     {
-                        output += "def external " + names + 
+                        output += "def external " + names +
                             file.Replace("\\", "/")
                             .Replace(path.Replace("\\", "/") + "/data/" + names + "/functions", "")
                             .Replace("/", ".")
@@ -696,13 +696,13 @@ namespace JSharp
                 {
                     form.type = (JSharp.NewFile.Type)type;
                 }
-                string dir = treeView1.SelectedNode != null?treeView1.SelectedNode.FullPath:"src/";
+                string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
                 if (treeView1.SelectedNode != null && treeView1.SelectedNode.Checked && dir.Contains("/"))
                 {
                     dir = dir.Substring(0, dir.LastIndexOf("/"));
                 }
-                string grp = dir.Contains("/")?dir.Substring(0, dir.IndexOf("/")):dir;
-                dir = dir.Contains("/")?dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1):"";
+                string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
+                dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
                 string path = dir == "" ? "" : dir + "/";
 
                 if (grp == "structures")
@@ -812,7 +812,7 @@ namespace JSharp
                 libForm2.ShowDialog();
                 string libs = libForm2.import.Count() > 0 ? libForm2.import.Select(x => $"import {x}").Aggregate((x, y) => x + "\n" + y) : "";
                 code.Add("import", libs);
-                code.Add(projectName.ToLower(), "package "+ projectName.ToLower()+"\n");
+                code.Add(projectName.ToLower(), "package " + projectName.ToLower() + "\n");
                 SelectFullPath("src/" + projectName.ToLower());
 
                 codeOrder.Add("import");
@@ -841,7 +841,7 @@ namespace JSharp
 
                 if (TagsList == null)
                 {
-                    MCTagsList=new Dictionary<string, Dictionary<string, TagsList>>();
+                    MCTagsList = new Dictionary<string, Dictionary<string, TagsList>>();
                     MCTagsList.Add("blocks", new Dictionary<string, TagsList>());
                     MCTagsList.Add("functions", new Dictionary<string, TagsList>());
                     MCTagsList["functions"].Add("load", new TagsList());
@@ -882,7 +882,7 @@ namespace JSharp
 
         public void UpdateCodeBox()
         {
-            
+
         }
         public void SafeCopy(string src, string dest)
         {
@@ -904,7 +904,7 @@ namespace JSharp
             {
                 File.WriteAllText(fileName, content);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Debug(e, Color.Red);
             }
@@ -923,7 +923,7 @@ namespace JSharp
                 recallFile();
 
                 string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-                string writePath = compilerSetting.ExportAsZip? ProjectPath + "tmp_dp": path;
+                string writePath = compilerSetting.ExportAsZip ? ProjectPath + "tmp_dp" : path;
 
                 if (File.Exists(writePath + "/pack.mcmeta"))
                 {
@@ -936,7 +936,8 @@ namespace JSharp
                 ExportReadMe(writePath);
                 SafeCopy(ProjectPath + "/assets/pack.png", writePath + "/pack.png");
                 SafeWriteFile(writePath + "/pack.mcmeta",
-                            JsonConvert.SerializeObject(new DataPackMeta(projectName +" - "+ projectDescription)));
+                            JsonConvert.SerializeObject(new DataPackMeta(projectName + " - " + projectDescription,
+                            compilerSetting.packformat)));
 
                 if (compilerSetting.ExportAsZip)
                 {
@@ -967,7 +968,7 @@ namespace JSharp
             {
                 foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
                 {
-                    var f = new Compiler.File(file.Replace(rpdir,""), File.ReadAllText(file).Replace('\t' + "", ""));
+                    var f = new Compiler.File(file.Replace(rpdir, ""), File.ReadAllText(file).Replace('\t' + "", ""));
                     f.resourcespack = true;
                     files.Add(f);
                 }
@@ -986,14 +987,14 @@ namespace JSharp
             List<Compiler.File> cFiles = Compiler.compile(core, projectName, files, resourcesfiles,
                                         DebugThread, compilerSetting, projectVersion,
                                         Path.GetDirectoryName(projectPath));
-            
+
             foreach (Compiler.File f in cFiles)
             {
                 string fileName;
                 if (f.type == "json" && f.name.Contains("json"))
                     fileName = path + core.GetJsonPath(projectName, f.name);
                 else if (f.type == "json" && !f.name.Contains("json"))
-                    fileName = path + core.GetJsonPath(projectName, f.name+".json");
+                    fileName = path + core.GetJsonPath(projectName, f.name + ".json");
                 else
                     fileName = path + core.GetFunctionPath(projectName, f.name);
                 try
@@ -1107,44 +1108,46 @@ namespace JSharp
         }
         public void ExportReadMe(string path)
         {
-            string readme = "This Datapack was made using TheblueMan003's Compiler.\n" +
+            if (compilerSetting.generateMAPSFile || compilerSetting.generateREADMEFile)
+            {
+                string readme = "This Datapack was made using TheblueMan003's Compiler.\n" +
                             "Therefor all variables & functions might have wierd name.\n" +
                             "Please refers to MAPS.txt";
-            string offuscation = "#==================================#\n" +
-                                    "In order to compile each variable to a unique scoreboard name the compiler use an offuscation map\n" +
-                                    "#==================================#\n";
-            offuscation += "variable count = " + Compiler.offuscationMap.Keys.Count + "\n";
-            offuscation += "alphabet = " + Compiler.alphabet + "\n\n";
-            foreach (string key in Compiler.offuscationMap.Keys)
-            {
-                offuscation += key + " <===> " + Compiler.offuscationMap[key] + "\n";
-            }
-            string fileNameReadMe = path + "/README.txt";
-            string fileNameOffuscation = path + "/MAPS.txt";
-            try
-            {
-                SafeWriteFile(fileNameReadMe, readme);
-                SafeWriteFile(fileNameOffuscation, offuscation);
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Notice " + e.ToString());
+                string offuscation = "#==================================#\n" +
+                                        "In order to compile each variable to a unique scoreboard name the compiler use an offuscation map\n" +
+                                        "#==================================#\n";
+                offuscation += "variable count = " + Compiler.offuscationMap.Keys.Count + "\n";
+                offuscation += "alphabet = " + Compiler.alphabet + "\n\n";
+                foreach (string key in Compiler.offuscationMap.Keys)
+                {
+                    offuscation += key + " <===> " + Compiler.offuscationMap[key] + "\n";
+                }
+                string fileNameReadMe = path + "/README.txt";
+                string fileNameOffuscation = path + "/MAPS.txt";
+                try
+                {
+                    if (compilerSetting.generateREADMEFile)
+                        SafeWriteFile(fileNameReadMe, readme);
+                    if (compilerSetting.generateMAPSFile)
+                        SafeWriteFile(fileNameOffuscation, offuscation);
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Notice " + e.ToString());
+                }
             }
         }
         public void ExportStructures(string path)
         {
-            Task.Factory.StartNew(() =>
+            if (Directory.Exists(ProjectFolder() + "/structures"))
             {
-                if (Directory.Exists(ProjectFolder() + "/structures"))
-                {
-                    Directory.CreateDirectory(path + "/data/" + projectName.ToLower() + "/structures/");
+                Directory.CreateDirectory(path + "/data/" + projectName.ToLower() + "/structures/");
 
-                    foreach (string file in Directory.GetFiles(ProjectFolder() + "/structures"))
-                    {
-                        File.Copy(file, path + "/data/" + projectName.ToLower() + "/structures/" + Path.GetFileName(file));
-                    }
+                foreach (string file in Directory.GetFiles(ProjectFolder() + "/structures"))
+                {
+                    File.Copy(file, path + "/data/" + projectName.ToLower() + "/structures/" + Path.GetFileName(file));
                 }
-            });
+            }
         }
         public void ExportResourcePack(string path)
         {
@@ -1153,8 +1156,8 @@ namespace JSharp
                 string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
                 SafeWriteFile(rpPath + "/pack.mcmeta",
                                 JsonConvert.SerializeObject(
-                                    new ResourcePackMeta(projectName + " - " + projectDescription, 
-                                    compilerSetting.packformat)));
+                                    new ResourcePackMeta(projectName + " - " + projectDescription,
+                                    compilerSetting.rppackformat)));
 
                 if (Directory.Exists(rpPath))
                 {
@@ -1167,7 +1170,7 @@ namespace JSharp
         #endregion
         public void ChangeCompileOrder()
         {
-            CompileOrder form = new CompileOrder(codeOrder, codeOrder.Contains("import")?1:0);
+            CompileOrder form = new CompileOrder(codeOrder, codeOrder.Contains("import") ? 1 : 0);
             if (form.ShowDialog() == DialogResult.OK)
             {
                 ignorNextListboxUpdate = true;
@@ -1253,7 +1256,7 @@ namespace JSharp
                 CompilerCore core;
                 if (compilerSetting.CompilerCoreName == "java") { core = new CompilerCoreJava(); }
                 else if (compilerSetting.CompilerCoreName == "bedrock") { core = new CompilerCoreBedrock(); }
-                else{ throw new Exception("Unknown Compiler Core"); }
+                else { throw new Exception("Unknown Compiler Core"); }
                 if (exporting)
                 {
                     compileFiled = Compiler.compile(core, projectName, compileFile, compileResource,
@@ -1263,7 +1266,7 @@ namespace JSharp
                 else
                 {
                     compileFiled = Compiler.compile(core, projectName, compileFile, compileResource,
-                        DebugThread, compilerSetting.withoutOffuscation(), projectVersion,
+                        DebugThread, debugOffuscate ? compilerSetting : compilerSetting.withoutOffuscation(), projectVersion,
                         Path.GetDirectoryName(projectPath));
                 }
 
@@ -1293,12 +1296,12 @@ namespace JSharp
                     Path.GetDirectoryName(projectPath));
                 compileFiled = new List<Compiler.File>();
                 compileFiled.Add(new Compiler.File("Call Stacks", file));
-                
+
                 try
                 {
                     System.Diagnostics.Process.Start("https://dreampuf.github.io/GraphvizOnline/");
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     DebugThread(e.StackTrace, Color.Red);
                 }
@@ -1326,7 +1329,7 @@ namespace JSharp
                 Stack<char> chars = new Stack<char>();
                 string[] textArr = CodeBox.Text.Split('\n');
                 string text = "";
-                
+
                 for (int i = 0; i < textArr.Length; i++)
                 {
                     int shift = 0;
@@ -1401,7 +1404,7 @@ namespace JSharp
                 CodeBox.Text = text;
                 CodeBox.ClearUndo();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Debug(e, Color.Red);
             }
@@ -1529,21 +1532,21 @@ namespace JSharp
         {
             showError = !showError;
             ShowErrorButton.FlatAppearance.BorderSize = showError ? 3 : 1;
-            ShowErrorButton.ForeColor = showError ? Color.FromArgb(255,0, 165, 255) : Color.Gray;
+            ShowErrorButton.ForeColor = showError ? Color.FromArgb(255, 0, 165, 255) : Color.Gray;
             ReShowError();
         }
         private void WarningButton_Click(object sender, EventArgs e)
         {
             showWarning = !showWarning;
             ShowWarningButton.FlatAppearance.BorderSize = showWarning ? 3 : 1;
-            ShowWarningButton.ForeColor = showWarning ? Color.FromArgb(255,0, 165, 255) : Color.Gray;
+            ShowWarningButton.ForeColor = showWarning ? Color.FromArgb(255, 0, 165, 255) : Color.Gray;
             ReShowError();
         }
         private void InfoButton_Click(object sender, EventArgs e)
         {
             showInfo = !showInfo;
             ShowInfoButton.FlatAppearance.BorderSize = showInfo ? 3 : 1;
-            ShowInfoButton.ForeColor = showInfo ? Color.FromArgb(255,0, 165, 255) : Color.Gray;
+            ShowInfoButton.ForeColor = showInfo ? Color.FromArgb(255, 0, 165, 255) : Color.Gray;
             ReShowError();
         }
         private void SaveButton_Click(object sender, EventArgs e)
@@ -1570,13 +1573,13 @@ namespace JSharp
         }
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(ProjectOpen.ShowDialog() == DialogResult.OK)
+            if (ProjectOpen.ShowDialog() == DialogResult.OK)
             {
                 try
                 {
                     OpenFile(ProjectOpen.FileName);
                 }
-                catch(Exception error)
+                catch (Exception error)
                 {
                     MessageBox.Show(error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
@@ -1605,9 +1608,9 @@ namespace JSharp
                         t.Start();
                     }
                 }
-                else if (currentResourcesPack!=null || ExportRP.ShowDialog() == DialogResult.OK)
+                else if (currentResourcesPack != null || ExportRP.ShowDialog() == DialogResult.OK)
                 {
-                    string rpPath = currentResourcesPack==null ? ExportRP.FileName: currentResourcesPack;
+                    string rpPath = currentResourcesPack == null ? ExportRP.FileName : currentResourcesPack;
                     currentResourcesPack = rpPath;
                     if (isCompiling == 0)
                     {
@@ -1632,7 +1635,7 @@ namespace JSharp
             if (form.ShowDialog() == DialogResult.OK)
             {
                 TagsList = form.data;
-                
+
                 Debug("Project Tags Changed", Color.Aqua);
             }
         }
@@ -1661,7 +1664,7 @@ namespace JSharp
             if (ExportSave.ShowDialog() == DialogResult.OK)
             {
                 string path = ExportSave.FileName;
-                
+
                 string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
                 if (!Directory.Exists(rpdir))
                 {
@@ -1687,7 +1690,7 @@ namespace JSharp
         }
         private void structuresToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            new StructureImport(projectPath.Replace(Path.GetFileName(projectPath),"")).ShowDialog();
+            new StructureImport(projectPath.Replace(Path.GetFileName(projectPath), "")).ShowDialog();
         }
         private void findToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1711,7 +1714,7 @@ namespace JSharp
         }
         private void redoToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (index < PreviousText.Count-1)
+            if (index < PreviousText.Count - 1)
             {
                 ignoreMod = true;
                 CodeBox.Text = PreviousText[++index];
@@ -1808,7 +1811,7 @@ namespace JSharp
 
             string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
             dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
-            
+
             string gloDir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
             if (grp == "resourcespack")
             {
@@ -1852,7 +1855,7 @@ namespace JSharp
             var paths = codeOrder.Select(x => x.Replace("\\", "/")).ToList();
             var root = GetNodeByName(treeView1.Nodes, "", "src").Nodes;
 
-            paths.ForEach(x => { if (!allPath.Contains(x)) allPath.Add("src/"+x); });
+            paths.ForEach(x => { if (!allPath.Contains(x)) allPath.Add("src/" + x); });
             BuildTree(paths, "src", root);
 
             string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
@@ -1940,7 +1943,7 @@ namespace JSharp
                      .ForEach(x =>
                      {
                          TreeNode curNode = null;
-                         
+
                          foreach (TreeNode n in addInMe)
                          {
                              if (n.FullPath == parent + "/" + x.Key)
@@ -1949,13 +1952,14 @@ namespace JSharp
                              }
                          }
                          if (curNode == null)
-                            curNode = addInMe.Add(x.Key);
+                             curNode = addInMe.Add(x.Key);
                          BuildTree(x.Select(z => z.Last())
                                                  .ToList(),
                                                  parent + "/" + x.Key, curNode.Nodes, isFile, rec + 1);
 
                      });
-                paths.Where(x => !x.Contains("/")).ToList().ForEach(x => {
+                paths.Where(x => !x.Contains("/")).ToList().ForEach(x =>
+                {
                     TreeNode curNode = null;
                     foreach (TreeNode n in addInMe)
                     {
@@ -1966,12 +1970,12 @@ namespace JSharp
                     }
                     if (curNode == null)
                         addInMe.Add(x).Checked = isFile;
-                    });
+                });
             }
         }
         private void TreeRM(HashSet<string> paths, TreeNodeCollection addInMe, int height = 0)
         {
-            foreach(TreeNode n in addInMe)
+            foreach (TreeNode n in addInMe)
             {
                 if (n != null && n.Nodes != null)
                     TreeRM(paths, n.Nodes, height++);
@@ -2045,26 +2049,26 @@ namespace JSharp
             Rectangle nodeRect = e.Node.Bounds;
 
             /*--------- 1. draw expand/collapse icon ---------*/
-            Point ptExpand = new Point(nodeRect.Location.X - 10, nodeRect.Location.Y-2);
+            Point ptExpand = new Point(nodeRect.Location.X - 10, nodeRect.Location.Y - 2);
             Image expandImg = null;
 
             if (e.Node.IsExpanded)
                 expandImg = minusPath;
             else
                 expandImg = plusPath;
-            
+
             Graphics g = Graphics.FromImage(expandImg);
-            
+
             IntPtr imgPtr = g.GetHdc();
             g.ReleaseHdc();
             if (!e.Node.Checked)
             {
                 e.Graphics.DrawImage(expandImg, ptExpand);
             }
-            
+
 
             /*--------- 2. draw node icon ---------*/
-            Point ptNodeIcon = new Point(nodeRect.Location.X - 4, nodeRect.Location.Y-2);
+            Point ptNodeIcon = new Point(nodeRect.Location.X - 4, nodeRect.Location.Y - 2);
             Image nodeImg = filePath;
             if (e.Node.FullPath.EndsWith(".csv"))
             {
@@ -2118,7 +2122,7 @@ namespace JSharp
             treeView1.SelectedNode = treeView1.GetNodeAt(targetPoint);
             if (treeView1.SelectedNode.Checked)
                 treeView1.SelectedNode = treeView1.SelectedNode.Parent;
-            
+
             if (ForceSave())
             {
                 string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
@@ -2175,7 +2179,8 @@ namespace JSharp
         }
         private void treeView1_AfterCollapse(object sender, TreeViewEventArgs e)
         {
-            if (Control.ModifierKeys == Keys.Control) {
+            if (Control.ModifierKeys == Keys.Control)
+            {
                 CollapseRec(e.Node);
             }
         }
@@ -2200,7 +2205,7 @@ namespace JSharp
                 ignorNextListboxUpdate = false;
             }
         }
-        
+
         public void DeleteSelectedFile()
         {
             string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
@@ -2208,7 +2213,8 @@ namespace JSharp
             string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
             dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
             if (MessageBox.Show($"Are you sure you want to delete {dir} from {grp}?", "Are you sure?", MessageBoxButtons.OKCancel)
-                == DialogResult.OK) {
+                == DialogResult.OK)
+            {
                 string gloDir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
                 if (grp == "resourcespack")
                 {
@@ -2336,7 +2342,7 @@ namespace JSharp
                     if (path.EndsWith(".ogg"))
                     {
                         ShowMediaBox();
-                        
+
                     }
                 }
             }
@@ -2354,7 +2360,7 @@ namespace JSharp
                 {
                     openedFullPath.RemoveAt(20);
                 }
-                openedFullPath.Insert(0,fullPath);
+                openedFullPath.Insert(0, fullPath);
                 tabControl1.TabPages.Clear();
                 openedFullPath.ForEach(name =>
                 {
@@ -2375,10 +2381,10 @@ namespace JSharp
         {
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             //CodeBox.SyntaxHighlighter = null;
-            CodeBox.DescriptionFile = path+"formating.xml";
+            CodeBox.DescriptionFile = path + "formating.xml";
             autocompleteMenu1.Items = Formatter.getAutoComplete(CodeBox.Text);
         }
-        
+
 
         private void CodeBox_Load(object sender, EventArgs e)
         {
@@ -2398,7 +2404,7 @@ namespace JSharp
                 SendKeys.Send(text);
             }
         }
-        
+
         private void CodeBox_CustomAction(object sender, FastColoredTextBoxNS.CustomActionEventArgs e)
         {
             string text = Clipboard.GetText();
@@ -2408,7 +2414,7 @@ namespace JSharp
                 if (new Regex(@"/setblock [\-\d]+ [\-\d]+ [\-\d]+").Match(text).Success)
                 {
                     Regex reg2 = new Regex(@"[\-\d]+ [\-\d]+ [\-\d]+");
-                    CodeBox.InsertText(reg2.Match(text).Value.Replace(" ",","));
+                    CodeBox.InsertText(reg2.Match(text).Value.Replace(" ", ","));
                 }
                 else if (new Regex(@"^/summon [\w\.\:]+ [\-\d\.~]+ [\-\d\.~]+ [\-\d\.~]+ \{.+\}").Match(text).Success)
                 {
@@ -2418,7 +2424,7 @@ namespace JSharp
                 else if (new Regex(@"tp [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+").Match(text).Success)
                 {
                     Regex reg2 = new Regex(@"[\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+");
-                    CodeBox.InsertText(reg2.Match(text).Value.Replace(" ",","));
+                    CodeBox.InsertText(reg2.Match(text).Value.Replace(" ", ","));
                 }
                 else if (new Regex(@"([\-\d\.]+\s)+").Match(text).Success)
                 {
@@ -2436,9 +2442,9 @@ namespace JSharp
         {
             Regex reg = new Regex(@"[\w\._\:]+");
             string word = "";
-            foreach(Match m in reg.Matches(CodeBox.Text.Split('\n')[e.Place.iLine]))
+            foreach (Match m in reg.Matches(CodeBox.Text.Split('\n')[e.Place.iLine]))
             {
-                if (m.Index <= e.Place.iChar && m.Index+m.Length >= e.Place.iChar)
+                if (m.Index <= e.Place.iChar && m.Index + m.Length >= e.Place.iChar)
                 {
                     word = m.Value;
                 }
@@ -2454,7 +2460,7 @@ namespace JSharp
                             .Select(x => Compiler.functions[x])
                             .Aggregate((x, y) => x.Concat(y).ToList())
                             .Where(x => !x.gameName.Contains("__struct__"))
-                            .Select(x => $"{((x.outputs.Count > 0) ? (x.outputs.Select(arg => arg.GetFancyTypeString()).Aggregate((s1, s2) => s1 + ", " + s2)) : "void")} {x.gameName.Replace("/",".").Replace(":",".")}({((x.args.Count > 0)?(x.args.Select(arg => arg.GetFancyTypeString() + " " + arg.name).Aggregate((s1, s2) => s1 + ", " + s2)):"")})\n{x.desc}\n\n")
+                            .Select(x => $"{((x.outputs.Count > 0) ? (x.outputs.Select(arg => arg.GetFancyTypeString()).Aggregate((s1, s2) => s1 + ", " + s2)) : "void")} {x.gameName.Replace("/", ".").Replace(":", ".")}({((x.args.Count > 0) ? (x.args.Select(arg => arg.GetFancyTypeString() + " " + arg.name).Aggregate((s1, s2) => s1 + ", " + s2)) : "")})\n{x.desc}\n\n")
                             .Aggregate((x, y) => x + y);
                     e.ToolTipText = text;
                     e.ToolTipTitle = "Function";
@@ -2462,6 +2468,12 @@ namespace JSharp
                 }
                 catch { }
             }
+        }
+
+        private void inspectorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            InspectorForm inst = new InspectorForm(currentDataPack);
+            inst.Show();
         }
     }
 }

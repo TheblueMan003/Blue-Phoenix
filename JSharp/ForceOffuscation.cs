@@ -1,11 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -14,7 +8,7 @@ namespace JSharp
     {
         Dictionary<string, string> offuscationMap;
         Dictionary<string, Compiler.Variable> variables;
-        public ForceOffuscation(Dictionary<string, Compiler.Variable> variables, Dictionary<string,string> offuscationMap)
+        public ForceOffuscation(Dictionary<string, Compiler.Variable> variables, Dictionary<string, string> offuscationMap)
         {
             InitializeComponent();
             this.offuscationMap = offuscationMap;
@@ -29,7 +23,7 @@ namespace JSharp
 
         private void ForceOffuscation_Load(object sender, EventArgs e)
         {
-            
+
         }
 
         private void button1_Click(object sender, EventArgs e)

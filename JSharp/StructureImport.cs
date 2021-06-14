@@ -1,12 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -14,11 +7,11 @@ namespace JSharp
     public partial class StructureImport : Form
     {
         public string projectDirectory;
-        
+
         public StructureImport(string projectDirectory)
         {
             InitializeComponent();
-            this.projectDirectory = projectDirectory + (projectDirectory.EndsWith("/")? "structures/" : "/structures/");
+            this.projectDirectory = projectDirectory + (projectDirectory.EndsWith("/") ? "structures/" : "/structures/");
             if (!Directory.Exists(this.projectDirectory))
                 Directory.CreateDirectory(this.projectDirectory);
             Reload();

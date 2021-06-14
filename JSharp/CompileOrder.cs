@@ -1,11 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -13,12 +7,12 @@ namespace JSharp
     public partial class CompileOrder : Form
     {
         public List<string> Content;
-        public int fixedFile=1;
+        public int fixedFile = 1;
         public CompileOrder(List<string> order, int fixedFile)
         {
             InitializeComponent();
             Content = new List<string>();
-            order.ForEach(x=>listBox1.Items.Add(x));
+            order.ForEach(x => listBox1.Items.Add(x));
             this.fixedFile = fixedFile;
         }
 
@@ -51,8 +45,8 @@ namespace JSharp
                 object a = listBox1.SelectedItem;
                 int i = listBox1.SelectedIndex;
                 listBox1.Items.RemoveAt(listBox1.SelectedIndex);
-                listBox1.Items.Insert(Math.Max(i - 1, fixedFile-1), a);
-                listBox1.SelectedIndex = Math.Max(i - 1, fixedFile-1);
+                listBox1.Items.Insert(Math.Max(i - 1, fixedFile - 1), a);
+                listBox1.SelectedIndex = Math.Max(i - 1, fixedFile - 1);
             }
         }
 
@@ -72,7 +66,7 @@ namespace JSharp
         {
             DialogResult = DialogResult.OK;
             Content.Clear();
-            foreach(string l in listBox1.Items)
+            foreach (string l in listBox1.Items)
             {
                 Content.Add(l);
             }

@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace JSharp
 {
     public class CompilerCoreBedrock : CompilerCore
     {
-        private int condInv=0;
+        private int condInv = 0;
         public override string LoadBase()
         {
             return "scoreboard objectives add tbms.value dummy\n" +
@@ -46,11 +44,11 @@ namespace JSharp
         {
             var c = condInv++;
             var name = "__cond_bedrock__" + c.ToString();
-            string def = Compiler.parseLine(var1.type.ToString().ToLower()+" "+name + " = "+var1.gameName);
+            string def = Compiler.parseLine(var1.type.ToString().ToLower() + " " + name + " = " + var1.gameName);
             def += Compiler.parseLine(name + " -= " + var2.gameName);
             string[] res = CompareVariable(Compiler.GetVariableByName(name), 0, op, selector1);
-            
-            return new string[] { res[0], res[1]+"\n"+def };
+
+            return new string[] { res[0], res[1] + "\n" + def };
         }
         public override string[] CompareVariable(Compiler.Variable var1, int value, string op, string selector1 = "")
         {
@@ -69,7 +67,7 @@ namespace JSharp
         }
         public override string[] CompareVariable(Compiler.Variable var1, int value1, int value2, string selector1 = "")
         {
-            return new string[] { "execute " + GetSelectorEntity(var1, value1.ToString()+".."+value2.ToString(), selector1) + " ~ ~ ~ ", "" };
+            return new string[] { "execute " + GetSelectorEntity(var1, value1.ToString() + ".." + value2.ToString(), selector1) + " ~ ~ ~ ", "" };
         }
         public override string Condition(string val)
         {
@@ -77,7 +75,7 @@ namespace JSharp
         }
         public override string[] ConditionBlock(string val)
         {
-            return new string[] { "execute @s ~ ~ ~ detect " + val +" ",""};
+            return new string[] { "execute @s ~ ~ ~ detect " + val + " ", "" };
         }
         public override string[] ConditionBlocks(string val)
         {
@@ -85,14 +83,14 @@ namespace JSharp
         }
         public override string[] ConditionEntity(string entity)
         {
-            return new string[] { "execute "+entity+" ~ ~ ~ ","" };
+            return new string[] { "execute " + entity + " ~ ~ ~ ", "" };
         }
 
         public override string[] ConditionInverse(string[] val)
         {
             var c = condInv++;
             string def = Compiler.parseLine("bool __cond_bedrock__" + c.ToString() + " = true");
-            string condMod = val[0]+Compiler.parseLine("__cond_bedrock__" + c.ToString() + " = false");
+            string condMod = val[0] + Compiler.parseLine("__cond_bedrock__" + c.ToString() + " = false");
             return new string[] { Compiler.getCondition("__cond_bedrock__" + c.ToString()), val[1] + "\n" + def + "\n" + condMod };
         }
 
@@ -163,7 +161,7 @@ namespace JSharp
                 }
                 else
                 {
-                    return "@e[type=tmbsvalue] "+var1.scoreboard().Split(' ')[0];
+                    return "@e[type=tmbsvalue] " + var1.scoreboard().Split(' ')[0];
                 }
             }
         }
@@ -174,10 +172,10 @@ namespace JSharp
             else
             {
                 if (selector.Contains("]"))
-                    return selector.Substring(0,selector.LastIndexOf("]"))+
+                    return selector.Substring(0, selector.LastIndexOf("]")) +
                         ",scores={" + var1.scoreboard().Replace("@s ", "") + "=" + val + "}]";
                 else
-                    return selector+"[scores={" + var1.scoreboard().Replace("@s ", "") + "=" + val + "}]";
+                    return selector + "[scores={" + var1.scoreboard().Replace("@s ", "") + "=" + val + "}]";
             }
         }
 
@@ -251,7 +249,7 @@ namespace JSharp
             return false;
         }
 
-        public override string getLibraryFolder() { return "bedrock";}
+        public override string getLibraryFolder() { return "bedrock"; }
 
         public override string FormatTagsPath(string path)
         {
@@ -266,7 +264,7 @@ namespace JSharp
         public override string[] FormatJson(string[] args, Compiler.Context context, int start = 0)
         {
             string[] outs = FormatJsonInternal(args, context, start);
-            return new string[] { "{ \"rawtext\" :"+outs[0]+"}", outs[1], outs[2] };
+            return new string[] { "{ \"rawtext\" :" + outs[0] + "}", outs[1], outs[2] };
         }
         public string[] FormatJsonInternal(string[] args, Compiler.Context context, int start = 0)
         {

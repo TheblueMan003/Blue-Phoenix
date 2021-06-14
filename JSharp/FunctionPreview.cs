@@ -1,37 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
 {
     public partial class FunctionPreview : Form
     {
-        private Dictionary<string, List<Compiler.Function>> dic;
-        private Dictionary<string, Compiler.Structure> structs;
-        private Dictionary<string, Compiler.Variable> vars;
-        private Dictionary<string, Compiler.Enum> enums;
-        private Dictionary<string, List<Compiler.Predicate>> predicate;
-        private Dictionary<string, TagsList> blocktags;
+        private Dictionary<string, List<Compiler.Function>> Functions;
+        private Dictionary<string, Compiler.Structure> Structures;
+        private Dictionary<string, Compiler.Variable> Variables;
+        private Dictionary<string, Compiler.Enum> Enums;
+        private Dictionary<string, List<Compiler.Predicate>> Predicates;
+        private Dictionary<string, TagsList> Tags;
         private string[] names;
         private bool isClass;
 
         public FunctionPreview(Dictionary<string, List<Compiler.Function>> dic)
         {
             InitializeComponent();
-            this.dic = dic;
+            this.Functions = dic;
 
             Reload();
         }
         public FunctionPreview(Dictionary<string, Compiler.Structure> dic, bool isClass)
         {
             InitializeComponent();
-            this.structs = dic;
+            this.Structures = dic;
             this.isClass = isClass;
 
             Reload();
@@ -39,28 +35,28 @@ namespace JSharp
         public FunctionPreview(Dictionary<string, Compiler.Variable> dic)
         {
             InitializeComponent();
-            this.vars = dic;
+            this.Variables = dic;
 
             Reload();
         }
         public FunctionPreview(Dictionary<string, Compiler.Enum> dic)
         {
             InitializeComponent();
-            this.enums = dic;
+            this.Enums = dic;
 
             Reload();
         }
         public FunctionPreview(Dictionary<string, TagsList> dic)
         {
             InitializeComponent();
-            this.blocktags = dic;
+            this.Tags = dic;
 
             Reload();
         }
         public FunctionPreview(Dictionary<string, List<Compiler.Predicate>> dic)
         {
             InitializeComponent();
-            this.predicate = dic;
+            this.Predicates = dic;
 
             Reload();
         }
@@ -76,9 +72,9 @@ namespace JSharp
         public void Reload()
         {
             listBox1.Items.Clear();
-            if (dic != null)
+            if (Functions != null)
             {
-                foreach (string key in dic.Keys)
+                foreach (string key in Functions.Keys)
                 {
                     if (key.Contains(Filter.Text))
                     {
@@ -86,29 +82,19 @@ namespace JSharp
                     }
                 }
             }
-            if (structs != null)
+            if (Structures != null)
             {
-                foreach (string key in structs.Values.Distinct().Select(x => x.name))
+                foreach (string key in Structures.Values.Distinct().Select(x => x.name))
                 {
-                    if (key.Contains(Filter.Text) && structs[key].isClass == isClass)
+                    if (key.Contains(Filter.Text) && Structures[key].isClass == isClass)
                     {
                         listBox1.Items.Add(key);
                     }
                 }
             }
-            if (vars != null)
+            if (Variables != null)
             {
-                foreach (string key in vars.Keys)
-                {
-                    if (key.Contains(Filter.Text))
-                    {
-                        listBox1.Items.Add(key);
-                    }
-                }
-            }
-            if (enums != null)
-            {
-                foreach (string key in enums.Values.Distinct().Select(x => x.name))
+                foreach (string key in Variables.Keys)
                 {
                     if (key.Contains(Filter.Text))
                     {
@@ -116,9 +102,19 @@ namespace JSharp
                     }
                 }
             }
-            if (blocktags != null)
+            if (Enums != null)
             {
-                foreach (string key in blocktags.Keys)
+                foreach (string key in Enums.Values.Distinct().Select(x => x.name))
+                {
+                    if (key.Contains(Filter.Text))
+                    {
+                        listBox1.Items.Add(key);
+                    }
+                }
+            }
+            if (Tags != null)
+            {
+                foreach (string key in Tags.Keys)
                 {
                     if (key.Contains(Filter.Text))
                     {
@@ -136,9 +132,9 @@ namespace JSharp
                     }
                 }
             }
-            if (predicate != null)
+            if (Predicates != null)
             {
-                foreach (string key in predicate.Keys)
+                foreach (string key in Predicates.Keys)
                 {
                     if (key.Contains(Filter.Text))
                     {
@@ -149,66 +145,64 @@ namespace JSharp
         }
         private void FunctionPreview_Load(object sender, EventArgs e)
         {
-            
+
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (listBox1.SelectedIndex > -1)
             {
-                if (dic != null)
+                if (Functions != null)
                 {
                     listBox2.Items.Clear();
                     richTextBox1.Text = "";
-                    foreach (Compiler.Function f in dic[listBox1.SelectedItem.ToString()])
+                    foreach (Compiler.Function f in Functions[listBox1.SelectedItem.ToString()])
                     {
                         foreach (var arg in f.args)
                         {
                             listBox2.Items.Add(arg.name + " : " + arg.GetTypeString());
                         }
-                        if (dic[listBox1.SelectedItem.ToString()].Count > 1)
+                        if (Functions[listBox1.SelectedItem.ToString()].Count > 1)
                             listBox2.Items.Add("==========================");
-                        richTextBox1.Text += f.desc+"\n==========================\n";
-                        foreach (string line in f.file.parsed) {
-                            richTextBox1.Text += line+"\n";
+                        richTextBox1.Text += f.desc + "\n==========================\n";
+                        richTextBox1.Text += $"lazy: {f.lazy.ToString()} adj: {f?.package}\nattributes: {f?.attributes.Aggregate((x, y) => (x + ", " + y))}\n\n";
+                        foreach (string line in f.file.parsed)
+                        {
+                            richTextBox1.Text += line + "\n";
                         }
                         richTextBox1.Text += "\n==========================\n";
                     }
                 }
-                if (structs != null)
+                if (Structures != null)
                 {
                     listBox2.Items.Clear();
-                    Compiler.Structure f = structs[listBox1.SelectedItem.ToString()];
+                    Compiler.Structure f = Structures[listBox1.SelectedItem.ToString()];
                     foreach (var arg in f.fields)
                     {
                         listBox2.Items.Add(arg.name + " : " + arg.GetTypeString());
                     }
+                    richTextBox1.Text = $"attributes: {f.attributes.Aggregate((x, y) => (x + ", " + y))}";
                 }
-                if (vars != null)
+                if (Variables != null)
                 {
                     listBox2.Items.Clear();
-                    Compiler.Variable f = vars[listBox1.SelectedItem.ToString()];
-                    richTextBox1.Text = f.gameName + ": "+f.GetTypeString()+" entity:"+f.entity.ToString();
-                    /*
-                    foreach (var arg in f.enums)
-                    {
-                        listBox2.Items.Add(arg.name + " : " + arg.type.ToString());
-                    }*/
+                    Compiler.Variable f = Variables[listBox1.SelectedItem.ToString()];
+                    richTextBox1.Text = f.gameName + ": " + f.GetTypeString() + " entity:" + f.entity.ToString() + $"\nattributes: {f.attributes.Aggregate((x, y) => (x + ", " + y))}";
                 }
-                if (enums != null)
+                if (Enums != null)
                 {
                     listBox2.Items.Clear();
-                    List<string> f = enums[listBox1.SelectedItem.ToString()].Values();
-                    
+                    List<string> f = Enums[listBox1.SelectedItem.ToString()].Values();
+
                     foreach (var arg in f)
                     {
                         listBox2.Items.Add(arg);
                     }
                 }
-                if (blocktags != null)
+                if (Tags != null)
                 {
                     listBox2.Items.Clear();
-                    List<string> f = blocktags[listBox1.SelectedItem.ToString()].values;
+                    List<string> f = Tags[listBox1.SelectedItem.ToString()].values;
 
                     foreach (var arg in f)
                     {
@@ -221,10 +215,11 @@ namespace JSharp
                     listBox2.Items.Add(listBox1.SelectedItem.ToString());
                     richTextBox1.Text = listBox1.SelectedItem.ToString();
                 }
-                if (predicate != null)
+                if (Predicates != null)
                 {
                     listBox2.Items.Clear();
-                    foreach (var v in predicate[listBox1.SelectedItem.ToString()]) {
+                    foreach (var v in Predicates[listBox1.SelectedItem.ToString()])
+                    {
                         richTextBox1.Text += v.baseFile.content + "\n===================\n";
                     }
                 }
@@ -240,13 +235,13 @@ namespace JSharp
         {
             if (listBox2.SelectedIndex > -1)
             {
-                if (enums != null)
+                if (Enums != null)
                 {
-                    var en = enums[listBox1.SelectedItem.ToString()];
+                    var en = Enums[listBox1.SelectedItem.ToString()];
                     var f = en.values[listBox2.SelectedIndex];
 
-                    richTextBox1.Text = 
-                        f.fields.Select((x) => 
+                    richTextBox1.Text =
+                        f.fields.Select((x) =>
                             $"{x.Key}({en.fields.Find(y => y.name == x.Key).type}): {x.Value}\n"
                             ).Aggregate((x, y) => x + y);
                 }

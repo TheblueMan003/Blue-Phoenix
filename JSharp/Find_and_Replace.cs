@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -45,13 +38,13 @@ namespace JSharp
             {
                 int s = Codebox.SelectionStart;
                 string a = Codebox.Text.Substring(0, Codebox.SelectionStart);
-                string b = Codebox.Text.Substring(Codebox.SelectionStart+Codebox.SelectionLength, Codebox.Text.Length - (Codebox.SelectionStart + Codebox.SelectionLength));
+                string b = Codebox.Text.Substring(Codebox.SelectionStart + Codebox.SelectionLength, Codebox.Text.Length - (Codebox.SelectionStart + Codebox.SelectionLength));
 
                 Codebox.Text = a + textBox2.Text + b;
-                Formatter.reformat(Codebox,this,false);
+                Formatter.reformat(Codebox, this, false);
                 Find();
 
-                Codebox.SelectionStart=s;
+                Codebox.SelectionStart = s;
             }
         }
 

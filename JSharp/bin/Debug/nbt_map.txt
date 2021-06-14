@@ -26,7 +26,7 @@ motion[2] = Motion[2] = double
 hp = Health = float
 air = Air = float
 fall_distance = FallDistance = float
-food = food_level = float
+food = foodLevel = float
 hurt_time = HurtTime = float
 
 uuid_0 = UUID[0] = int

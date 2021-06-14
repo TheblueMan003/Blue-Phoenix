@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BluePhoenix
@@ -28,9 +24,10 @@ namespace BluePhoenix
                 ImportedLB.Items.Add("standard.entity_id");
                 ImportedLB.Items.Add("standard.object");
             }
-            foreach(string p in paths.Select(x => x.StartsWith("./") ? path + x.Replace("./", "") : x))
+            foreach (string p in paths.Select(x => x.StartsWith("./") ? path + x.Replace("./", "") : x))
             {
-                foreach (string lib in Directory.EnumerateFiles(p, "*.tbms", SearchOption.AllDirectories)){
+                foreach (string lib in Directory.EnumerateFiles(p, "*.tbms", SearchOption.AllDirectories))
+                {
                     var lib2 = lib.Replace(p, "").Replace("\\", ".").Replace("/", ".").Replace(".tbms", "");
                     if (!AvailableLB.Items.Contains(lib2) &&
                         !ImportedLB.Items.Contains(lib2))

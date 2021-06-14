@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace JSharp
 {
@@ -31,7 +27,7 @@ namespace JSharp
 
                         if (xop == "^")
                         {
-                            return (float)Math.Pow(a,b);
+                            return (float)Math.Pow(a, b);
                         }
                         if (xop == "*")
                         {
@@ -58,9 +54,9 @@ namespace JSharp
             }
             catch (Exception e)
             {
-                throw new Exception("Calculation Error: " + val+e.ToString());
+                throw new Exception("Calculation Error: " + val + e.ToString());
             }
-            throw new Exception("Calculation Error: "+val);
+            throw new Exception("Calculation Error: " + val);
         }
         public static bool TryCalculate(string val, out float a)
         {
