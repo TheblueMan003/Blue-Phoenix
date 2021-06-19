@@ -165,7 +165,7 @@ namespace JSharp
                         if (Functions[listBox1.SelectedItem.ToString()].Count > 1)
                             listBox2.Items.Add("==========================");
                         richTextBox1.Text += f.desc + "\n==========================\n";
-                        richTextBox1.Text += $"lazy: {f.lazy.ToString()} adj: {f?.package}\nattributes: {f?.attributes.Aggregate((x, y) => (x + ", " + y))}\n\n";
+                        richTextBox1.Text += $"lazy: {f.lazy.ToString()} adj: {f?.package}\nattributes: {(f?.attributes.Count > 0 ? f?.attributes.Aggregate((x, y) => (x + ", " + y)):"")}\n\n";
                         foreach (string line in f.file.parsed)
                         {
                             richTextBox1.Text += line + "\n";
@@ -181,13 +181,13 @@ namespace JSharp
                     {
                         listBox2.Items.Add(arg.name + " : " + arg.GetTypeString());
                     }
-                    richTextBox1.Text = $"attributes: {f.attributes.Aggregate((x, y) => (x + ", " + y))}";
+                    richTextBox1.Text = $"attributes: {(f.attributes.Count > 0 ? f.attributes.Aggregate((x, y) => (x + ", " + y)):"")}";
                 }
                 if (Variables != null)
                 {
                     listBox2.Items.Clear();
                     Compiler.Variable f = Variables[listBox1.SelectedItem.ToString()];
-                    richTextBox1.Text = f.gameName + ": " + f.GetTypeString() + " entity:" + f.entity.ToString() + $"\nattributes: {f.attributes.Aggregate((x, y) => (x + ", " + y))}";
+                    richTextBox1.Text = f.gameName + ": " + f.GetTypeString() + " entity:" + f.entity.ToString() + $"\nattributes: {(f.attributes.Count>0?f.attributes.Aggregate((x, y) => (x + ", " + y)):"")}";
                 }
                 if (Enums != null)
                 {

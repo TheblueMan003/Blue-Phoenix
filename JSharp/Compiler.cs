@@ -1425,6 +1425,14 @@ namespace JSharp
         {
             return getLazyVal(val) != null;
         }
+        public static List<Dictionary<string,string>> GetLazyValStack()
+        {
+            return lazyEvalVar?.ToList();
+        }
+        public static void SetLazyValStack(List<Dictionary<string, string>> stack)
+        {
+            lazyEvalVar = stack;
+        }
         #endregion
 
         #region eval
@@ -1949,7 +1957,7 @@ namespace JSharp
                                 if (op == "=")
                                 {
                                     output += Core.VariableOperation(variable, GetVariableByName(val), op);
-                                    output += Core.VariableOperation(variable, compilerSetting.FloatPrecision, op);
+                                    output += Core.VariableOperation(variable, compilerSetting.FloatPrecision, "/=");
                                     return output;
                                 }
                                 else
@@ -2289,14 +2297,17 @@ namespace JSharp
         private static string Decurry(string val, Variable variable, Type ca, string op = "=")
         {
             string left = getFunctionName(val);
-
-            preparseLine("var __decurry__ = " + left);
-            preparseLine(variable.gameName + " = __decurry__(" + val.Replace(left, "") + ")");
+            string subName1 = left.EndsWith(")") ? left.Substring(0, left.LastIndexOf(')')) : left;
+            string subName2 = left.EndsWith(")") ? left.Substring(left.LastIndexOf(')') + 1, left.Length - left.LastIndexOf(')') - 1) : null;
+            preparseLine("var __decurry__ = " + subName1);
+            preparseLine(variable.gameName + $" = __decurry__{(subName2 == null ? "" : "." + subName2)}({val.Replace(left, "")})");
             return "";
         }
         private static string Decurry(string val, string[] variables, string op = "=")
         {
             string left = getFunctionName(val);
+            string subName1 = left.EndsWith(")") ? left.Substring(0, left.LastIndexOf(')')) : left;
+            string subName2 = left.EndsWith(")") ? left.Substring(left.LastIndexOf(')')+1, left.Length- left.LastIndexOf(')')-1) : null;
             string varStr = "";
             for (int i = 0; i < variables.Length; i++)
             {
@@ -2306,8 +2317,8 @@ namespace JSharp
                     varStr += ",";
                 }
             }
-            preparseLine("var __decurry__ = " + left);
-            preparseLine(varStr + "=__decurry__(" + val.Replace(left, "") + ")");
+            preparseLine("var __decurry__ = " + subName1);
+            preparseLine(varStr + $" = __decurry__{(subName2==null?"":"."+subName2)}({val.Replace(left, "")})");
             return "";
         }
         #endregion
@@ -3766,7 +3777,7 @@ namespace JSharp
                     variable.isPrivate = isPrivate;
                     variable.isStatic = isStatic;
                     variable.privateContext = context.GetVar();
-                    variable.attributes = attributes;
+                    
                     AddVariable(name, variable);
 
                     string typeArray = smartExtract(text.Substring(0, mat.Index));
@@ -3788,7 +3799,6 @@ namespace JSharp
                     variable.isPrivate = isPrivate;
                     variable.isStatic = isStatic;
                     variable.privateContext = prefix;
-                    variable.attributes = attributes;
 
                     AddVariable(name, variable);
                     if (ca == Type.ENUM)
@@ -3814,7 +3824,7 @@ namespace JSharp
                     variable.isPrivate = isPrivate;
                     variable.isStatic = isStatic;
                     variable.privateContext = prefix;
-                    variable.attributes = attributes;
+                    
                     AddVariable(name, variable);
 
                     if (getStruct(text) == null)
@@ -3871,7 +3881,8 @@ namespace JSharp
                     index = (index + 1) % defValue.Length;
                 }
             }
-
+            if (!structGenerating)
+                attributes = new List<string>();
             if (context.currentFile().type != "struct" && ((!entity && splited.Length > 1) ||
                      (entity && part == 2 && entityFormatVar)) && !instantiated && !isConst)
             {
@@ -3881,8 +3892,7 @@ namespace JSharp
             {
                 output += modVar(vari + op + splited[2]);
             }
-            if (!structGenerating)
-                attributes = new List<string>();
+            
             return output;
         }
         public static void InstFunctionVar(Variable variable, string text, string name)
@@ -4578,6 +4588,10 @@ namespace JSharp
                     fFile.enumGen = args1Extra;
                 }
                 else if (args1Extra.StartsWith("("))
+                {
+                    fFile.enumGen = args1Extra;
+                }
+                else if (args.Length == 2)
                 {
                     fFile.enumGen = args1Extra;
                 }
@@ -5772,18 +5786,6 @@ namespace JSharp
         #endregion
 
         #region type
-        private static bool containType(string text)
-        {
-            if (typeMaps.Count > 0)
-            {
-                foreach (string key in typeMaps.Peek().Keys)
-                {
-                    if (text.ToLower().StartsWith(key))
-                        return true;
-                }
-            }
-            return false;
-        }
         public static Type getType(string t, int recCall = 0)
         {
             t = t.Replace("{", "") + " ";
@@ -6523,12 +6525,15 @@ namespace JSharp
                                 else if (a.type == Type.PARAMS)
                                 {
                                     string param = "(";
+                                    int c = 0;
                                     for (int j = i; j < args.Length; j++)
                                     {
                                         param += args[j] + ",";
+                                        c++;
                                     }
 
                                     context.compVal[context.compVal.Count - 1].Add(a.name, param + ")");
+                                    context.compVal[context.compVal.Count - 1].Add(a.name+".count", c.ToString());
                                 }
                                 else if (a.type == Type.STRING)
                                     context.compVal[context.compVal.Count - 1].Add(a.name, smartExtract(args[i]));
@@ -8548,6 +8553,7 @@ namespace JSharp
                 this.type = type;
                 this.entity = entity;
                 this.def = def;
+                this.attributes = Compiler.attributes;
 
                 if (structStack.Count > 0 && !isInStaticMethod)
                 {
@@ -9316,7 +9322,6 @@ namespace JSharp
             string type;
             public Variable variable;
             Variable copyFrom;
-            int copyFromAccessTime;
             string text;
             int treeBottom;
             string[] sizes = new string[0];
@@ -9394,10 +9399,6 @@ namespace JSharp
 
 
                 copyFrom = GetVariableByName(smartExtract(text), true);
-                if (copyFrom != null)
-                {
-                    copyFromAccessTime = copyFrom.accessTime;
-                }
 
                 variable = GetVariableByName(name);
             }
@@ -9406,7 +9407,8 @@ namespace JSharp
                 bool createVar = casesUnit.TrueForAll(x => !x.cmd.Contains("function") 
                                                         && !(x.cmd.StartsWith("scoreboard") && x.cmd.Contains(copyFrom.scoreboard()))) &&
                                  casesRange.TrueForAll(x => !x.cmd.Contains("function")
-                                                        && !(x.cmd.StartsWith("scoreboard") && x.cmd.Contains(copyFrom.scoreboard())));
+                                                        && !(x.cmd.StartsWith("scoreboard") && x.cmd.Contains(copyFrom.scoreboard()))) &&
+                                 copyFrom != null;
                 
                 if (createVar)
                     variable = copyFrom;
@@ -9911,6 +9913,8 @@ namespace JSharp
             public string UnparsedFunctionFileContext;
             public bool resourcespack;
             public Dictionary<string, string> typeMapContext = new Dictionary<string, string>();
+            public bool multiUsed = false;
+            public List<Dictionary<string, string>> lazyVarStack;
 
             public Function function;
             public Switch.Case switchcase;
@@ -9924,6 +9928,7 @@ namespace JSharp
                 this.name = name;
                 this.content = content;
                 this.type = type;
+                lazyVarStack = GetLazyValStack();
 
                 if (typeMaps.Count > 0)
                 {
@@ -10235,7 +10240,7 @@ namespace JSharp
 
                         foreach (File file in lst)
                         {
-                            if (file.content == content)
+                            if (file.content == content && file.valid && !file.notUsed)
                             {
                                 if ((type == "if" || type == "with") && lineCount != 1)
                                 {
@@ -10245,6 +10250,7 @@ namespace JSharp
                                             .Replace(Core.CallFunction(this), Core.CallFunction(file));
                                     found = true;
                                     valid = false;
+                                    file.multiUsed = true;
                                     break;
                                 }
                                 if (type == "case" && lineCount != 1)
@@ -10253,6 +10259,7 @@ namespace JSharp
                                                                 .Replace(Core.CallFunction(this), Core.CallFunction(file));
                                     found = true;
                                     valid = false;
+                                    file.multiUsed = true;
                                     break;
                                 }
                             }
@@ -10352,7 +10359,8 @@ namespace JSharp
                 }
                 adjPackage.Push(function.package);
                 adjPackage.Push(function.structure);
-
+                SetLazyValStack(lazyVarStack);
+                
                 if (function != null && function.args.Count == 1)
                 {
                     switches.Push(new Switch(function.args[0], -1));

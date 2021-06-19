@@ -39,3 +39,4 @@ F:\002_Software_dev\JSharp\JSharp\bin\Debug\Interop.WMPLib.dll
 F:\002_Software_dev\JSharp\JSharp\bin\Debug\AxInterop.WMPLib.dll
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.InspectorForm.resources
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.csproj.AssemblyReference.cache
+F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.StructureToCMD.resources

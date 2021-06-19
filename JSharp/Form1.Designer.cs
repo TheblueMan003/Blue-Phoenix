@@ -92,6 +92,8 @@
             this.animatedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.CodeBox = new FastColoredTextBoxNS.FastColoredTextBox();
+            this.autocompleteMenu1 = new AutocompleteMenuNS.AutocompleteMenu();
             this.SaveButton = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.ShowInfoButton = new System.Windows.Forms.Button();
@@ -100,13 +102,12 @@
             this.ClearLogButton = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
-            this.CodeBox = new FastColoredTextBoxNS.FastColoredTextBox();
-            this.autocompleteMenu1 = new AutocompleteMenuNS.AutocompleteMenu();
+            this.structureToCMDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.CodeListContextMenu.SuspendLayout();
             this.tabControl1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.CodeBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // timer1
@@ -315,7 +316,8 @@
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.getCallStackTraceToolStripMenuItem,
             this.generateResourcesPackToolStripMenuItem,
-            this.inspectorToolStripMenuItem});
+            this.inspectorToolStripMenuItem,
+            this.structureToCMDToolStripMenuItem});
             this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
@@ -724,6 +726,71 @@
             this.tabControl1.TabIndex = 40;
             this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
+            // CodeBox
+            // 
+            this.CodeBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.CodeBox.AutoCompleteBrackets = true;
+            this.CodeBox.AutoCompleteBracketsList = new char[] {
+        '(',
+        ')',
+        '{',
+        '}',
+        '[',
+        ']',
+        '\"',
+        '\"',
+        '\'',
+        '\''};
+            this.autocompleteMenu1.SetAutocompleteMenu(this.CodeBox, this.autocompleteMenu1);
+            this.CodeBox.AutoScrollMinSize = new System.Drawing.Size(27, 14);
+            this.CodeBox.BackBrush = null;
+            this.CodeBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.CodeBox.CaretColor = System.Drawing.Color.White;
+            this.CodeBox.CharHeight = 14;
+            this.CodeBox.CharWidth = 8;
+            this.CodeBox.CurrentLineColor = System.Drawing.Color.DimGray;
+            this.CodeBox.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.CodeBox.DescriptionFile = "";
+            this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this.CodeBox.FoldingIndicatorColor = System.Drawing.Color.Chartreuse;
+            this.CodeBox.Hotkeys = resources.GetString("CodeBox.Hotkeys");
+            this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.CodeBox.IsReplaceMode = false;
+            this.CodeBox.LineNumberColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.CodeBox.Location = new System.Drawing.Point(237, 62);
+            this.CodeBox.Name = "CodeBox";
+            this.CodeBox.Paddings = new System.Windows.Forms.Padding(0);
+            this.CodeBox.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+            this.CodeBox.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("CodeBox.ServiceColors")));
+            this.CodeBox.ServiceLinesColor = System.Drawing.Color.DimGray;
+            this.CodeBox.ShowFoldingLines = true;
+            this.CodeBox.Size = new System.Drawing.Size(795, 492);
+            this.CodeBox.TabIndex = 42;
+            this.CodeBox.Zoom = 100;
+            this.CodeBox.ToolTipNeeded += new System.EventHandler<FastColoredTextBoxNS.ToolTipNeededEventArgs>(this.CodeBox_ToolTipNeeded);
+            this.CodeBox.CustomAction += new System.EventHandler<FastColoredTextBoxNS.CustomActionEventArgs>(this.CodeBox_CustomAction);
+            this.CodeBox.Load += new System.EventHandler(this.CodeBox_Load);
+            this.CodeBox.Enter += new System.EventHandler(this.fastColoredTextBox1_Enter);
+            // 
+            // autocompleteMenu1
+            // 
+            this.autocompleteMenu1.AllowsTabKey = true;
+            this.autocompleteMenu1.AppearInterval = 100;
+            this.autocompleteMenu1.Colors = ((AutocompleteMenuNS.Colors)(resources.GetObject("autocompleteMenu1.Colors")));
+            this.autocompleteMenu1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.autocompleteMenu1.ImageList = null;
+            this.autocompleteMenu1.Items = new string[] {
+        "public void ^ (){\\n\\n}",
+        "public class ^ (){\\n\\n}",
+        "public struct ^ (){\\n\\n}",
+        "public enum ^{\\n\\n}"};
+            this.autocompleteMenu1.MaximumSize = new System.Drawing.Size(300, 200);
+            this.autocompleteMenu1.SearchPattern = "[\\$\\w\\.\\:\\@]";
+            this.autocompleteMenu1.TargetControlWrapper = null;
+            this.autocompleteMenu1.Selected += new System.EventHandler<AutocompleteMenuNS.SelectedEventArgs>(this.autocompleteMenu1_Selected);
+            // 
             // SaveButton
             // 
             this.SaveButton.BackColor = System.Drawing.Color.Black;
@@ -838,70 +905,12 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // CodeBox
+            // structureToCMDToolStripMenuItem
             // 
-            this.CodeBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.CodeBox.AutoCompleteBrackets = true;
-            this.CodeBox.AutoCompleteBracketsList = new char[] {
-        '(',
-        ')',
-        '{',
-        '}',
-        '[',
-        ']',
-        '\"',
-        '\"',
-        '\'',
-        '\''};
-            this.autocompleteMenu1.SetAutocompleteMenu(this.CodeBox, this.autocompleteMenu1);
-            this.CodeBox.AutoScrollMinSize = new System.Drawing.Size(27, 14);
-            this.CodeBox.BackBrush = null;
-            this.CodeBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.CodeBox.CaretColor = System.Drawing.Color.White;
-            this.CodeBox.CharHeight = 14;
-            this.CodeBox.CharWidth = 8;
-            this.CodeBox.CurrentLineColor = System.Drawing.Color.DimGray;
-            this.CodeBox.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.CodeBox.DescriptionFile = "";
-            this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
-            this.CodeBox.FoldingIndicatorColor = System.Drawing.Color.Chartreuse;
-            this.CodeBox.Hotkeys = resources.GetString("CodeBox.Hotkeys");
-            this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.CodeBox.IsReplaceMode = false;
-            this.CodeBox.LineNumberColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.CodeBox.Location = new System.Drawing.Point(237, 62);
-            this.CodeBox.Name = "CodeBox";
-            this.CodeBox.Paddings = new System.Windows.Forms.Padding(0);
-            this.CodeBox.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
-            this.CodeBox.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("CodeBox.ServiceColors")));
-            this.CodeBox.ServiceLinesColor = System.Drawing.Color.DimGray;
-            this.CodeBox.ShowFoldingLines = true;
-            this.CodeBox.Size = new System.Drawing.Size(795, 492);
-            this.CodeBox.TabIndex = 42;
-            this.CodeBox.Zoom = 100;
-            this.CodeBox.ToolTipNeeded += new System.EventHandler<FastColoredTextBoxNS.ToolTipNeededEventArgs>(this.CodeBox_ToolTipNeeded);
-            this.CodeBox.CustomAction += new System.EventHandler<FastColoredTextBoxNS.CustomActionEventArgs>(this.CodeBox_CustomAction);
-            this.CodeBox.Load += new System.EventHandler(this.CodeBox_Load);
-            this.CodeBox.Enter += new System.EventHandler(this.fastColoredTextBox1_Enter);
-            // 
-            // autocompleteMenu1
-            // 
-            this.autocompleteMenu1.AllowsTabKey = true;
-            this.autocompleteMenu1.AppearInterval = 100;
-            this.autocompleteMenu1.Colors = ((AutocompleteMenuNS.Colors)(resources.GetObject("autocompleteMenu1.Colors")));
-            this.autocompleteMenu1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.autocompleteMenu1.ImageList = null;
-            this.autocompleteMenu1.Items = new string[] {
-        "public void ^ (){\\n\\n}",
-        "public class ^ (){\\n\\n}",
-        "public struct ^ (){\\n\\n}",
-        "public enum ^{\\n\\n}"};
-            this.autocompleteMenu1.MaximumSize = new System.Drawing.Size(300, 200);
-            this.autocompleteMenu1.SearchPattern = "[\\$\\w\\.\\:\\@]";
-            this.autocompleteMenu1.TargetControlWrapper = null;
-            this.autocompleteMenu1.Selected += new System.EventHandler<AutocompleteMenuNS.SelectedEventArgs>(this.autocompleteMenu1_Selected);
+            this.structureToCMDToolStripMenuItem.Name = "structureToCMDToolStripMenuItem";
+            this.structureToCMDToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.structureToCMDToolStripMenuItem.Text = "Structure To CMD";
+            this.structureToCMDToolStripMenuItem.Click += new System.EventHandler(this.structureToCMDToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -954,8 +963,8 @@
             this.menuStrip1.PerformLayout();
             this.CodeListContextMenu.ResumeLayout(false);
             this.tabControl1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.CodeBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1034,6 +1043,7 @@
         private AutocompleteMenuNS.AutocompleteMenu autocompleteMenu1;
         private System.Windows.Forms.ToolStripMenuItem libraryToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem inspectorToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem structureToCMDToolStripMenuItem;
     }
 }
 

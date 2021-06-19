@@ -223,6 +223,12 @@
     <Compile Include="StructureImport.Designer.cs">
       <DependentUpon>StructureImport.cs</DependentUpon>
     </Compile>
+    <Compile Include="StructureToCMD.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="StructureToCMD.Designer.cs">
+      <DependentUpon>StructureToCMD.cs</DependentUpon>
+    </Compile>
     <Compile Include="TagsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -299,6 +305,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="StructureImport.resx">
       <DependentUpon>StructureImport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="StructureToCMD.resx">
+      <DependentUpon>StructureToCMD.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="TagsForm.resx">
       <DependentUpon>TagsForm.cs</DependentUpon>

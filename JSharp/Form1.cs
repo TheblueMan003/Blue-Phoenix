@@ -2421,7 +2421,7 @@ namespace JSharp
                     Regex reg2 = new Regex(@"\{.+\}");
                     CodeBox.InsertText(reg2.Match(text).Value);
                 }
-                else if (new Regex(@"tp [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+").Match(text).Success)
+                else if (new Regex(@"tp @\w [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+").Match(text).Success)
                 {
                     Regex reg2 = new Regex(@"[\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+ [\-\d\.]+");
                     CodeBox.InsertText(reg2.Match(text).Value.Replace(" ", ","));
@@ -2473,6 +2473,12 @@ namespace JSharp
         private void inspectorToolStripMenuItem_Click(object sender, EventArgs e)
         {
             InspectorForm inst = new InspectorForm(currentDataPack);
+            inst.Show();
+        }
+
+        private void structureToCMDToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            StructureToCMD inst = new StructureToCMD();
             inst.Show();
         }
     }
