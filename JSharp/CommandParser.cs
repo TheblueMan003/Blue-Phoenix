@@ -17,6 +17,7 @@ namespace JSharp
         public static string[] sounds;
         public static string[] cmds;
         public static string[] grp2;
+        public static HashSet<string> functionSet;
         public static List<string> gamerules = new List<string>();
         public static List<Gamerule> gamerulesObj = new List<Gamerule>();
         private static bool loaded;
@@ -25,6 +26,7 @@ namespace JSharp
         {
             if (!loaded)
             {
+                functionSet = new HashSet<string>();
                 loaded = true;
                 string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
                 difficulties = File.ReadAllLines(path + "cmd_data/difficulty.txt");
@@ -44,18 +46,13 @@ namespace JSharp
                         gamerules.Add(c[0]);
                     }
                 }
+                foreach (string fun in funcName)
+                    functionSet.Add(fun);
             }
         }
         public static bool canBeParse(string text)
         {
-            foreach (string fun in funcName)
-            {
-                if (text.StartsWith(fun + "("))
-                {
-                    return true;
-                }
-            }
-            return false;
+            return functionSet.Contains(text);
         }
         public static string parse(string text, Compiler.Context context)
         {

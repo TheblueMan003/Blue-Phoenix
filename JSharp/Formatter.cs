@@ -23,7 +23,7 @@ namespace JSharp
             "struct", "extends", "static", "positioned", "lazy", "abstract", "this", "align", "alias",
             "ticking", "loading", "helper", "void", "null", "enum", "blocktags","entitytags","itemtags", "public", "private",
             "new", "external", "jsonfile", "require", "indexed", "predicate", "let", "var", "val", "extension", "implements",
-            "invisible","stacksafe"};
+            "invisible","stacksafe", "infix","prefix"};
 
         private static string[] autoCompleteTools ={
             "public void ^(){\n\n}",

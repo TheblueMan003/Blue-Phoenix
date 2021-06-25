@@ -1218,6 +1218,7 @@ namespace JSharp
                     CompileThread.Abort();
 
                 CompileThread = new Thread(CompileThreaded);
+                CompileThread.Priority = ThreadPriority.Highest;
                 CompileThread.Start();
             }
         }
@@ -1672,6 +1673,7 @@ namespace JSharp
                     if (isCompiling == 0)
                     {
                         Thread t = new Thread(new ThreadStart(ExportDataPackThread));
+                        t.Priority = ThreadPriority.Highest;
                         t.Start();
                     }
                 }
@@ -1683,6 +1685,7 @@ namespace JSharp
                     if (isCompiling == 0)
                     {
                         Thread t = new Thread(new ThreadStart(ExportDataPackThread));
+                        t.Priority = ThreadPriority.Highest;
                         t.Start();
                     }
                 }
@@ -1895,7 +1898,7 @@ namespace JSharp
             BuildTree(paths, "resources", root, false);
 
 
-            string[] folders = { "resourcespack", "structures" };
+            string[] folders = { "resourcespack", "structures", "tilemaps" };
             folders.ToList().ForEach(folder =>
             {
                 dir = Path.GetDirectoryName(projectPath) + $"/{folder}/";
@@ -2455,7 +2458,7 @@ namespace JSharp
                 try
                 {
                     text = Compiler.functions
-                            .Keys
+                            ?.Keys
                             .Where(x => x.EndsWith(word.ToLower()))
                             .Select(x => Compiler.functions[x])
                             .Aggregate((x, y) => x.Concat(y).ToList())
@@ -2480,6 +2483,19 @@ namespace JSharp
         {
             StructureToCMD inst = new StructureToCMD();
             inst.Show();
+        }
+
+        private void tilemapEditorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (ForceSave())
+            {
+                if (!Directory.Exists(Path.GetDirectoryName(projectPath) + "/tilemaps"))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/tilemaps");
+                }
+                TilemapGenerator t = new TilemapGenerator(Path.GetDirectoryName(projectPath) + "/tilemaps");
+                t.Show();
+            }
         }
     }
 }

@@ -57,6 +57,7 @@
             this.getCallStackTraceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.generateResourcesPackToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.inspectorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.structureToCMDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ProjectSave = new System.Windows.Forms.SaveFileDialog();
             this.ProjectOpen = new System.Windows.Forms.OpenFileDialog();
             this.ExportSave = new System.Windows.Forms.SaveFileDialog();
@@ -102,7 +103,7 @@
             this.ClearLogButton = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
-            this.structureToCMDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.tilemapEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.CodeListContextMenu.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -317,7 +318,8 @@
             this.getCallStackTraceToolStripMenuItem,
             this.generateResourcesPackToolStripMenuItem,
             this.inspectorToolStripMenuItem,
-            this.structureToCMDToolStripMenuItem});
+            this.structureToCMDToolStripMenuItem,
+            this.tilemapEditorToolStripMenuItem});
             this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
@@ -344,6 +346,13 @@
             this.inspectorToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
             this.inspectorToolStripMenuItem.Text = "Inspector";
             this.inspectorToolStripMenuItem.Click += new System.EventHandler(this.inspectorToolStripMenuItem_Click);
+            // 
+            // structureToCMDToolStripMenuItem
+            // 
+            this.structureToCMDToolStripMenuItem.Name = "structureToCMDToolStripMenuItem";
+            this.structureToCMDToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.structureToCMDToolStripMenuItem.Text = "Structure To CMD";
+            this.structureToCMDToolStripMenuItem.Click += new System.EventHandler(this.structureToCMDToolStripMenuItem_Click);
             // 
             // ProjectSave
             // 
@@ -755,6 +764,7 @@
             this.CodeBox.DescriptionFile = "";
             this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.CodeBox.FoldingIndicatorColor = System.Drawing.Color.Chartreuse;
+            this.CodeBox.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.CodeBox.Hotkeys = resources.GetString("CodeBox.Hotkeys");
             this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.CodeBox.IsReplaceMode = false;
@@ -905,12 +915,12 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // structureToCMDToolStripMenuItem
+            // tilemapEditorToolStripMenuItem
             // 
-            this.structureToCMDToolStripMenuItem.Name = "structureToCMDToolStripMenuItem";
-            this.structureToCMDToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
-            this.structureToCMDToolStripMenuItem.Text = "Structure To CMD";
-            this.structureToCMDToolStripMenuItem.Click += new System.EventHandler(this.structureToCMDToolStripMenuItem_Click);
+            this.tilemapEditorToolStripMenuItem.Name = "tilemapEditorToolStripMenuItem";
+            this.tilemapEditorToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.tilemapEditorToolStripMenuItem.Text = "Tilemap Editor";
+            this.tilemapEditorToolStripMenuItem.Click += new System.EventHandler(this.tilemapEditorToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -1044,6 +1054,7 @@
         private System.Windows.Forms.ToolStripMenuItem libraryToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem inspectorToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem structureToCMDToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem tilemapEditorToolStripMenuItem;
     }
 }
 
