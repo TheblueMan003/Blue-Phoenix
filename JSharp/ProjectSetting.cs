@@ -44,6 +44,8 @@ namespace JSharp
             ExportAsZip_Box.Checked = compilerSetting.ExportAsZip;
             AuthorsBox.Text = compilerSetting.Authors;
             FunctionTagOptiBox.Checked = compilerSetting.opti_FunctionTagsReplace;
+            ShowExceptionBox.Checked = compilerSetting.opti_ShowException;
+            ShowDebugBox.Checked = compilerSetting.opti_ShowDebug;
 
             HighlighEnum_Box.Checked = Formatter.showEnumValue;
             HighlighFunction_Box.Checked = Formatter.showFunc;
@@ -97,6 +99,8 @@ namespace JSharp
                 compilerSetting.Authors = AuthorsBox.Text;
 
                 compilerSetting.opti_FunctionTagsReplace = FunctionTagOptiBox.Checked;
+                compilerSetting.opti_ShowException = ShowExceptionBox.Checked;
+                compilerSetting.opti_ShowDebug = ShowDebugBox.Checked;
 
                 Formatter.showEnumValue = HighlighEnum_Box.Checked;
                 Formatter.showFunc = HighlighFunction_Box.Checked;

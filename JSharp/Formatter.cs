@@ -11,7 +11,7 @@ namespace JSharp
 {
     public static class Formatter
     {
-        private static string[] funKeyword = { "debug", "print" };
+        private static string[] funKeyword = { "debug", "print", "warning", "exception" };
         private static string[] typKeyword = { "int", "float", "entity", "string", "bool", "function", "selector" };
         private static string[] compKeyword = { "json", "params", "implicite", "define" };
         private static string[] blueWord = { "true", "false" };
@@ -56,7 +56,7 @@ namespace JSharp
         public static List<string> defWordMore2 = new List<string>();
 
         private static Regex numberRegex = new Regex(@"(-?\b)(\d+\.\d+|\d+)[bldsf]?\b");
-        private static Regex wordRegex = new Regex("\"[^\"]*\"");//= new Regex("\"(([^\\n\"]+)*(\\\\\")*)*\"");
+        private static Regex wordRegex = new Regex("\"[^\"\n]*\"");//= new Regex("\"(([^\\n\"]+)*(\\\\\")*)*\"");
         private static Regex commentRegex = new Regex(@"(?s)(//[^\n]*|/\*[^*]*\*/)");
         private static Regex funcDocRegex = new Regex("(?s)\"\"\"[^\"\"\"]*\"\"\"");
         private static List<ColorCoding> colorCodings = new List<ColorCoding>();
@@ -83,6 +83,7 @@ namespace JSharp
             colorCodings.Add(ColorCoding.Get(funKeyword
                                             .Concat(compKeyword)
                                             .Concat(tags.ToArray()).Distinct()
+                                            .Concat(CommandParser.dataattribute.Select(x => "\\["+x+"\\]"))
                                             .ToArray(), Color.Magenta, "Bold"));
 
             colorCodings.Add(ColorCoding.Get(typKeyword.Distinct().ToArray(), Color.Orange, "Bold"));
@@ -90,11 +91,11 @@ namespace JSharp
             if (showName)
             {
                 colorCodings.Add(ColorCoding.Get(CommandParser.names.Distinct()
-                    .Concat(CommandParser.scoreboards.Distinct())
-                    .Concat(CommandParser.effects)
-                    .Concat(CommandParser.gamerules.Distinct())
-                    .Concat(CommandParser.sounds.Distinct())
-                    .ToArray(), cKeyword, ""));
+                            .Concat(CommandParser.scoreboards.Distinct())
+                            .Concat(CommandParser.effects)
+                            .Concat(CommandParser.gamerules.Distinct())
+                            .Concat(CommandParser.sounds.Distinct())
+                            .ToArray(), cKeyword, ""));
             }
 
 
@@ -375,7 +376,10 @@ namespace JSharp
                 string s = "(?i)(";
                 foreach (string p in lst)
                 {
-                    s += @"\b" + p.Replace("|", "\\|").Replace(".", "\\.") + @"\b|";
+                    if (p.StartsWith("\\"))
+                        s += p + "|";
+                    else
+                        s += @"\b" + p.Replace("|", "\\|").Replace(".", "\\.") + @"\b|";
                 }
                 s = s.Substring(0, s.Length - 1) + ")";
                 if (s == "(?i))")

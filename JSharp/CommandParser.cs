@@ -17,6 +17,7 @@ namespace JSharp
         public static string[] sounds;
         public static string[] cmds;
         public static string[] grp2;
+        public static string[] dataattribute;
         public static HashSet<string> functionSet;
         public static List<string> gamerules = new List<string>();
         public static List<Gamerule> gamerulesObj = new List<Gamerule>();
@@ -37,6 +38,7 @@ namespace JSharp
                 sounds = File.ReadAllLines(path + "cmd_data/sounds.txt");
                 cmds = File.ReadAllLines(path + "cmd_data/colors/grp_1.txt");
                 grp2 = File.ReadAllLines(path + "cmd_data/colors/grp_2.txt");
+                dataattribute = File.ReadAllLines(path + "cmd_data/dataattribute.txt");
                 foreach (string gr in File.ReadAllLines(path + "cmd_data/gamerule.txt"))
                 {
                     string[] c = gr.Split('	');

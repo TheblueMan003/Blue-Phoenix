@@ -221,9 +221,11 @@ namespace JSharp
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
-            while (lastSeen < debugMSGs.Count - 1)
+            int nb = 0;
+            while (lastSeen < debugMSGs.Count - 1 && nb < 100)
             {
                 lastSeen++;
+                nb++;
                 Debug(debugMSGs[lastSeen].msg, debugMSGs[lastSeen].color);
             }
 

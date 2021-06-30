@@ -63,6 +63,10 @@ namespace JSharp
             else
                 return getEntityVar(field[0], field[1]);
         }
+        public static bool isValid(string nbt)
+        {
+            return nbt_map.ContainsKey(nbt);
+        }
         public static string getType(string nbt)
         {
             loadDict();

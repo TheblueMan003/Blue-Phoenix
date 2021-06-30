@@ -53,9 +53,9 @@
             this.label8 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.RMFileBox = new System.Windows.Forms.CheckBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.TreeSizeBox = new System.Windows.Forms.TextBox();
-            this.label5 = new System.Windows.Forms.Label();
             this.IsLibCheckbox = new System.Windows.Forms.CheckBox();
             this.HighlightName_Box = new System.Windows.Forms.CheckBox();
             this.HighlighEnum_Box = new System.Windows.Forms.CheckBox();
@@ -69,6 +69,8 @@
             this.AuthorsBox = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.FunctionTagOptiBox = new System.Windows.Forms.CheckBox();
+            this.ShowExceptionBox = new System.Windows.Forms.CheckBox();
+            this.ShowDebugBox = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -341,6 +343,15 @@
             this.RMFileBox.Text = "Remove Useless Files";
             this.RMFileBox.UseVisualStyleBackColor = true;
             // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(7, 18);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(79, 13);
+            this.label5.TabIndex = 12;
+            this.label5.Text = "Float Precision:";
+            // 
             // label6
             // 
             this.label6.AutoSize = true;
@@ -359,15 +370,6 @@
             this.TreeSizeBox.Name = "TreeSizeBox";
             this.TreeSizeBox.Size = new System.Drawing.Size(176, 20);
             this.TreeSizeBox.TabIndex = 13;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(7, 18);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(79, 13);
-            this.label5.TabIndex = 12;
-            this.label5.Text = "Float Precision:";
             // 
             // IsLibCheckbox
             // 
@@ -480,6 +482,8 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.ShowDebugBox);
+            this.groupBox2.Controls.Add(this.ShowExceptionBox);
             this.groupBox2.Controls.Add(this.FunctionTagOptiBox);
             this.groupBox2.Controls.Add(this.TreeSizeBox);
             this.groupBox2.Controls.Add(this.label6);
@@ -500,6 +504,26 @@
             this.FunctionTagOptiBox.TabIndex = 24;
             this.FunctionTagOptiBox.Text = "Function Tags Replace";
             this.FunctionTagOptiBox.UseVisualStyleBackColor = true;
+            // 
+            // ShowExceptionBox
+            // 
+            this.ShowExceptionBox.AutoSize = true;
+            this.ShowExceptionBox.Location = new System.Drawing.Point(6, 206);
+            this.ShowExceptionBox.Name = "ShowExceptionBox";
+            this.ShowExceptionBox.Size = new System.Drawing.Size(103, 17);
+            this.ShowExceptionBox.TabIndex = 25;
+            this.ShowExceptionBox.Text = "Show Exception";
+            this.ShowExceptionBox.UseVisualStyleBackColor = true;
+            // 
+            // ShowDebugBox
+            // 
+            this.ShowDebugBox.AutoSize = true;
+            this.ShowDebugBox.Location = new System.Drawing.Point(6, 183);
+            this.ShowDebugBox.Name = "ShowDebugBox";
+            this.ShowDebugBox.Size = new System.Drawing.Size(88, 17);
+            this.ShowDebugBox.TabIndex = 26;
+            this.ShowDebugBox.Text = "Show Debug";
+            this.ShowDebugBox.UseVisualStyleBackColor = true;
             // 
             // ProjectSetting
             // 
@@ -587,5 +611,7 @@
         private System.Windows.Forms.TextBox AuthorsBox;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.CheckBox FunctionTagOptiBox;
+        private System.Windows.Forms.CheckBox ShowDebugBox;
+        private System.Windows.Forms.CheckBox ShowExceptionBox;
     }
 }
