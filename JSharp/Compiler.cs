@@ -89,7 +89,11 @@ namespace JSharp
         private static int jsonIndent = 0;
 
         private static List<string> funcDef;
-        private static List<string> funcDef2;
+        private static List<string> funcDefF;
+        private static List<string> funcDefM;
+        private static List<string> funcDefL;
+        private static Dictionary<string, List<string>> varWord;
+        private static Dictionary<string, List<string>> objectFunc;
         private static string callTrace = "digraph G {\nmain\nload\nhelper\n";
         private static string callingFunctName = "loading";
         private static bool structInstCompVar;
@@ -220,7 +224,12 @@ namespace JSharp
             GlobalDebug = debug;
             Project = project;
             funcDef = new List<string>();
-            funcDef2 = new List<string>();
+            funcDefM = new List<string>();
+            funcDefL = new List<string>();
+            funcDefF = new List<string>();
+            varWord = new Dictionary<string, List<string>>();
+            objectFunc = new Dictionary<string, List<string>>();
+
             structGenerating = false;
 
             try
@@ -395,6 +404,7 @@ namespace JSharp
         }
         private static void compileFile(File f, string[] desugaredContent, bool notUsed = false, bool import = false)
         {
+            string preFile = currentFile;
             structStack = new Stack<Structure>();
             packageMap = new Dictionary<string, string>();
             LastConds = new Stack<If>();
@@ -413,6 +423,11 @@ namespace JSharp
             jsonIndent = 0;
             totalCodeFiles++;
             totalCodeChar += f.content.Length;
+            if (!varWord.ContainsKey(currentFile))
+            {
+                varWord[currentFile] = new List<string>();
+                objectFunc[currentFile] = new List<string>();
+            }
 
             ParenthiseError parenthiseError = checkParenthisation(f.content.Split('\n'));
             if (parenthiseError != null)
@@ -488,8 +503,10 @@ namespace JSharp
                     }
                 }
             }
+            
             totalCodeLines += currentLine - 1;
             GlobalDebug("Succefully Compiled " + currentFile + " (" + (currentLine - 1).ToString() + " Lines)", Color.Lime);
+            currentFile = preFile!=null?preFile:"____";
         }
 
         public static void updateFormater()
@@ -511,7 +528,11 @@ namespace JSharp
                 Formatter.setpackage(packages.Concat(structs.Keys.Where(x => structs[x].isStatic)).Distinct().ToList());
                 Formatter.setTags(functionTags.Keys.ToList());
                 Formatter.setDefWord(funcDef);
-                Formatter.defWordMore1F = funcDef2.Distinct().ToList();
+                Formatter.defWordMore1F = funcDefF.Distinct().ToList();
+                Formatter.defWordMore1L = funcDefL.Distinct().ToList();
+                Formatter.defWordMore1M = funcDefM.Distinct().ToList();
+                Formatter.objectFunc = objectFunc;
+                Formatter.varWord = varWord;
                 Formatter.loadDict();
             }
             catch { }
@@ -4039,6 +4060,8 @@ namespace JSharp
             {
                 string prefix = context.GetVar();
                 string name = v.StartsWith(".") ? v.Substring(1, v.Length - 1) : prefix + v;
+                if (varWord.ContainsKey(currentFile))
+                    varWord[currentFile].Add(v);
 
                 if (isStatic)
                 {
@@ -4685,7 +4708,11 @@ namespace JSharp
             }
 
             if (function.args.Count == 1 && function.args[0].type == Type.FUNCTION)
-                funcDef2.Add(subName.Replace("/", "."));
+                funcDefF.Add(subName.Replace("/", "."));
+            else if (function.args.Count > 1 && function.args[function.args.Count-1].type == Type.FUNCTION)
+                funcDefM.Add(subName.Replace("/", "."));
+            else if (function.lazy)
+                funcDefL.Add(subName.Replace("/", "."));
             else
                 funcDef.Add(subName.Replace("/", "."));
 
@@ -6196,6 +6223,8 @@ namespace JSharp
         }
         public static Type getExprType(string t, int recCall = 0)
         {
+            if (t == null)
+                throw new ArgumentNullException();
             if (recCall > maxRecCall)
             {
                 throw new Exception("Stack Overflow!");
@@ -8362,6 +8391,7 @@ namespace JSharp
 
                     File fFile = new File(context.GetFile() + funcName);
 
+                    objectFunc[currentFile].Add(v+"."+ fun.name);
                     Function function = new Function(fun.name, context.GetFun() + funcName, fFile);
                     fFile.function = function;
                     function.desc = fun.desc;

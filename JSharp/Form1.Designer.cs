@@ -58,6 +58,7 @@
             this.generateResourcesPackToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.inspectorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.structureToCMDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.tilemapEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ProjectSave = new System.Windows.Forms.SaveFileDialog();
             this.ProjectOpen = new System.Windows.Forms.OpenFileDialog();
             this.ExportSave = new System.Windows.Forms.SaveFileDialog();
@@ -103,7 +104,6 @@
             this.ClearLogButton = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
-            this.tilemapEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.CodeListContextMenu.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -353,6 +353,13 @@
             this.structureToCMDToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
             this.structureToCMDToolStripMenuItem.Text = "Structure To CMD";
             this.structureToCMDToolStripMenuItem.Click += new System.EventHandler(this.structureToCMDToolStripMenuItem_Click);
+            // 
+            // tilemapEditorToolStripMenuItem
+            // 
+            this.tilemapEditorToolStripMenuItem.Name = "tilemapEditorToolStripMenuItem";
+            this.tilemapEditorToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.tilemapEditorToolStripMenuItem.Text = "Tilemap Editor";
+            this.tilemapEditorToolStripMenuItem.Click += new System.EventHandler(this.tilemapEditorToolStripMenuItem_Click);
             // 
             // ProjectSave
             // 
@@ -714,6 +721,7 @@
             // 
             // tabPage1
             // 
+            this.tabPage1.BackColor = System.Drawing.Color.Transparent;
             this.tabPage1.ForeColor = System.Drawing.Color.Black;
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
@@ -721,7 +729,6 @@
             this.tabPage1.Size = new System.Drawing.Size(787, 0);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
-            this.tabPage1.UseVisualStyleBackColor = true;
             // 
             // tabControl1
             // 
@@ -764,7 +771,6 @@
             this.CodeBox.DescriptionFile = "";
             this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.CodeBox.FoldingIndicatorColor = System.Drawing.Color.Chartreuse;
-            this.CodeBox.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.CodeBox.Hotkeys = resources.GetString("CodeBox.Hotkeys");
             this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.CodeBox.IsReplaceMode = false;
@@ -914,13 +920,6 @@
             this.button1.Text = "Compile";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // tilemapEditorToolStripMenuItem
-            // 
-            this.tilemapEditorToolStripMenuItem.Name = "tilemapEditorToolStripMenuItem";
-            this.tilemapEditorToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
-            this.tilemapEditorToolStripMenuItem.Text = "Tilemap Editor";
-            this.tilemapEditorToolStripMenuItem.Click += new System.EventHandler(this.tilemapEditorToolStripMenuItem_Click);
             // 
             // Form1
             // 

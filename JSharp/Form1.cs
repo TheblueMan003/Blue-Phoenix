@@ -948,6 +948,7 @@ namespace JSharp
                     ZipFile.CreateFromDirectory(writePath, path);
                     Directory.Delete(writePath, true);
                 }
+                Formatter.getAutoComplete(autocompleteMenu1, previous, CodeBox.Text);
 
                 ExportResourcePack(rpPath);
                 DebugThread("Datapack successfully exported!", Color.Aqua);
@@ -1272,7 +1273,7 @@ namespace JSharp
                         DebugThread, debugOffuscate ? compilerSetting : compilerSetting.withoutOffuscation(), projectVersion,
                         Path.GetDirectoryName(projectPath));
                 }
-
+                Formatter.getAutoComplete(autocompleteMenu1, previous, CodeBox.Text);
                 if (showForm)
                 {
                     isCompiling = 2;
@@ -2387,7 +2388,7 @@ namespace JSharp
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             //CodeBox.SyntaxHighlighter = null;
             CodeBox.DescriptionFile = path + "formating.xml";
-            autocompleteMenu1.Items = Formatter.getAutoComplete(CodeBox.Text);
+            Formatter.getAutoComplete(autocompleteMenu1, previous, CodeBox.Text);
         }
 
 

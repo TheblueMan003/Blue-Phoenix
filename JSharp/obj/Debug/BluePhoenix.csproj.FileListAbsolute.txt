@@ -42,3 +42,5 @@ F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.csproj.AssemblyReference
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.StructureToCMD.resources
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.TilemapGenerator.resources
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.TilemapSetting.resources
+F:\002_Software_dev\JSharp\JSharp\bin\Debug\System.ValueTuple.dll
+F:\002_Software_dev\JSharp\JSharp\bin\Debug\System.ValueTuple.xml

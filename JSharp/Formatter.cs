@@ -53,7 +53,11 @@ namespace JSharp
         private static List<string> tags = new List<string>();
         public static List<string> defWordMore1 = new List<string>();
         public static List<string> defWordMore1F = new List<string>();
+        public static List<string> defWordMore1L = new List<string>();
+        public static List<string> defWordMore1M = new List<string>();
         public static List<string> defWordMore2 = new List<string>();
+        public static Dictionary<string, List<string>> varWord = new Dictionary<string, List<string>>();
+        public static Dictionary<string, List<string>> objectFunc = new Dictionary<string, List<string>>();
 
         private static Regex numberRegex = new Regex(@"(-?\b)(\d+\.\d+|\d+)[bldsf]?\b");
         private static Regex wordRegex = new Regex("\"[^\"\n]*\"");//= new Regex("\"(([^\\n\"]+)*(\\\\\")*)*\"");
@@ -64,6 +68,18 @@ namespace JSharp
         public static bool showName = true;
         public static bool showFunc = true;
         public static bool showEnumValue = true;
+        public static Image IMG_Class;
+        public static Image IMG_Enum;
+        public static Image IMG_Method;
+        public static Image IMG_Lazy_Method;
+        public static Image IMG_Event;
+        public static Image IMG_Word;
+        public static Image IMG_String;
+        public static Image IMG_Package; 
+        public static Image IMG_Entity;
+        public static Image IMG_Sound;
+        public static Image IMG_Variable;
+        public static Image IMG_Object_Method;
 
         public static void loadDict()
         {
@@ -77,13 +93,13 @@ namespace JSharp
             colorCodings.Add(ColorCoding.Get(blueWord, Color.Aqua, "Bold"));
 
             colorCodings.Add(ColorCoding.Get(CommandParser.funcName, Color.FromArgb(0, 185, 255), ""));
-            colorCodings.Add(ColorCoding.Get(defWord.Concat(importWord).Concat(defWordMore1.Distinct()).Concat(defWordMore1F.Distinct()).ToArray(),
+            colorCodings.Add(ColorCoding.Get(defWord.Concat(importWord).Concat(defWordMore1).Concat(defWordMore1F).Concat(defWordMore1M).Concat(defWordMore1L).Distinct().ToArray(),
                 Color.FromArgb(74, 156, 199), "Bold"));
 
             colorCodings.Add(ColorCoding.Get(funKeyword
                                             .Concat(compKeyword)
                                             .Concat(tags.ToArray()).Distinct()
-                                            .Concat(CommandParser.dataattribute.Select(x => "\\["+x+"\\]"))
+                                            .Concat(CommandParser.dataattribute.Select(x => "\\[" + x + "\\]"))
                                             .ToArray(), Color.Magenta, "Bold"));
 
             colorCodings.Add(ColorCoding.Get(typKeyword.Distinct().ToArray(), Color.Orange, "Bold"));
@@ -113,6 +129,20 @@ namespace JSharp
             colorCodings.Add(new ColorCoding(cString, wordRegex, "\"[^\"]*\"", "Italic"));
             colorCodings.Add(new ColorCoding(Color.LightYellow, funcDocRegex, "(?s)\"\"\"[^\"\"\"]*\"\"\"", "Italic"));
             generateXML();
+
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/assets/";
+            IMG_Class = Image.FromFile(path + "class.png");
+            IMG_Enum = Image.FromFile(path + "enum.png");
+            IMG_Method = Image.FromFile(path + "method.png");
+            IMG_Lazy_Method = Image.FromFile(path + "lazy_method.png");
+            IMG_Event = Image.FromFile(path + "event.png");
+            IMG_Word = Image.FromFile(path + "word.png");
+            IMG_String = Image.FromFile(path + "string.png");
+            IMG_Package = Image.FromFile(path + "package.png");
+            IMG_Entity = Image.FromFile(path + "entity.png");
+            IMG_Sound = Image.FromFile(path + "sound.png");
+            IMG_Variable = Image.FromFile(path + "variable.png");
+            IMG_Object_Method = Image.FromFile(path + "object_method.png");
         }
         private static String HexConverter(System.Drawing.Color c)
         {
@@ -149,26 +179,49 @@ namespace JSharp
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             File.WriteAllText(path + "formating.xml", doc);
         }
-        public static string[] getAutoComplete(string text)
+        public static List<(string,Image)> getAutoCompleteFull(string file, string text)
         {
-            var lst = autoCompleteTools.Concat(funKeyword.Select(x => $"{x}(^)"))
-                      .Concat(typKeyword)
-                      .Concat(compKeyword)
-                      .Concat(blueWord)
-                      .Concat(importWord)
-                      .Concat(selector.Select(x => $"{x}[^]"))
-                      .Concat(defWord)
-                      .Concat(enums)
-                      .Concat(structs.Select(x => $"{x} ^ = {x}()"))
-                      .Concat(package)
-                      .Concat(CommandParser.names.Select(x => $"minecraft:{x}"))
-                      .Concat(CommandParser.sounds.Select(x => $"minecraft:{x}"))
-                      .Concat(defWordMore1.Select(x => $"{x}(^)"))
-                      .Concat(defWordMore1F.Select(x => $"{x}" + "{\n^\n} "))
-                      .Concat(defWordMore2.Select(x => $"{x}(^)"))
+            var vars = varWord.ContainsKey(file) ? varWord[file] : new List<string>();
+            var func = objectFunc.ContainsKey(file) ? objectFunc[file] : new List<string>();
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/assets/mob_effect/";
+            var effect = CommandParser.effects.Where(x => File.Exists($"{path}{x}.png"));
+
+            return autoCompleteTools.Select(x => (x, IMG_String))
+                      .Concat(funKeyword.Select(x => $"{x}(^)").Select(x => (x, IMG_Method)))
+                      .Concat(typKeyword.Select(x => (x, IMG_String)))
+                      .Concat(compKeyword.Select(x => (x, IMG_Word)))
+                      .Concat(blueWord.Select(x => (x, IMG_Word)))
+                      .Concat(importWord.Select(x => (x, IMG_Word)))
+                      .Concat(selector.Select(x => $"{x}[^]").Select(x => (x, IMG_Entity)))
+                      .Concat(defWord.Select(x => (x, IMG_Word)))
+                      .Concat(enums.Select(x => (x, IMG_Enum)))
+                      .Concat(structs.Select(x => $"{x} ^ = {x}()").Select(x => (x, IMG_Class)))
+                      .Concat(package.Select(x => (x, IMG_Package)))
+                      .Concat(CommandParser.names.Select(x => $"minecraft:{x}").Select(x => (x, IMG_String)))
+                      .Concat(CommandParser.sounds.Select(x => $"minecraft:{x}").Select(x => (x, IMG_Sound)))
+                      .Concat(defWordMore1.Select(x => $"{x}(^)").Select(x => (x, IMG_Method)))
+                      .Concat(defWordMore1F.Select(x => $"{x}" + "{\n^\n} ").Select(x => (x, IMG_Event)))
+                      .Concat(defWordMore1M.Select(x => $"{x}()" + "{\n^\n} ").Select(x => (x, IMG_Event)))
+                      .Concat(defWordMore1L.Select(x => $"{x}(^)").Select(x => (x, IMG_Lazy_Method)))
+                      .Concat(defWordMore2.Select(x => $"{x}(^)").Select(x => (x, IMG_Method)))
+                      .Concat(vars.Select(x => (x, IMG_Variable)))
+                      .Concat(func.Select(x => $"{x}(^)").Select(x => (x, IMG_Object_Method)))
+                      .Concat(effect.Select(x => (x, Image.FromFile($"{path}{x}.png"))))
+                      .Concat(CommandParser.funcName.Select(x => (x, IMG_Lazy_Method)))
                       .Distinct().ToList();
-            lst.Sort();
-            return lst.ToArray();
+        }
+        public static void getAutoComplete(AutocompleteMenuNS.AutocompleteMenu menu, string file, string text)
+        {
+            var lst = getAutoCompleteFull(file, text);
+            lst.Sort((x,y)=>x.Item1.CompareTo(y.Item1));
+            menu.Items = new string[0];
+            menu.ImageList = new ImageList();
+            Image[] imgs = lst.Select(x => x.Item2).Distinct().ToArray();
+            menu.ImageList.Images.AddRange(imgs);
+            lst.ForEach(x => {
+                menu.AddItem(new AutocompleteMenuNS.AutocompleteItem(x.Item1, imgs.ToList().IndexOf(x.Item2)));
+                }
+            );
         }
 
         public static void setEnum(List<string> keys)
