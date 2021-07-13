@@ -47,6 +47,9 @@ namespace JSharp
             ShowExceptionBox.Checked = compilerSetting.opti_ShowException;
             ShowDebugBox.Checked = compilerSetting.opti_ShowDebug;
 
+            GenMAPSFile.Checked = compilerSetting.generateMAPSFile;
+            GenReadMeFile.Checked = compilerSetting.generateREADMEFile;
+
             HighlighEnum_Box.Checked = Formatter.showEnumValue;
             HighlighFunction_Box.Checked = Formatter.showFunc;
             HighlightName_Box.Checked = Formatter.showName;
@@ -101,6 +104,9 @@ namespace JSharp
                 compilerSetting.opti_FunctionTagsReplace = FunctionTagOptiBox.Checked;
                 compilerSetting.opti_ShowException = ShowExceptionBox.Checked;
                 compilerSetting.opti_ShowDebug = ShowDebugBox.Checked;
+
+                compilerSetting.generateMAPSFile = GenMAPSFile.Checked;
+                compilerSetting.generateREADMEFile = GenReadMeFile.Checked;
 
                 Formatter.showEnumValue = HighlighEnum_Box.Checked;
                 Formatter.showFunc = HighlighFunction_Box.Checked;

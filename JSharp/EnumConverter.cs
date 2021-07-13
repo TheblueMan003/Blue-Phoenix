@@ -33,7 +33,7 @@ namespace JSharp
             {
                 try
                 {
-                    type = Compiler.getExprType(Compiler.smartExtract(value)).ToString().ToLower();
+                    type = Compiler.getExprTypeStr(Compiler.smartExtract(value)).ToString().ToLower();
                 }
                 catch
                 {
@@ -44,7 +44,7 @@ namespace JSharp
             {
                 try
                 {
-                    string nType = Compiler.getExprType(Compiler.smartExtract(value)).ToString().ToLower();
+                    string nType = Compiler.getExprTypeStr(Compiler.smartExtract(value)).ToString().ToLower();
                     if (type != nType)
                     {
                         if (type == "int" && nType == "float")

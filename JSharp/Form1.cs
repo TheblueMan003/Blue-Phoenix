@@ -1142,7 +1142,7 @@ namespace JSharp
         }
         public void ExportStructures(string path)
         {
-            if (Directory.Exists(ProjectFolder() + "/structures"))
+            if (projectPath != null && Directory.Exists(ProjectFolder() + "/structures"))
             {
                 Directory.CreateDirectory(path + "/data/" + projectName.ToLower() + "/structures/");
 

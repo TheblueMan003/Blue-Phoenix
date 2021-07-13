@@ -68,9 +68,11 @@
             this.label14 = new System.Windows.Forms.Label();
             this.AuthorsBox = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.FunctionTagOptiBox = new System.Windows.Forms.CheckBox();
-            this.ShowExceptionBox = new System.Windows.Forms.CheckBox();
             this.ShowDebugBox = new System.Windows.Forms.CheckBox();
+            this.ShowExceptionBox = new System.Windows.Forms.CheckBox();
+            this.FunctionTagOptiBox = new System.Windows.Forms.CheckBox();
+            this.GenReadMeFile = new System.Windows.Forms.CheckBox();
+            this.GenMAPSFile = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -194,7 +196,6 @@
             this.groupBox1.Controls.Add(this.label12);
             this.groupBox1.Controls.Add(this.LibPaths);
             this.groupBox1.Controls.Add(this.label10);
-            this.groupBox1.Controls.Add(this.PathTags);
             this.groupBox1.Controls.Add(this.button5);
             this.groupBox1.Controls.Add(this.TempScoreboardBox);
             this.groupBox1.Controls.Add(this.ConstScoreboardBox);
@@ -202,7 +203,6 @@
             this.groupBox1.Controls.Add(this.label9);
             this.groupBox1.Controls.Add(this.label8);
             this.groupBox1.Controls.Add(this.label7);
-            this.groupBox1.Controls.Add(this.RMFileBox);
             this.groupBox1.Controls.Add(this.label5);
             this.groupBox1.Controls.Add(this.FloatPrecBox);
             this.groupBox1.ForeColor = System.Drawing.Color.White;
@@ -258,7 +258,7 @@
             // PathTags
             // 
             this.PathTags.AutoSize = true;
-            this.PathTags.Location = new System.Drawing.Point(10, 214);
+            this.PathTags.Location = new System.Drawing.Point(6, 139);
             this.PathTags.Name = "PathTags";
             this.PathTags.Size = new System.Drawing.Size(87, 17);
             this.PathTags.TabIndex = 23;
@@ -336,7 +336,7 @@
             // RMFileBox
             // 
             this.RMFileBox.AutoSize = true;
-            this.RMFileBox.Location = new System.Drawing.Point(10, 237);
+            this.RMFileBox.Location = new System.Drawing.Point(6, 162);
             this.RMFileBox.Name = "RMFileBox";
             this.RMFileBox.Size = new System.Drawing.Size(130, 17);
             this.RMFileBox.TabIndex = 16;
@@ -482,11 +482,15 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.GenMAPSFile);
+            this.groupBox2.Controls.Add(this.GenReadMeFile);
             this.groupBox2.Controls.Add(this.ShowDebugBox);
             this.groupBox2.Controls.Add(this.ShowExceptionBox);
+            this.groupBox2.Controls.Add(this.PathTags);
             this.groupBox2.Controls.Add(this.FunctionTagOptiBox);
             this.groupBox2.Controls.Add(this.TreeSizeBox);
             this.groupBox2.Controls.Add(this.label6);
+            this.groupBox2.Controls.Add(this.RMFileBox);
             this.groupBox2.ForeColor = System.Drawing.Color.White;
             this.groupBox2.Location = new System.Drawing.Point(659, 9);
             this.groupBox2.Name = "groupBox2";
@@ -495,15 +499,15 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Optimisation";
             // 
-            // FunctionTagOptiBox
+            // ShowDebugBox
             // 
-            this.FunctionTagOptiBox.AutoSize = true;
-            this.FunctionTagOptiBox.Location = new System.Drawing.Point(6, 229);
-            this.FunctionTagOptiBox.Name = "FunctionTagOptiBox";
-            this.FunctionTagOptiBox.Size = new System.Drawing.Size(137, 17);
-            this.FunctionTagOptiBox.TabIndex = 24;
-            this.FunctionTagOptiBox.Text = "Function Tags Replace";
-            this.FunctionTagOptiBox.UseVisualStyleBackColor = true;
+            this.ShowDebugBox.AutoSize = true;
+            this.ShowDebugBox.Location = new System.Drawing.Point(6, 183);
+            this.ShowDebugBox.Name = "ShowDebugBox";
+            this.ShowDebugBox.Size = new System.Drawing.Size(88, 17);
+            this.ShowDebugBox.TabIndex = 26;
+            this.ShowDebugBox.Text = "Show Debug";
+            this.ShowDebugBox.UseVisualStyleBackColor = true;
             // 
             // ShowExceptionBox
             // 
@@ -515,15 +519,35 @@
             this.ShowExceptionBox.Text = "Show Exception";
             this.ShowExceptionBox.UseVisualStyleBackColor = true;
             // 
-            // ShowDebugBox
+            // FunctionTagOptiBox
             // 
-            this.ShowDebugBox.AutoSize = true;
-            this.ShowDebugBox.Location = new System.Drawing.Point(6, 183);
-            this.ShowDebugBox.Name = "ShowDebugBox";
-            this.ShowDebugBox.Size = new System.Drawing.Size(88, 17);
-            this.ShowDebugBox.TabIndex = 26;
-            this.ShowDebugBox.Text = "Show Debug";
-            this.ShowDebugBox.UseVisualStyleBackColor = true;
+            this.FunctionTagOptiBox.AutoSize = true;
+            this.FunctionTagOptiBox.Location = new System.Drawing.Point(6, 229);
+            this.FunctionTagOptiBox.Name = "FunctionTagOptiBox";
+            this.FunctionTagOptiBox.Size = new System.Drawing.Size(137, 17);
+            this.FunctionTagOptiBox.TabIndex = 24;
+            this.FunctionTagOptiBox.Text = "Function Tags Replace";
+            this.FunctionTagOptiBox.UseVisualStyleBackColor = true;
+            // 
+            // GenReadMeFile
+            // 
+            this.GenReadMeFile.AutoSize = true;
+            this.GenReadMeFile.Location = new System.Drawing.Point(6, 117);
+            this.GenReadMeFile.Name = "GenReadMeFile";
+            this.GenReadMeFile.Size = new System.Drawing.Size(135, 17);
+            this.GenReadMeFile.TabIndex = 27;
+            this.GenReadMeFile.Text = "Generate README file";
+            this.GenReadMeFile.UseVisualStyleBackColor = true;
+            // 
+            // GenMAPSFile
+            // 
+            this.GenMAPSFile.AutoSize = true;
+            this.GenMAPSFile.Location = new System.Drawing.Point(6, 94);
+            this.GenMAPSFile.Name = "GenMAPSFile";
+            this.GenMAPSFile.Size = new System.Drawing.Size(119, 17);
+            this.GenMAPSFile.TabIndex = 28;
+            this.GenMAPSFile.Text = "Generate MAPS file";
+            this.GenMAPSFile.UseVisualStyleBackColor = true;
             // 
             // ProjectSetting
             // 
@@ -613,5 +637,7 @@
         private System.Windows.Forms.CheckBox FunctionTagOptiBox;
         private System.Windows.Forms.CheckBox ShowDebugBox;
         private System.Windows.Forms.CheckBox ShowExceptionBox;
+        private System.Windows.Forms.CheckBox GenMAPSFile;
+        private System.Windows.Forms.CheckBox GenReadMeFile;
     }
 }
