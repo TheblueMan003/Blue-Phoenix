@@ -787,6 +787,7 @@
             this.CodeBox.TabIndex = 42;
             this.CodeBox.Zoom = 100;
             this.CodeBox.ToolTipNeeded += new System.EventHandler<FastColoredTextBoxNS.ToolTipNeededEventArgs>(this.CodeBox_ToolTipNeeded);
+            this.CodeBox.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this.CodeBox_TextChanged);
             this.CodeBox.CustomAction += new System.EventHandler<FastColoredTextBoxNS.CustomActionEventArgs>(this.CodeBox_CustomAction);
             this.CodeBox.Load += new System.EventHandler(this.CodeBox_Load);
             this.CodeBox.Enter += new System.EventHandler(this.fastColoredTextBox1_Enter);
@@ -967,6 +968,7 @@
             this.Text = "Default";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Activated += new System.EventHandler(this.Form1_Activated);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.menuStrip1.ResumeLayout(false);

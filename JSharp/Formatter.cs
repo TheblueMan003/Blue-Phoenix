@@ -144,10 +144,12 @@ namespace JSharp
             IMG_Variable = Image.FromFile(path + "variable.png");
             IMG_Object_Method = Image.FromFile(path + "object_method.png");
         }
+        
         private static String HexConverter(System.Drawing.Color c)
         {
             return "#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
         }
+        
         public static void generateXML()
         {
             string doc = "<doc>\n";
@@ -179,6 +181,7 @@ namespace JSharp
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             File.WriteAllText(path + "formating.xml", doc);
         }
+        
         public static List<(string,Image)> getAutoCompleteFull(string file, string text)
         {
             var vars = varWord.ContainsKey(file) ? varWord[file] : new List<string>();
@@ -210,6 +213,7 @@ namespace JSharp
                       .Concat(CommandParser.funcName.Select(x => (x, IMG_Lazy_Method)))
                       .Distinct().ToList();
         }
+        
         public static void getAutoComplete(AutocompleteMenuNS.AutocompleteMenu menu, string file, string text)
         {
             var lst = getAutoCompleteFull(file, text);

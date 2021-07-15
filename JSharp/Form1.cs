@@ -17,24 +17,25 @@ namespace JSharp
 {
     public partial class Form1 : Form
     {
-        public Dictionary<string, string> code = new Dictionary<string, string>();
-        public Dictionary<string, string> resources = new Dictionary<string, string>();
+        public Dictionary<string, FormFile> code = new Dictionary<string, FormFile>();
+        public Dictionary<string, FormFile> resources = new Dictionary<string, FormFile>();
+        public Dictionary<string, DateTime> rpmoddate = new Dictionary<string, DateTime>();
         public Dictionary<string, Dictionary<int, int>> collaspe = new Dictionary<string, Dictionary<int, int>>();
         public Dictionary<string, Dictionary<string, TagsList>> TagsList = new Dictionary<string, Dictionary<string, TagsList>>();
         public Dictionary<string, Dictionary<string, TagsList>> MCTagsList = new Dictionary<string, Dictionary<string, TagsList>>();
-        public Dictionary<string, DateTime> moddificationFileTime = new Dictionary<string, DateTime>();
-        public Dictionary<string, DateTime> moddificationResTime = new Dictionary<string, DateTime>();
+        
         public Dictionary<string, string> structures = new Dictionary<string, string>();
         public List<string> codeOrder = new List<string>();
         public List<string> resourceOrder = new List<string>();
         public ProjectVersion projectVersion = new ProjectVersion();
         public Compiler.CompilerSetting compilerSetting = new Compiler.CompilerSetting();
-        public ResourcesPackEditor ResourcesPackEditor;
 
         public string projectDescription;
 
         private string previous = "load";
         private string projectName = "default";
+        private bool settingChanged = false;
+        private bool exportRP = false;
         private string currentDataPack;
         private string currentResourcesPack;
         public string projectPath;
@@ -44,7 +45,6 @@ namespace JSharp
         public int isCompiling = 0;
 
         private Thread CompileThread;
-        private CancellationTokenSource tokenSource2 = new CancellationTokenSource();
 
         public List<Compiler.File> compileFile;
         public List<Compiler.File> compileResource;
@@ -71,7 +71,8 @@ namespace JSharp
 
         private bool showError = true;
         private bool showWarning = true;
-        private bool showInfo = true;
+        private bool showInfo = false;
+        private bool exportNew = false;
 
         private bool debugOffuscate = false;
 
@@ -97,19 +98,23 @@ namespace JSharp
         }
         private void recallFile()
         {
-            if (resourceSelected == "res")
+            try
             {
-                resources[previous] = CodeBox.Text;
+                if (resourceSelected == "res")
+                {
+                    resources[previous].SetContent(CodeBox.Text);
+                }
+                else if (resourceSelected == "src")
+                {
+                    code[previous].SetContent(CodeBox.Text);
+                }
+                else if (resourceSelected == "respack")
+                {
+                    string dir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+                    File.WriteAllText(dir + previous, CodeBox.Text);
+                }
             }
-            else if (resourceSelected == "src")
-            {
-                code[previous] = CodeBox.Text;
-            }
-            else if (resourceSelected == "respack")
-            {
-                string dir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
-                File.WriteAllText(dir + previous, CodeBox.Text);
-            }
+            catch { }
         }
         public void ReloadCodeBoxFileCode(string file)
         {
@@ -123,7 +128,7 @@ namespace JSharp
             index = 0;
             if (code.ContainsKey(file))
             {
-                CodeBox.Text = code[file];
+                CodeBox.Text = code[file].content;
                 CodeBox.ClearUndo();
             }
             else
@@ -153,7 +158,7 @@ namespace JSharp
             index = 0;
             if (resources.ContainsKey(file))
             {
-                CodeBox.Text = resources[file];
+                CodeBox.Text = resources[file].content;
                 CodeBox.ClearUndo();
             }
             else
@@ -304,34 +309,44 @@ namespace JSharp
             {
                 if (project.compilationSetting.isLibrary)
                 {
-                    if (!file.Contains('.'))
+                    if (code[file].wasModdified || settingChanged)
                     {
-                        SafeWriteFile(dir + file + ".bps", code[file]);
-                        moddificationFileTime[file] = DateTime.Now.AddSeconds(5);
-                        project.compileOrder.Add(file);
+                        if (!file.Contains('.'))
+                        {
+                            SafeWriteFile(dir + file + ".bps", code[file].content);
+                            code[file].date = DateTime.Now.AddSeconds(5);
+                            code[file].Save();
+                        }
+                        else
+                        {
+                            SafeWriteFile(dir + file, code[file].content);
+                            code[file].date = DateTime.Now.AddSeconds(5);
+                            code[file].Save();
+                        }
                     }
-                    else
-                    {
-                        SafeWriteFile(dir + file, code[file]);
-                        moddificationFileTime[file] = DateTime.Now.AddSeconds(5);
-                        project.compileOrder.Add(file);
-                    }
+                    project.compileOrder.Add(file);
                 }
                 else
                 {
-                    lst.Add(new ProjectSave.FileSave(file, code[file], i));
+                    lst.Add(new ProjectSave.FileSave(file, code[file].content, i));
+                    code[file].Save();
                 }
             }
             foreach (string file in resourceOrder)
             {
                 if (project.compilationSetting.isLibrary)
                 {
-                    SafeWriteFile(dirRes + file, resources[file]);
-                    moddificationResTime[file] = DateTime.Now.AddSeconds(5);
+                    if (resources[file].wasModdified || settingChanged)
+                    {
+                        SafeWriteFile(dirRes + file, resources[file].content);
+                        resources[file].date = DateTime.Now.AddSeconds(5);
+                        resources[file].Save();
+                    }
                 }
                 else
                 {
-                    lstRes.Add(new ProjectSave.FileSave(file, resources[file], i));
+                    lstRes.Add(new ProjectSave.FileSave(file, resources[file].content, i));
+                    resources[file].Save();
                 }
             }
             project.files = lst.ToArray();
@@ -339,14 +354,18 @@ namespace JSharp
             project.description = projectDescription;
 
             File.WriteAllText(projectPath, JsonConvert.SerializeObject(project));
+            settingChanged = false;
         }
         public void OpenFile(string name)
         {
             try
             {
-                projectPath = name;
-                Open(name, File.ReadAllText(name));
-                Text = projectName + " - TBMScript";
+                if (TryClose())
+                {
+                    projectPath = name;
+                    Open(name, File.ReadAllText(name));
+                    Text = projectName + " - BluePhoenix";
+                }
             }
             catch (Exception error)
             {
@@ -357,14 +376,13 @@ namespace JSharp
         {
             Reset();
 
-            moddificationFileTime = new Dictionary<string, DateTime>();
-            moddificationResTime = new Dictionary<string, DateTime>();
-
             ProjectSave project = JsonConvert.DeserializeObject<ProjectSave>(data);
             codeOrder.Clear();
             ResetTabBar();
-            code.Clear();
-            code = new Dictionary<string, string>();
+            
+            code = new Dictionary<string, FormFile>();
+            resources = new Dictionary<string, FormFile>();
+            rpmoddate = new Dictionary<string, DateTime>();
             TagsList = project.TagsList;
             MCTagsList = project.mcTagsList;
             projectVersion = project.version;
@@ -389,7 +407,8 @@ namespace JSharp
                 ignorNextListboxUpdate = true;
                 try
                 {
-                    code.Add(file.name, file.content.Replace("\r", ""));
+                    code.Add(file.name, new FormFile(file.name, file.content.Replace("\r", ""), false));
+                    code[file.name].date = DateTime.Now;
                     project.compilationSetting.isLibrary = false;
                 }
                 catch
@@ -407,7 +426,8 @@ namespace JSharp
                     ignorNextListboxUpdate = true;
                     try
                     {
-                        resources.Add(file.name, file.content.Replace("\r", ""));
+                        resources.Add(file.name, new FormFile(file.name, file.content.Replace("\r", ""), false));
+                        resources[file.name].date = DateTime.Now;
                     }
                     catch
                     {
@@ -426,9 +446,10 @@ namespace JSharp
                     try
                     {
                         if (!file.Contains('.'))
-                            code.Add(file, File.ReadAllText(dir + file + ".bps").Replace("\r", ""));
+                            code.Add(file, new FormFile(file, File.ReadAllText(dir + file + ".bps").Replace("\r", ""), false));
                         else
-                            code.Add(file, File.ReadAllText(dir + file).Replace("\r", ""));
+                            code.Add(file, new FormFile(file, File.ReadAllText(dir + file).Replace("\r", ""), false));
+                        code[file].date = DateTime.Now;
                     }
                     catch (Exception e)
                     {
@@ -452,6 +473,27 @@ namespace JSharp
 
             SelectFullPath("src/" + codeOrder[0]);
         }
+        public bool TryClose()
+        {
+            if (code.Values.Any(x => x.wasModdified) || resources.Values.Any(x => x.wasModdified) || settingChanged)
+            {
+                string lst = code.Values.Concat(resources.Values).Where(x => x.wasModdified).Select(x => x.name).Aggregate("", (x, y) => (x==""?y:x + ", " + y));
+                DialogResult res = MessageBox.Show("You have unsaved work. Do you want to save?\n"+ lst, "Are you sure?", MessageBoxButtons.YesNoCancel);
+                if (res == DialogResult.Cancel)
+                {
+                    return false;
+                }
+                else if (res == DialogResult.Yes)
+                {
+                    return ForceSave(true);
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            return true;
+        }
 
         private void FetchFilesInDirectory()
         {
@@ -469,11 +511,10 @@ namespace JSharp
 
                     if (!code.ContainsKey(fname.ToLower()) && fname != "desktop.ini")
                     {
-                        moddificationFileTime.Add(fname.ToLower(), DateTime.Now);
-
                         try
                         {
-                            code.Add(fname.ToLower(), File.ReadAllText(file));
+                            code.Add(fname.ToLower(), new FormFile(fname, File.ReadAllText(file), false));
+                            code[fname].date = DateTime.Now;
                         }
                         catch (Exception e)
                         {
@@ -492,11 +533,10 @@ namespace JSharp
 
                     if (!resources.ContainsKey(fname.ToLower()))
                     {
-                        moddificationResTime.Add(fname.ToLower(), DateTime.Now);
-
                         try
                         {
-                            resources.Add(fname.ToLower(), File.ReadAllText(file));
+                            resources.Add(fname.ToLower(), new FormFile(fname.ToLower(), File.ReadAllText(file), false));
+                            resources[fname].date = DateTime.Now;
                         }
                         catch (Exception e)
                         {
@@ -507,8 +547,31 @@ namespace JSharp
                     }
                 }
             }
+            
+            UpdateRPTimes();
         }
-        public bool ForceSave()
+        public void UpdateRPTimes()
+        {
+            rpmoddate.Clear();
+            string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+            if (Directory.Exists(rpdir))
+            {
+                Directory.EnumerateFiles(rpdir, "*.*", SearchOption.AllDirectories).ToList().ForEach(x => rpmoddate.Add(x, File.GetLastWriteTime(x)));
+            }
+        }
+        public bool WasRPChanged()
+        {
+            string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+            if (Directory.Exists(rpdir))
+            {
+                bool res = rpmoddate.Any(x => !File.Exists(x.Key) || File.GetLastWriteTime(x.Key) > x.Value) ||
+                        Directory.EnumerateFiles(rpdir, "*.*", SearchOption.AllDirectories).Any(x => !rpmoddate.ContainsKey(x));
+                return res;
+            }
+            else
+                return false;
+        }
+        public bool ForceSave(bool save = false)
         {
             if (projectPath == "" || projectPath == null)
             {
@@ -518,13 +581,18 @@ namespace JSharp
                 }
                 else
                     return false;
-
+                
                 Save(projectPath);
                 UpdateProjectList();
                 Debug("Project save as " + projectPath, Color.Aqua);
             }
             if (projectPath != "" && projectPath != null)
             {
+                if (save)
+                {
+                    Save(projectPath);
+                    UpdateProjectList();
+                }
                 return true;
             }
             return false;
@@ -555,22 +623,22 @@ namespace JSharp
             string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
             UpdateFile.Result prev = UpdateFile.Result.No;
             List<string> keys = new List<string>();
-            keys.AddRange(moddificationFileTime.Keys);
+            keys.AddRange(code.Keys);
             foreach (string key in keys)
             {
-                if (File.Exists(dir + key + ".bps") && moddificationFileTime[key] < File.GetLastWriteTime(dir + key + ".bps"))
+                if (File.Exists(dir + key + ".bps") && code[key].date < File.GetLastWriteTime(dir + key + ".bps"))
                 {
                     if (prev == UpdateFile.Result.NoForAll)
                     {
-                        moddificationFileTime[key] = File.GetLastWriteTime(dir + key + ".bps");
+                        code[key].date = File.GetLastWriteTime(dir + key + ".bps");
                     }
                     else if (prev == UpdateFile.Result.YesForAll)
                     {
-                        code[key] = File.ReadAllText(dir + key + ".bps");
-                        moddificationFileTime[key] = File.GetLastWriteTime(dir + key + ".bps");
+                        code[key].SetContent(File.ReadAllText(dir + key + ".bps"));
+                        code[key].date = File.GetLastWriteTime(dir + key + ".bps");
                         if (previous == key)
                         {
-                            CodeBox.Text = code[key];
+                            CodeBox.Text = code[key].content;
                             CodeBox.ClearUndo();
                         }
                     }
@@ -580,38 +648,38 @@ namespace JSharp
                         prev = res;
                         if (res == UpdateFile.Result.YesForAll || res == UpdateFile.Result.Yes)
                         {
-                            code[key] = File.ReadAllText(dir + key + ".bps");
-                            moddificationFileTime[key] = File.GetLastWriteTime(dir + key + ".bps");
+                            code[key].SetContent(File.ReadAllText(dir + key + ".bps"));
+                            code[key].date = File.GetLastWriteTime(dir + key + ".bps");
                             if (previous == key)
                             {
-                                CodeBox.Text = code[key];
+                                CodeBox.Text = code[key].content;
                                 CodeBox.ClearUndo();
                             }
                         }
                         else
                         {
-                            moddificationFileTime[key] = File.GetLastWriteTime(dir + key + ".bps");
+                            code[key].date = File.GetLastWriteTime(dir + key + ".bps");
                         }
                     }
                 }
             }
             keys = new List<string>();
-            keys.AddRange(moddificationResTime.Keys);
+            keys.AddRange(resources.Keys);
             foreach (string key in keys)
             {
-                if (File.Exists(dir + key) && moddificationResTime[key] < File.GetLastWriteTime(dir + key))
+                if (File.Exists(dir + key) && resources[key].date < File.GetLastWriteTime(dir + key))
                 {
                     if (prev == UpdateFile.Result.NoForAll)
                     {
-                        moddificationResTime[key] = File.GetLastWriteTime(dir + key);
+                        resources[key].date = File.GetLastWriteTime(dir + key);
                     }
                     else if (prev == UpdateFile.Result.YesForAll)
                     {
-                        resources[key] = File.ReadAllText(dirRes + key);
-                        moddificationResTime[key] = File.GetLastWriteTime(dir + key);
+                        resources[key].SetContent(File.ReadAllText(dirRes + key));
+                        resources[key].date = File.GetLastWriteTime(dir + key);
                         if (previous == key)
                         {
-                            CodeBox.Text = resources[key];
+                            CodeBox.Text = resources[key].content;
                             CodeBox.ClearUndo();
                         }
                     }
@@ -621,17 +689,17 @@ namespace JSharp
                         prev = res;
                         if (res == UpdateFile.Result.YesForAll || res == UpdateFile.Result.Yes)
                         {
-                            resources[key] = File.ReadAllText(dir + key);
-                            moddificationResTime[key] = File.GetLastWriteTime(dirRes + key);
+                            resources[key].SetContent(File.ReadAllText(dir + key));
+                            resources[key].date = File.GetLastWriteTime(dirRes + key);
                             if (previous == key)
                             {
-                                CodeBox.Text = resources[key];
+                                CodeBox.Text = resources[key].content;
                                 CodeBox.ClearUndo();
                             }
                         }
                         else
                         {
-                            moddificationResTime[key] = File.GetLastWriteTime(dir + key);
+                            resources[key].date = File.GetLastWriteTime(dir + key);
                         }
                     }
                 }
@@ -731,7 +799,7 @@ namespace JSharp
                     else
                     {
                         resourceOrder.Add(path + form.filename);
-                        resources.Add(path + form.filename, "");
+                        resources.Add(path + form.filename, new FormFile(path+form.filename, ""));
                     }
                 }
                 else if (grp == "resourcespack")
@@ -765,7 +833,7 @@ namespace JSharp
                         if (DatapackOpen.ShowDialog() == DialogResult.OK)
                         {
                             codeOrder.Add(path + form.filename);
-                            code.Add(path + form.filename.ToLower(), GenerateDatapackLink(DatapackOpen.FileName));
+                            code.Add(path + form.filename.ToLower(), new FormFile(path+form.filename.ToLower(), GenerateDatapackLink(DatapackOpen.FileName)));
                         }
                     }
                     else
@@ -776,15 +844,15 @@ namespace JSharp
                             codeOrder.Insert(0, path + form.filename);
                         if (form.type == JSharp.NewFile.Type.STRUCTURE)
                         {
-                            code.Add(path + form.filename, "package " + (path + form.filename).Replace("/", ".") + "\n\nstruct " + (path + form.filename).Replace("/", ".") + "{\n\tdef __init__(){\n\n\t}\n}");
+                            code.Add(path + form.filename, new FormFile(path + form.filename, "package " + (path + form.filename).Replace("/", ".") + "\n\nstruct " + (path + form.filename).Replace("/", ".") + "{\n\tdef __init__(){\n\n\t}\n}"));
                         }
                         else if (form.type == JSharp.NewFile.Type.SUBPROGRAMME)
                         {
-                            code.Add(path + form.filename, "package " + (path + form.filename).Replace("/", ".") + "\n\nBOOL Enabled\ndef ticking main(){\n\twith(@a,true,Enabled){\n\t\t\n\t}\n}\n\ndef start(){\n\tEnabled = true\n}\n\ndef close(){\n\tEnabled = false\n}");
+                            code.Add(path + form.filename, new FormFile(path + form.filename, "package " + (path + form.filename).Replace("/", ".") + "\n\nBOOL Enabled\ndef ticking main(){\n\twith(@a,true,Enabled){\n\t\t\n\t}\n}\n\ndef start(){\n\tEnabled = true\n}\n\ndef close(){\n\tEnabled = false\n}"));
                         }
                         else
                         {
-                            code.Add(path + form.filename, "package " + (path + form.filename).Replace("/", "."));
+                            code.Add(path + form.filename, new FormFile(path + form.filename, "package " + (path + form.filename).Replace("/", ".")));
                         }
                     }
                 }
@@ -813,8 +881,8 @@ namespace JSharp
                 LibImport libForm2 = new LibImport(compilerSetting.libraryFolder);
                 libForm2.ShowDialog();
                 string libs = libForm2.import.Count() > 0 ? libForm2.import.Select(x => $"import {x}").Aggregate((x, y) => x + "\n" + y) : "";
-                code.Add("import", libs);
-                code.Add(projectName.ToLower(), "package " + projectName.ToLower() + "\n");
+                code.Add("import", new FormFile("import", libs));
+                code.Add(projectName.ToLower(), new FormFile(projectName.ToLower(), "package " + projectName.ToLower() + "\n"));
                 SelectFullPath("src/" + projectName.ToLower());
 
                 codeOrder.Add("import");
@@ -865,15 +933,11 @@ namespace JSharp
         {
             ResetTabBar();
             codeOrder.Clear();
-            moddificationFileTime.Clear();
-            moddificationResTime.Clear();
             code.Clear();
             resources.Clear();
             resourceOrder.Clear();
             projectVersion = new ProjectVersion();
             projectDescription = "";
-            moddificationFileTime.Clear();
-            moddificationResTime.Clear();
             compilerSetting = new Compiler.CompilerSetting();
             structures.Clear();
             MCTagsList.Clear();
@@ -931,6 +995,8 @@ namespace JSharp
                 {
                     Directory.Delete(writePath, true);
                 }
+                
+                exportRP = WasRPChanged() || exportNew;
                 projectVersion.Build();
                 ExportFiles(writePath);
                 ExportTags(writePath);
@@ -950,8 +1016,8 @@ namespace JSharp
                 }
                 Formatter.getAutoComplete(autocompleteMenu1, previous, CodeBox.Text);
 
-                ExportResourcePack(rpPath);
                 DebugThread("Datapack successfully exported!", Color.Aqua);
+                ExportResourcePack(rpPath);
             }
             catch (Exception er)
             {
@@ -963,11 +1029,11 @@ namespace JSharp
             List<Compiler.File> files = new List<Compiler.File>();
             foreach (string f in codeOrder)
             {
-                files.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
+                files.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
             }
 
             string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
-            if (Directory.Exists(rpdir))
+            if (Directory.Exists(rpdir) && exportRP)
             {
                 foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
                 {
@@ -980,7 +1046,7 @@ namespace JSharp
             List<Compiler.File> resourcesfiles = new List<Compiler.File>();
             foreach (string f in resourceOrder)
             {
-                resourcesfiles.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
+                resourcesfiles.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
             }
             CompilerCore core;
             if (compilerSetting.CompilerCoreName == "java") { core = new CompilerCoreJava(); }
@@ -1009,7 +1075,7 @@ namespace JSharp
                     throw new Exception(fileName + " " + e.ToString());
                 }
             }
-            if (Directory.Exists(rpdir))
+            if (Directory.Exists(rpdir) && exportRP)
             {
 
                 string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
@@ -1044,6 +1110,8 @@ namespace JSharp
                         SafeCopy(file, fileName);
                     }
                 }
+                rpmoddate.Clear();
+                UpdateRPTimes();
             }
         }
         public void ExportTags(string path)
@@ -1154,20 +1222,28 @@ namespace JSharp
         }
         public void ExportResourcePack(string path)
         {
-            if (path != null && path != "")
+            try
             {
-                string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
-                SafeWriteFile(rpPath + "/pack.mcmeta",
-                                JsonConvert.SerializeObject(
-                                    new ResourcePackMeta(projectName + " - " + projectDescription,
-                                    compilerSetting.rppackformat)));
-
-                if (Directory.Exists(rpPath))
+                if (path != null && path != "" && exportRP)
                 {
-                    if (File.Exists(path)) { File.Delete(path); }
-                    ZipFile.CreateFromDirectory(rpPath, path);
+                    string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
+                    SafeWriteFile(rpPath + "/pack.mcmeta",
+                                    JsonConvert.SerializeObject(
+                                        new ResourcePackMeta(projectName + " - " + projectDescription,
+                                        compilerSetting.rppackformat)));
+
+                    if (Directory.Exists(rpPath))
+                    {
+                        if (File.Exists(path)) { File.Delete(path); }
+                        ZipFile.CreateFromDirectory(rpPath, path);
+                    }
+                    Directory.Delete(rpPath, true);
                 }
-                Directory.Delete(rpPath, true);
+                DebugThread("Resources Pack successfully exported!", Color.Aqua);
+            }
+            catch(Exception e)
+            {
+                DebugThread(e, Color.Red);
             }
         }
         #endregion
@@ -1186,7 +1262,7 @@ namespace JSharp
         {
             if (isCompiling > 0)
             {
-                tokenSource2.Cancel();
+                CompileThread.Abort();
                 isCompiling = 0;
             }
             if (isCompiling == 0)
@@ -1199,10 +1275,13 @@ namespace JSharp
 
                 foreach (string f in codeOrder)
                 {
-                    compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
+                    compileFile.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
                 }
+                
+                bool rp = WasRPChanged();
+
                 string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
-                if (Directory.Exists(rpdir))
+                if (Directory.Exists(rpdir) && rp)
                 {
                     foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
                     {
@@ -1215,7 +1294,7 @@ namespace JSharp
                 compileResource = new List<Compiler.File>();
                 foreach (string f in resourceOrder)
                 {
-                    compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
+                    compileResource.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
                 }
                 if (CompileThread != null && CompileThread.IsAlive)
                     CompileThread.Abort();
@@ -1237,13 +1316,13 @@ namespace JSharp
 
                 foreach (string f in codeOrder)
                 {
-                    compileFile.Add(new Compiler.File(f, code[f].Replace('\t' + "", "")));
+                    compileFile.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
                 }
 
                 compileResource = new List<Compiler.File>();
                 foreach (string f in resourceOrder)
                 {
-                    compileResource.Add(new Compiler.File(f, resources[f].Replace('\t' + "", "")));
+                    compileResource.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
                 }
                 if (CompileThread != null && CompileThread.IsAlive)
                     CompileThread.Abort();
@@ -1436,7 +1515,7 @@ namespace JSharp
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             if (CompileThread != null)
-                tokenSource2.Cancel();
+                CompileThread.Abort();
         }
 
         #region Preview Button
@@ -1514,15 +1593,15 @@ namespace JSharp
         }
         private void LibraryButton_Click(object sender, EventArgs e)
         {
-            List<string> imported = code["import"].Split('\n').Where(x => x.StartsWith("import")).Select(x => x.Replace("import ", "")).ToList();
+            List<string> imported = code["import"].content.Split('\n').Where(x => x.StartsWith("import")).Select(x => x.Replace("import ", "")).ToList();
             LibImport libForm2 = new LibImport(compilerSetting.libraryFolder, imported);
             if (libForm2.ShowDialog() == DialogResult.OK)
             {
                 string libs = libForm2.import.Count() > 0 ? libForm2.import.Select(x => $"import {x}").Aggregate((x, y) => x + "\n" + y) : "";
-                code["import"] = libs;
+                code["import"].SetContent(libs);
                 if (previous == "import")
                 {
-                    CodeBox.Text = code["import"];
+                    CodeBox.Text = code["import"].content;
                     CodeBox.ClearUndo();
                 }
             }
@@ -1601,7 +1680,7 @@ namespace JSharp
             {
                 string path = (currentDataPack == null) ? ExportSave.FileName : currentDataPack;
                 currentDataPack = path;
-
+                exportNew = false;
                 string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
                 Debug(rpdir, Color.Yellow);
                 if (!Directory.Exists(rpdir))
@@ -1668,6 +1747,7 @@ namespace JSharp
             if (ExportSave.ShowDialog() == DialogResult.OK)
             {
                 string path = ExportSave.FileName;
+                exportNew = false;
 
                 string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
                 if (!Directory.Exists(rpdir))
@@ -1708,26 +1788,6 @@ namespace JSharp
             //Find_and_Replace far = new Find_and_Replace(CodeBox);
             //far.Show();
         }
-        private void undoToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (index >= 1)
-            {
-                ignoreMod = true;
-                CodeBox.Text = PreviousText[--index];
-                CodeBox.ClearUndo();
-                ignoreMod = false;
-            }
-        }
-        private void redoToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (index < PreviousText.Count - 1)
-            {
-                ignoreMod = true;
-                CodeBox.Text = PreviousText[++index];
-                CodeBox.ClearUndo();
-                ignoreMod = false;
-            }
-        }
         private void settingToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ProjectSetting settingForm = new ProjectSetting(projectName, projectVersion, projectDescription, compilerSetting, Compiler.variables);
@@ -1736,6 +1796,7 @@ namespace JSharp
             projectName = settingForm.ProjectName;
             projectVersion = settingForm.version;
             projectDescription = settingForm.description;
+            settingChanged = true;
         }
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1839,15 +1900,15 @@ namespace JSharp
         }
         private void libraryToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            List<string> imported = code["import"].Split('\n').Where(x => x.StartsWith("import")).Select(x => x.Replace("import ", "")).ToList();
+            List<string> imported = code["import"].content.Split('\n').Where(x => x.StartsWith("import")).Select(x => x.Replace("import ", "")).ToList();
             LibImport libForm2 = new LibImport(compilerSetting.libraryFolder, imported);
             if (libForm2.ShowDialog() == DialogResult.OK)
             {
                 string libs = libForm2.import.Count() > 0 ? libForm2.import.Select(x => $"import {x}").Aggregate((x, y) => x + "\n" + y) : "";
-                code["import"] = libs;
+                code["import"].SetContent(libs);
                 if (previous == "import")
                 {
-                    CodeBox.Text = code["import"];
+                    CodeBox.Text = code["import"].content;
                     CodeBox.ClearUndo();
                 }
             }
@@ -2248,7 +2309,6 @@ namespace JSharp
                     {
                         resourceOrder.Remove(dir);
                         resources.Remove(dir);
-                        moddificationResTime.Remove(dir);
                     }
                 }
                 gloDir = Path.GetDirectoryName(projectPath) + "/scripts/";
@@ -2262,7 +2322,6 @@ namespace JSharp
                     {
                         codeOrder.Remove(dir);
                         code.Remove(dir);
-                        moddificationFileTime.Remove(dir);
                     }
                 }
                 FetchFilesInDirectory();
@@ -2270,16 +2329,6 @@ namespace JSharp
             }
         }
 
-        private class DebugMessage
-        {
-            public string msg;
-            public Color color;
-            public DebugMessage(string msg, Color color)
-            {
-                this.msg = msg;
-                this.color = color;
-            }
-        }
 
         public void ShowCodeBox()
         {
@@ -2348,7 +2397,6 @@ namespace JSharp
                     if (path.EndsWith(".ogg"))
                     {
                         ShowMediaBox();
-
                     }
                 }
             }
@@ -2386,7 +2434,7 @@ namespace JSharp
         private void fastColoredTextBox1_Enter(object sender, EventArgs e)
         {
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-            //CodeBox.SyntaxHighlighter = null;
+            CodeBox.DescriptionFile = "";
             CodeBox.DescriptionFile = path + "formating.xml";
             Formatter.getAutoComplete(autocompleteMenu1, previous, CodeBox.Text);
         }
@@ -2499,6 +2547,73 @@ namespace JSharp
                 TilemapGenerator t = new TilemapGenerator(Path.GetDirectoryName(projectPath) + "/tilemaps");
                 t.Show();
             }
+        }
+        private void CodeBox_TextChanged(object sender, FastColoredTextBoxNS.TextChangedEventArgs e)
+        {
+            if (!noReformat)
+            {
+                try
+                {
+                    if (resourceSelected == "res")
+                    {
+                        resources[previous].wasModdified = true;
+                    }
+                    else if (resourceSelected == "src")
+                    {
+                        code[previous].wasModdified = true;
+                    }
+                }
+                catch { }
+            }
+        }
+
+        private class DebugMessage
+        {
+            public string msg;
+            public Color color;
+            public DebugMessage(string msg, Color color)
+            {
+                this.msg = msg;
+                this.color = color;
+            }
+        }
+        public class FormFile
+        {
+            public string name;
+            public string content;
+            public DateTime date;
+            public bool wasModdified;
+
+            public FormFile(string name, string content)
+            {
+                this.name = name;
+                this.content = content;
+                this.wasModdified = true;
+            }
+            public FormFile(string name, string content, bool wasModdified)
+            {
+                this.name = name;
+                this.content = content;
+                this.wasModdified = wasModdified;
+            }
+
+            public void SetContent(string content)
+            {
+                if (this.content.Replace("\r", "") != content.Replace("\r",""))
+                {
+                    this.content = content.Replace("\r", "");
+                    wasModdified = true;
+                }
+            }
+            public void Save()
+            {
+                wasModdified = false;
+            }
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = !TryClose();
         }
     }
 }

@@ -70,6 +70,7 @@ namespace JSharp
         public static string getType(string nbt)
         {
             loadDict();
+            nbt = Compiler.smartExtract(nbt);
             if (nbt_map_type.ContainsKey(nbt))
             {
                 if (nbt_map_type[nbt] == "double")
