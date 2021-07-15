@@ -771,7 +771,6 @@
             this.CodeBox.DescriptionFile = "";
             this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.CodeBox.FoldingIndicatorColor = System.Drawing.Color.Chartreuse;
-            this.CodeBox.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.CodeBox.Hotkeys = resources.GetString("CodeBox.Hotkeys");
             this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.CodeBox.IsReplaceMode = false;
@@ -840,9 +839,8 @@
             // 
             this.ShowInfoButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.ShowInfoButton.BackColor = System.Drawing.Color.Black;
-            this.ShowInfoButton.FlatAppearance.BorderSize = 3;
             this.ShowInfoButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.ShowInfoButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.ShowInfoButton.ForeColor = System.Drawing.Color.Gray;
             this.ShowInfoButton.Image = global::BluePhoenix.Properties.Resources.info;
             this.ShowInfoButton.Location = new System.Drawing.Point(1152, 656);
             this.ShowInfoButton.Name = "ShowInfoButton";

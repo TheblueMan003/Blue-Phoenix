@@ -3002,7 +3002,7 @@ namespace JSharp
                     {
                         int idVal3 = If.GetEval(context.GetFun());
 
-                        string pre2 = parseLine(getExprTypeStr(text).ToString().ToLower() + " cond_" + idVal3.ToString() + " = " + text);
+                        string pre2 = parseLine("bool cond_" + idVal3.ToString() + " = " + text);
                         Variable var2 = GetVariableByName("cond_" + idVal3);
 
                         if (text.StartsWith("!"))
@@ -3219,6 +3219,37 @@ namespace JSharp
                             if (i >= f.args.Count - ad ||
                                 (argType[i] != f.args[index].type &&
                                 !((argType[i] == Type.INT || argType[i] == Type.FLOAT) &&
+                                (f.args[index].type == Type.FLOAT)))
+                                || (f.lazy && f.args[index].isLazy && !f.tags.Contains("__numerical_only__")
+                                && f.args[index].type != Type.ENTITY)
+                                || (f.lazy && f.args[index].type == Type.ENTITY && !context.isEntity(args[i])))
+                            {
+                                isGood = false;
+                            }
+                        }
+                        if (isGood)
+                        {
+                            funObj = f;
+                            break;
+                        }
+                    }
+                }
+                foreach (Function f in functions[funcName])
+                {
+                    if (funObj == null)
+                    {
+                        bool isGood = f.argNeeded <= args.Length && f.maxArgNeeded >= args.Length;
+
+                        if (!numericalOnly && f.lazy && f.tags.Contains("__numerical_only__"))
+                            isGood = false;
+
+                        for (int i = 0; i < args.Length; i++)
+                        {
+                            int ad = (f.isExtensionMethod ? 1 : 0);
+                            int index = i + ad;
+                            if (i >= f.args.Count - ad ||
+                                (argType[i] != f.args[index].type &&
+                                !((argType[i] == Type.INT || argType[i] == Type.FLOAT) &&
                                 (f.args[index].type == Type.INT || f.args[index].type == Type.FLOAT)))
                                 || (f.lazy && f.args[index].isLazy && !f.tags.Contains("__numerical_only__")
                                 && f.args[index].type != Type.ENTITY)
@@ -3299,7 +3330,19 @@ namespace JSharp
                     }
                 }
                 if (funObj != null) { return funObj; }
-
+                if (funObj == null)
+                {
+                    foreach (Function f in functions[funcName])
+                    {
+                        foreach(Argument a in f.args)
+                        {
+                            if (a.type == Type.JSON || a.type == Type.PARAMS)
+                            {
+                                return f;
+                            }
+                        }
+                    }
+                }
                 if (funObj == null)
                 {
                     string a = "";
