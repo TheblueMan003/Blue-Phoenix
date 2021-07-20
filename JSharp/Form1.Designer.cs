@@ -59,6 +59,7 @@
             this.inspectorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.structureToCMDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tilemapEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.customPasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ProjectSave = new System.Windows.Forms.SaveFileDialog();
             this.ProjectOpen = new System.Windows.Forms.OpenFileDialog();
             this.ExportSave = new System.Windows.Forms.SaveFileDialog();
@@ -104,6 +105,7 @@
             this.ClearLogButton = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.openToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.CodeListContextMenu.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -118,6 +120,7 @@
             // 
             // menuStrip1
             // 
+            this.menuStrip1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.displayToolStripMenuItem,
@@ -319,7 +322,8 @@
             this.generateResourcesPackToolStripMenuItem,
             this.inspectorToolStripMenuItem,
             this.structureToCMDToolStripMenuItem,
-            this.tilemapEditorToolStripMenuItem});
+            this.tilemapEditorToolStripMenuItem,
+            this.customPasteToolStripMenuItem});
             this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.Black;
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
@@ -360,6 +364,13 @@
             this.tilemapEditorToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
             this.tilemapEditorToolStripMenuItem.Text = "Tilemap Editor";
             this.tilemapEditorToolStripMenuItem.Click += new System.EventHandler(this.tilemapEditorToolStripMenuItem_Click);
+            // 
+            // customPasteToolStripMenuItem
+            // 
+            this.customPasteToolStripMenuItem.Name = "customPasteToolStripMenuItem";
+            this.customPasteToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.customPasteToolStripMenuItem.Text = "Custom Paste";
+            this.customPasteToolStripMenuItem.Click += new System.EventHandler(this.customPasteToolStripMenuItem_Click);
             // 
             // ProjectSave
             // 
@@ -669,10 +680,11 @@
             // 
             this.CodeListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newFileToolStripMenuItem1,
+            this.openToolStripMenuItem1,
             this.deleteToolStripMenuItem,
             this.newFolderToolStripMenuItem});
             this.CodeListContextMenu.Name = "contextMenuStrip1";
-            this.CodeListContextMenu.Size = new System.Drawing.Size(156, 70);
+            this.CodeListContextMenu.Size = new System.Drawing.Size(181, 114);
             // 
             // newFileToolStripMenuItem1
             // 
@@ -680,7 +692,7 @@
             this.fileToolStripMenuItem1,
             this.folderToolStripMenuItem});
             this.newFileToolStripMenuItem1.Name = "newFileToolStripMenuItem1";
-            this.newFileToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
+            this.newFileToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.newFileToolStripMenuItem1.Text = "New";
             // 
             // fileToolStripMenuItem1
@@ -700,7 +712,7 @@
             // deleteToolStripMenuItem
             // 
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.deleteToolStripMenuItem.Text = "Delete";
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
             // 
@@ -709,7 +721,7 @@
             this.newFolderToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.animatedToolStripMenuItem});
             this.newFolderToolStripMenuItem.Name = "newFolderToolStripMenuItem";
-            this.newFolderToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.newFolderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.newFolderToolStripMenuItem.Text = "Resources Pack";
             // 
             // animatedToolStripMenuItem
@@ -771,6 +783,7 @@
             this.CodeBox.DescriptionFile = "";
             this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.CodeBox.FoldingIndicatorColor = System.Drawing.Color.Chartreuse;
+            this.CodeBox.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.CodeBox.Hotkeys = resources.GetString("CodeBox.Hotkeys");
             this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.CodeBox.IsReplaceMode = false;
@@ -921,6 +934,13 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // openToolStripMenuItem1
+            // 
+            this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
+            this.openToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem1.Text = "Open";
+            this.openToolStripMenuItem1.Click += new System.EventHandler(this.openToolStripMenuItem1_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1055,6 +1075,8 @@
         private System.Windows.Forms.ToolStripMenuItem inspectorToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem structureToCMDToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem tilemapEditorToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem customPasteToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem1;
     }
 }
 

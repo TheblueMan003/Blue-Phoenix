@@ -1,0 +1,1 @@
+[{"name":"test","regex":"/setblock (\\d+) (\\d+) (\\d+) \\w+\\[\\w+=(\\w+)]","replace":"positioned($1 $2 $3){$4}"}]

@@ -138,66 +138,69 @@ namespace JSharp
             Rectangle nodeRect = e.Node.Bounds;
 
             /*--------- 1. draw expand/collapse icon ---------*/
-            Point ptExpand = new Point(nodeRect.Location.X - 10, nodeRect.Location.Y - 2);
-            Image expandImg = null;
-
-            if (e.Node.IsExpanded)
-                expandImg = minusPath;
-            else
-                expandImg = plusPath;
-
-            Graphics g = Graphics.FromImage(expandImg);
-
-            IntPtr imgPtr = g.GetHdc();
-            g.ReleaseHdc();
-            if (e.Node.Nodes.Count > 0)
+            if (!(nodeRect.Location.X == 0 && nodeRect.Location.Y == 0))
             {
-                e.Graphics.DrawImage(expandImg, ptExpand);
-            }
+                Point ptExpand = new Point(nodeRect.Location.X - 10, nodeRect.Location.Y - 2);
+                Image expandImg = null;
+
+                if (e.Node.IsExpanded)
+                    expandImg = minusPath;
+                else
+                    expandImg = plusPath;
+
+                Graphics g = Graphics.FromImage(expandImg);
+
+                IntPtr imgPtr = g.GetHdc();
+                g.ReleaseHdc();
+                if (e.Node.Nodes.Count > 0)
+                {
+                    e.Graphics.DrawImage(expandImg, ptExpand);
+                }
 
 
-            /*--------- 2. draw node icon ---------*/
-            Point ptNodeIcon = new Point(nodeRect.Location.X - 4, nodeRect.Location.Y - 2);
-            Image nodeImg = filePath;
-            if (e.Node.FullPath.EndsWith(".csv"))
-            {
-                nodeImg = fileCSVPath;
-            }
-            if (e.Node.FullPath.EndsWith(".ini"))
-            {
-                nodeImg = fileINIPath;
-            }
-            if (e.Node.FullPath.EndsWith(".txt"))
-            {
-                nodeImg = fileTXTPath;
-            }
-            if (e.Node.FullPath.EndsWith(".json"))
-            {
-                nodeImg = fileINIPath;
-            }
+                /*--------- 2. draw node icon ---------*/
+                Point ptNodeIcon = new Point(nodeRect.Location.X - 4, nodeRect.Location.Y - 2);
+                Image nodeImg = filePath;
+                if (e.Node.FullPath.EndsWith(".csv"))
+                {
+                    nodeImg = fileCSVPath;
+                }
+                if (e.Node.FullPath.EndsWith(".ini"))
+                {
+                    nodeImg = fileINIPath;
+                }
+                if (e.Node.FullPath.EndsWith(".txt"))
+                {
+                    nodeImg = fileTXTPath;
+                }
+                if (e.Node.FullPath.EndsWith(".json"))
+                {
+                    nodeImg = fileINIPath;
+                }
 
-            g = Graphics.FromImage(nodeImg);
-            imgPtr = g.GetHdc();
-            g.ReleaseHdc();
-            if (e.Node.Nodes.Count == 0)
-            {
-                e.Graphics.DrawImage(nodeImg, ptNodeIcon);
-            }
+                g = Graphics.FromImage(nodeImg);
+                imgPtr = g.GetHdc();
+                g.ReleaseHdc();
+                if (e.Node.Nodes.Count == 0)
+                {
+                    e.Graphics.DrawImage(nodeImg, ptNodeIcon);
+                }
 
-            /*--------- 3. draw node text ---------*/
-            Font nodeFont = e.Node.NodeFont;
-            if (nodeFont == null)
-                nodeFont = ((TreeView)sender).Font;
-            Brush textBrush = new SolidBrush(Color.White);
-            //to highlight the text when selected
-            if ((e.State & TreeNodeStates.Focused) != 0)
-                textBrush = new SolidBrush(Color.Aqua);
-            //Inflate to not be cut
-            Rectangle textRect = nodeRect;
-            //need to extend node rect
-            textRect.Width += 40;
-            e.Graphics.DrawString(e.Node.Text, nodeFont, textBrush,
-                Rectangle.Inflate(textRect, -12, 0));
+                /*--------- 3. draw node text ---------*/
+                Font nodeFont = e.Node.NodeFont;
+                if (nodeFont == null)
+                    nodeFont = ((TreeView)sender).Font;
+                Brush textBrush = new SolidBrush(Color.White);
+                //to highlight the text when selected
+                if ((e.State & TreeNodeStates.Focused) != 0)
+                    textBrush = new SolidBrush(Color.Aqua);
+                //Inflate to not be cut
+                Rectangle textRect = nodeRect;
+                //need to extend node rect
+                textRect.Width += 40;
+                e.Graphics.DrawString(e.Node.Text, nodeFont, textBrush,
+                    Rectangle.Inflate(textRect, -12, 0));
+            }
         }
 
         private void CollapseRec(TreeNode node, int rec = 0)

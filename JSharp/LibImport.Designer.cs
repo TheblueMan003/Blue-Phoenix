@@ -29,10 +29,10 @@
         private void InitializeComponent()
         {
             this.ImportedLB = new System.Windows.Forms.ListBox();
-            this.AvailableLB = new System.Windows.Forms.ListBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
+            this.treeView1 = new System.Windows.Forms.TreeView();
             this.SuspendLayout();
             // 
             // ImportedLB
@@ -46,18 +46,6 @@
             this.ImportedLB.Size = new System.Drawing.Size(190, 366);
             this.ImportedLB.TabIndex = 0;
             this.ImportedLB.DoubleClick += new System.EventHandler(this.ImportedLB_DoubleClick);
-            // 
-            // AvailableLB
-            // 
-            this.AvailableLB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
-            this.AvailableLB.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.AvailableLB.ForeColor = System.Drawing.Color.White;
-            this.AvailableLB.FormattingEnabled = true;
-            this.AvailableLB.Location = new System.Drawing.Point(208, 27);
-            this.AvailableLB.Name = "AvailableLB";
-            this.AvailableLB.Size = new System.Drawing.Size(190, 366);
-            this.AvailableLB.TabIndex = 1;
-            this.AvailableLB.DoubleClick += new System.EventHandler(this.AvailableLB_DoubleClick);
             // 
             // label1
             // 
@@ -88,16 +76,36 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // treeView1
+            // 
+            this.treeView1.AllowDrop = true;
+            this.treeView1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.treeView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            this.treeView1.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawAll;
+            this.treeView1.ForeColor = System.Drawing.Color.White;
+            this.treeView1.FullRowSelect = true;
+            this.treeView1.Indent = 10;
+            this.treeView1.Location = new System.Drawing.Point(207, 27);
+            this.treeView1.Name = "treeView1";
+            this.treeView1.PathSeparator = ".";
+            this.treeView1.ShowLines = false;
+            this.treeView1.ShowNodeToolTips = true;
+            this.treeView1.Size = new System.Drawing.Size(190, 366);
+            this.treeView1.TabIndex = 34;
+            this.treeView1.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.treeView1_DrawNode);
+            this.treeView1.DoubleClick += new System.EventHandler(this.treeView1_DoubleClick);
+            // 
             // LibImport
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(409, 432);
+            this.Controls.Add(this.treeView1);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.AvailableLB);
             this.Controls.Add(this.ImportedLB);
             this.ForeColor = System.Drawing.Color.White;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -112,9 +120,9 @@
         #endregion
 
         private System.Windows.Forms.ListBox ImportedLB;
-        private System.Windows.Forms.ListBox AvailableLB;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TreeView treeView1;
     }
 }

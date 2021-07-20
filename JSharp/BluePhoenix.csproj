@@ -115,6 +115,12 @@
     <Compile Include="CompilerCore.cs" />
     <Compile Include="CompilerCoreBedrock.cs" />
     <Compile Include="CompilerCoreJava.cs" />
+    <Compile Include="CustomPaste.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CustomPaste.Designer.cs">
+      <DependentUpon>CustomPaste.cs</DependentUpon>
+    </Compile>
     <Compile Include="DataPackMeta.cs" />
     <Compile Include="EffectForm.cs">
       <SubType>Form</SubType>
@@ -261,6 +267,9 @@
     </Compile>
     <EmbeddedResource Include="CompileOrder.resx">
       <DependentUpon>CompileOrder.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CustomPaste.resx">
+      <DependentUpon>CustomPaste.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="EffectForm.resx">
       <DependentUpon>EffectForm.cs</DependentUpon>

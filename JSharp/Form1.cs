@@ -45,6 +45,7 @@ namespace JSharp
         public int isCompiling = 0;
 
         private Thread CompileThread;
+        private CustomPasteReplace customPaste;
 
         public List<Compiler.File> compileFile;
         public List<Compiler.File> compileResource;
@@ -61,6 +62,7 @@ namespace JSharp
         private string resourceSelected = "src";
         private int index = 0;
 
+        #region image
         private Image minusPath;
         private Image plusPath;
         private Image filePath;
@@ -68,6 +70,7 @@ namespace JSharp
         private Image fileINIPath;
         private Image fileTXTPath;
         private Image fileImagePath;
+        #endregion image
 
         private bool showError = true;
         private bool showWarning = true;
@@ -96,6 +99,7 @@ namespace JSharp
             fileTXTPath = Image.FromFile(path + "assets/file_txt.png");
             fileImagePath = Image.FromFile(path + "assets/file_image.png");
         }
+
         private void recallFile()
         {
             try
@@ -193,37 +197,6 @@ namespace JSharp
             UpdateCodeBox();
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            exporting = false;
-            debugOffuscate = ModifierKeys == Keys.Shift;
-            Compile(true);
-            UpdateCodeBox();
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            NewFile();
-        }
-        private void CodeBox_TextChanged(object sender, EventArgs e)
-        {
-            if (!Formatter.reformating && !noReformat)
-            {
-                if (!ignoreMod)
-                {
-                    while (index < PreviousText.Count - 1)
-                    {
-                        PreviousText.RemoveAt(PreviousText.Count - 1);
-                    }
-                    PreviousText.Add(CodeBox.Text);
-                    index++;
-                }
-            }
-        }
-        private void CodeBox_Leave(object sender, EventArgs e)
-        {
-            recallFile();
-        }
         private void timer1_Tick(object sender, EventArgs e)
         {
             int nb = 0;
@@ -252,17 +225,34 @@ namespace JSharp
             }
         }
 
-        private void CodeBox_MouseClick(object sender, MouseEventArgs e)
-        {
-
-        }
-
+        #region Form
         private void Form1_Load(object sender, EventArgs e)
         {
             if (projectPath == null)
                 NewProject();
         }
-
+        private void Form1_Activated(object sender, EventArgs e)
+        {
+            if (!ignorNextListboxUpdate)
+            {
+                CheckFileModdification();
+                ReloadTree();
+            }
+            else
+            {
+                ignorNextListboxUpdate = false;
+            }
+        }
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = !TryClose();
+        }
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (CompileThread != null)
+                CompileThread.Abort();
+        }
+        #endregion
 
         public void Debug(object text, Color color)
         {
@@ -304,6 +294,10 @@ namespace JSharp
             project.resourcesPackDirectory = currentResourcesPack;
             string dir = Path.GetDirectoryName(projectPath) + "/scripts/";
             string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
+            string dirLib = Path.GetDirectoryName(projectPath) + "/lib";
+            
+            if (!Directory.Exists(dirLib))
+                Directory.CreateDirectory(dirLib);
 
             foreach (string file in codeOrder)
             {
@@ -975,6 +969,272 @@ namespace JSharp
                 Debug(e, Color.Red);
             }
         }
+
+        public void ChangeCompileOrder()
+        {
+            CompileOrder form = new CompileOrder(codeOrder, codeOrder.Contains("import") ? 1 : 0);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                ignorNextListboxUpdate = true;
+                codeOrder.Clear();
+                codeOrder.AddRange(form.Content);
+                Debug("Compile Order Changed", Color.Aqua);
+            }
+        }
+        public void Compile(bool showForm = false)
+        {
+            if (isCompiling > 0)
+            {
+                CompileThread.Abort();
+                isCompiling = 0;
+            }
+            if (isCompiling == 0)
+            {
+                this.showForm = showForm;
+                projectVersion.Build();
+                compileFile = new List<Compiler.File>();
+
+                recallFile();
+
+                foreach (string f in codeOrder)
+                {
+                    compileFile.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
+                }
+                
+                bool rp = WasRPChanged();
+
+                string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+                if (Directory.Exists(rpdir) && rp)
+                {
+                    foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
+                    {
+                        var f = new Compiler.File(file.Replace(rpdir, ""), File.ReadAllText(file).Replace('\t' + "", ""));
+                        f.resourcespack = true;
+                        compileFile.Add(f);
+                    }
+                }
+
+                compileResource = new List<Compiler.File>();
+                foreach (string f in resourceOrder)
+                {
+                    compileResource.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
+                }
+                if (CompileThread != null && CompileThread.IsAlive)
+                    CompileThread.Abort();
+
+                CompileThread = new Thread(CompileThreaded);
+                CompileThread.Priority = ThreadPriority.Highest;
+                CompileThread.Start();
+            }
+        }
+        public void GetCallStackTrace()
+        {
+            if (isCompiling == 0)
+            {
+                this.showForm = true;
+                projectVersion.Build();
+                compileFile = new List<Compiler.File>();
+
+                recallFile();
+
+                foreach (string f in codeOrder)
+                {
+                    compileFile.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
+                }
+
+                compileResource = new List<Compiler.File>();
+                foreach (string f in resourceOrder)
+                {
+                    compileResource.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
+                }
+                if (CompileThread != null && CompileThread.IsAlive)
+                    CompileThread.Abort();
+                CompileThread = new Thread(GetCallStackTraceThreaded);
+                CompileThread.Start();
+            }
+        }
+
+        public void CompileThreaded()
+        {
+            try
+            {
+                isCompiling = 1;
+                CompilerCore core;
+                if (compilerSetting.CompilerCoreName == "java") { core = new CompilerCoreJava(); }
+                else if (compilerSetting.CompilerCoreName == "bedrock") { core = new CompilerCoreBedrock(); }
+                else { throw new Exception("Unknown Compiler Core"); }
+                if (exporting)
+                {
+                    compileFiled = Compiler.compile(core, projectName, compileFile, compileResource,
+                        DebugThread, compilerSetting, projectVersion,
+                        Path.GetDirectoryName(projectPath));
+                }
+                else
+                {
+                    compileFiled = Compiler.compile(core, projectName, compileFile, compileResource,
+                        DebugThread, debugOffuscate ? compilerSetting : compilerSetting.withoutOffuscation(), projectVersion,
+                        Path.GetDirectoryName(projectPath));
+                }
+                Formatter.getAutoComplete(autocompleteMenu1, previous, CodeBox.Text);
+                if (showForm)
+                {
+                    isCompiling = 2;
+                }
+                else
+                {
+                    isCompiling = 0;
+                }
+            }
+            catch (Exception er)
+            {
+                isCompiling = 0;
+                DebugThread(er, Color.Red);
+            }
+
+        }
+        public void GetCallStackTraceThreaded()
+        {
+            try
+            {
+                isCompiling = 1;
+                string file = Compiler.getStackCall(new CompilerCoreJava(), projectName, compileFile, compileResource,
+                    DebugThread, compilerSetting.withoutOffuscation(), projectVersion,
+                    Path.GetDirectoryName(projectPath));
+                compileFiled = new List<Compiler.File>();
+                compileFiled.Add(new Compiler.File("Call Stacks", file));
+
+                try
+                {
+                    System.Diagnostics.Process.Start("https://dreampuf.github.io/GraphvizOnline/");
+                }
+                catch (Exception e)
+                {
+                    DebugThread(e.StackTrace, Color.Red);
+                }
+                if (showForm)
+                {
+                    isCompiling = 2;
+                }
+                else
+                {
+                    isCompiling = 0;
+                }
+            }
+            catch (Exception er)
+            {
+                isCompiling = 0;
+                DebugThread(er, Color.Red);
+            }
+
+        }
+        public void ReIndent()
+        {
+            try
+            {
+                string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+                CodeBox.DescriptionFile = "";
+                CodeBox.DescriptionFile = path + "formating.xml";
+                Formatter.getAutoComplete(autocompleteMenu1, previous, CodeBox.Text);
+
+                Regex reg = new Regex(@"(?s)^\s*((if)|(for)|(while))\b");
+                Stack<char> chars = new Stack<char>();
+                string[] textArr = CodeBox.Text.Split('\n');
+                string text = "";
+
+                for (int i = 0; i < textArr.Length; i++)
+                {
+                    int shift = 0;
+                    if (textArr[i].Contains("}"))
+                        shift += textArr[i].Split('}').Length - textArr[i].Split('{').Length;
+
+                    if (textArr[i].Contains(")"))
+                        shift += textArr[i].Split(')').Length - textArr[i].Split('(').Length;
+
+                    if (textArr[i].Contains("]"))
+                        shift += textArr[i].Split(']').Length - textArr[i].Split('[').Length;
+
+                    for (int j = 0; j < chars.Count - shift; j++)
+                    {
+                        text += "\t";
+                    }
+                    text += Compiler.smartExtract(textArr[i].Replace("\t", ""));
+                    if (i < textArr.Length - 1)
+                        text += "\n";
+
+                    bool inComment = false;
+                    bool inString = false;
+                    char cPrev = '\n';
+
+                    foreach (char c in textArr[i])
+                    {
+                        if (c == '"' && cPrev != '\\')
+                        {
+                            inString = !inString;
+                        }
+                        else if (c == '\\' && cPrev == '\\')
+                        {
+                            inComment = true;
+                        }
+                        else if (c == '{' && !inComment && !inString)
+                        {
+                            chars.Push(c);
+                        }
+                        else if (c == '(' && !inComment && !inString)
+                        {
+                            chars.Push(c);
+                        }
+                        else if (c == '[' && !inComment && !inString)
+                        {
+                            chars.Push(c);
+                        }
+                        else if (c == '}' && !inComment && !inString && chars.Pop() != '{')
+                        {
+                            chars.Pop();
+                        }
+                        else if (c == ')' && !inComment && !inString && chars.Pop() != '(')
+                        {
+                            chars.Pop();
+                        }
+                        else if (c == ']' && !inComment && !inString && chars.Pop() != '[')
+                        {
+                            chars.Pop();
+                        }
+                    }
+                    /*
+                    if (reg.Match(textArr[i]).Success && !textArr[i].Contains("{"))
+                    {
+                        softCond++;
+                        chars.Push('{');
+                    }
+                    else if (softCond > 0)
+                    {
+                        chars.Pop();
+                        softCond -= 1;
+                    }*/
+                }
+                CodeBox.Text = text;
+                CodeBox.ClearUndo();
+            }
+            catch (Exception e)
+            {
+                Debug(e, Color.Red);
+            }
+        }
+        public string ProjectFolder()
+        {
+            return projectPath.Replace(Path.GetFileName(projectPath), "");
+        }
+        private void ReShowError()
+        {
+            ErrorBox.Text = "";
+            debugMSGsShowned.ForEach(x => DebugDisplay(x.msg, x.color));
+        }
+
+        public void DebugThread(object msg, Color c)
+        {
+            debugMSGs.Add(new DebugMessage(msg.ToString(), c));
+        }
+
         #region Compile & Export
         public void ExportDataPackThread()
         {
@@ -1247,278 +1507,19 @@ namespace JSharp
             }
         }
         #endregion
-        public void ChangeCompileOrder()
-        {
-            CompileOrder form = new CompileOrder(codeOrder, codeOrder.Contains("import") ? 1 : 0);
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                ignorNextListboxUpdate = true;
-                codeOrder.Clear();
-                codeOrder.AddRange(form.Content);
-                Debug("Compile Order Changed", Color.Aqua);
-            }
-        }
-        public void Compile(bool showForm = false)
-        {
-            if (isCompiling > 0)
-            {
-                CompileThread.Abort();
-                isCompiling = 0;
-            }
-            if (isCompiling == 0)
-            {
-                this.showForm = showForm;
-                projectVersion.Build();
-                compileFile = new List<Compiler.File>();
-
-                recallFile();
-
-                foreach (string f in codeOrder)
-                {
-                    compileFile.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
-                }
-                
-                bool rp = WasRPChanged();
-
-                string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
-                if (Directory.Exists(rpdir) && rp)
-                {
-                    foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
-                    {
-                        var f = new Compiler.File(file.Replace(rpdir, ""), File.ReadAllText(file).Replace('\t' + "", ""));
-                        f.resourcespack = true;
-                        compileFile.Add(f);
-                    }
-                }
-
-                compileResource = new List<Compiler.File>();
-                foreach (string f in resourceOrder)
-                {
-                    compileResource.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
-                }
-                if (CompileThread != null && CompileThread.IsAlive)
-                    CompileThread.Abort();
-
-                CompileThread = new Thread(CompileThreaded);
-                CompileThread.Priority = ThreadPriority.Highest;
-                CompileThread.Start();
-            }
-        }
-        public void GetCallStackTrace()
-        {
-            if (isCompiling == 0)
-            {
-                this.showForm = true;
-                projectVersion.Build();
-                compileFile = new List<Compiler.File>();
-
-                recallFile();
-
-                foreach (string f in codeOrder)
-                {
-                    compileFile.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
-                }
-
-                compileResource = new List<Compiler.File>();
-                foreach (string f in resourceOrder)
-                {
-                    compileResource.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
-                }
-                if (CompileThread != null && CompileThread.IsAlive)
-                    CompileThread.Abort();
-                CompileThread = new Thread(GetCallStackTraceThreaded);
-                CompileThread.Start();
-            }
-        }
-
-        public void CompileThreaded()
-        {
-            try
-            {
-                isCompiling = 1;
-                CompilerCore core;
-                if (compilerSetting.CompilerCoreName == "java") { core = new CompilerCoreJava(); }
-                else if (compilerSetting.CompilerCoreName == "bedrock") { core = new CompilerCoreBedrock(); }
-                else { throw new Exception("Unknown Compiler Core"); }
-                if (exporting)
-                {
-                    compileFiled = Compiler.compile(core, projectName, compileFile, compileResource,
-                        DebugThread, compilerSetting, projectVersion,
-                        Path.GetDirectoryName(projectPath));
-                }
-                else
-                {
-                    compileFiled = Compiler.compile(core, projectName, compileFile, compileResource,
-                        DebugThread, debugOffuscate ? compilerSetting : compilerSetting.withoutOffuscation(), projectVersion,
-                        Path.GetDirectoryName(projectPath));
-                }
-                Formatter.getAutoComplete(autocompleteMenu1, previous, CodeBox.Text);
-                if (showForm)
-                {
-                    isCompiling = 2;
-                }
-                else
-                {
-                    isCompiling = 0;
-                }
-            }
-            catch (Exception er)
-            {
-                isCompiling = 0;
-                DebugThread(er, Color.Red);
-            }
-
-        }
-        public void GetCallStackTraceThreaded()
-        {
-            try
-            {
-                isCompiling = 1;
-                string file = Compiler.getStackCall(new CompilerCoreJava(), projectName, compileFile, compileResource,
-                    DebugThread, compilerSetting.withoutOffuscation(), projectVersion,
-                    Path.GetDirectoryName(projectPath));
-                compileFiled = new List<Compiler.File>();
-                compileFiled.Add(new Compiler.File("Call Stacks", file));
-
-                try
-                {
-                    System.Diagnostics.Process.Start("https://dreampuf.github.io/GraphvizOnline/");
-                }
-                catch (Exception e)
-                {
-                    DebugThread(e.StackTrace, Color.Red);
-                }
-                if (showForm)
-                {
-                    isCompiling = 2;
-                }
-                else
-                {
-                    isCompiling = 0;
-                }
-            }
-            catch (Exception er)
-            {
-                isCompiling = 0;
-                DebugThread(er, Color.Red);
-            }
-
-        }
-        public void ReIndent()
-        {
-            try
-            {
-                Regex reg = new Regex(@"(?s)^\s*((if)|(for)|(while))\b");
-                Stack<char> chars = new Stack<char>();
-                string[] textArr = CodeBox.Text.Split('\n');
-                string text = "";
-
-                for (int i = 0; i < textArr.Length; i++)
-                {
-                    int shift = 0;
-                    if (textArr[i].Contains("}"))
-                        shift += textArr[i].Split('}').Length - textArr[i].Split('{').Length;
-
-                    if (textArr[i].Contains(")"))
-                        shift += textArr[i].Split(')').Length - textArr[i].Split('(').Length;
-
-                    if (textArr[i].Contains("]"))
-                        shift += textArr[i].Split(']').Length - textArr[i].Split('[').Length;
-
-                    for (int j = 0; j < chars.Count - shift; j++)
-                    {
-                        text += "\t";
-                    }
-                    text += Compiler.smartExtract(textArr[i].Replace("\t", ""));
-                    if (i < textArr.Length - 1)
-                        text += "\n";
-
-                    bool inComment = false;
-                    bool inString = false;
-                    char cPrev = '\n';
-
-                    foreach (char c in textArr[i])
-                    {
-                        if (c == '"' && cPrev != '\\')
-                        {
-                            inString = !inString;
-                        }
-                        else if (c == '\\' && cPrev == '\\')
-                        {
-                            inComment = true;
-                        }
-                        else if (c == '{' && !inComment && !inString)
-                        {
-                            chars.Push(c);
-                        }
-                        else if (c == '(' && !inComment && !inString)
-                        {
-                            chars.Push(c);
-                        }
-                        else if (c == '[' && !inComment && !inString)
-                        {
-                            chars.Push(c);
-                        }
-                        else if (c == '}' && !inComment && !inString && chars.Pop() != '{')
-                        {
-                            chars.Pop();
-                        }
-                        else if (c == ')' && !inComment && !inString && chars.Pop() != '(')
-                        {
-                            chars.Pop();
-                        }
-                        else if (c == ']' && !inComment && !inString && chars.Pop() != '[')
-                        {
-                            chars.Pop();
-                        }
-                    }
-                    /*
-                    if (reg.Match(textArr[i]).Success && !textArr[i].Contains("{"))
-                    {
-                        softCond++;
-                        chars.Push('{');
-                    }
-                    else if (softCond > 0)
-                    {
-                        chars.Pop();
-                        softCond -= 1;
-                    }*/
-                }
-                CodeBox.Text = text;
-                CodeBox.ClearUndo();
-            }
-            catch (Exception e)
-            {
-                Debug(e, Color.Red);
-            }
-        }
-        public string ProjectFolder()
-        {
-            return projectPath.Replace(Path.GetFileName(projectPath), "");
-        }
-        private void ReShowError()
-        {
-            ErrorBox.Text = "";
-            debugMSGsShowned.ForEach(x => DebugDisplay(x.msg, x.color));
-        }
-
-        public void DebugThread(object msg, Color c)
-        {
-            debugMSGs.Add(new DebugMessage(msg.ToString(), c));
-        }
-
-        private void splitContainer2_Panel2_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            if (CompileThread != null)
-                CompileThread.Abort();
-        }
 
         #region Preview Button
+        private void button1_Click(object sender, EventArgs e)
+        {
+            exporting = false;
+            debugOffuscate = ModifierKeys == Keys.Shift;
+            Compile(true);
+            UpdateCodeBox();
+        }
+        private void button2_Click(object sender, EventArgs e)
+        {
+            NewFile();
+        }
         private void FunctionPreview_Click(object sender, EventArgs e)
         {
             FunctionPreview fp = new FunctionPreview(Compiler.functions);
@@ -1913,6 +1914,36 @@ namespace JSharp
                 }
             }
         }
+        private void customPasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CustomPaste inst = new CustomPaste();
+            if (inst.ShowDialog() == DialogResult.OK)
+            {
+                customPaste = inst.customPasteReplace;
+            }
+        }
+        private void inspectorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            InspectorForm inst = new InspectorForm(currentDataPack);
+            inst.Show();
+        }
+        private void structureToCMDToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            StructureToCMD inst = new StructureToCMD();
+            inst.Show();
+        }
+        private void tilemapEditorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (ForceSave())
+            {
+                if (!Directory.Exists(Path.GetDirectoryName(projectPath) + "/tilemaps"))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/tilemaps");
+                }
+                TilemapGenerator t = new TilemapGenerator(Path.GetDirectoryName(projectPath) + "/tilemaps");
+                t.Show();
+            }
+        }
         #endregion
 
         #region codetree
@@ -2116,70 +2147,64 @@ namespace JSharp
             Rectangle nodeRect = e.Node.Bounds;
 
             /*--------- 1. draw expand/collapse icon ---------*/
-            Point ptExpand = new Point(nodeRect.Location.X - 10, nodeRect.Location.Y - 2);
-            Image expandImg = null;
+            if (!(nodeRect.Location.X == 0 && nodeRect.Location.Y == 0)) {
+                Point ptExpand = new Point(nodeRect.Location.X - 10, nodeRect.Location.Y - 2);
+                Image expandImg = null;
 
-            if (e.Node.IsExpanded)
-                expandImg = minusPath;
-            else
-                expandImg = plusPath;
+                if (e.Node.IsExpanded)
+                    expandImg = minusPath;
+                else
+                    expandImg = plusPath;
 
-            Graphics g = Graphics.FromImage(expandImg);
-
-            IntPtr imgPtr = g.GetHdc();
-            g.ReleaseHdc();
-            if (!e.Node.Checked)
-            {
-                e.Graphics.DrawImage(expandImg, ptExpand);
-            }
+                if (!e.Node.Checked)
+                {
+                    e.Graphics.DrawImage(expandImg, ptExpand);
+                }
 
 
-            /*--------- 2. draw node icon ---------*/
-            Point ptNodeIcon = new Point(nodeRect.Location.X - 4, nodeRect.Location.Y - 2);
-            Image nodeImg = filePath;
-            if (e.Node.FullPath.EndsWith(".csv"))
-            {
-                nodeImg = fileCSVPath;
-            }
-            if (e.Node.FullPath.EndsWith(".ini"))
-            {
-                nodeImg = fileINIPath;
-            }
-            if (e.Node.FullPath.EndsWith(".txt") || e.Node.FullPath.EndsWith(".mcmeta"))
-            {
-                nodeImg = fileTXTPath;
-            }
-            if (e.Node.FullPath.EndsWith(".json"))
-            {
-                nodeImg = fileINIPath;
-            }
-            if (e.Node.FullPath.EndsWith(".png"))
-            {
-                nodeImg = fileImagePath;
-            }
+                /*--------- 2. draw node icon ---------*/
+                Point ptNodeIcon = new Point(nodeRect.Location.X - 4, nodeRect.Location.Y - 2);
+                Image nodeImg = filePath;
+                if (e.Node.FullPath.EndsWith(".csv"))
+                {
+                    nodeImg = fileCSVPath;
+                }
+                if (e.Node.FullPath.EndsWith(".ini"))
+                {
+                    nodeImg = fileINIPath;
+                }
+                if (e.Node.FullPath.EndsWith(".txt") || e.Node.FullPath.EndsWith(".mcmeta"))
+                {
+                    nodeImg = fileTXTPath;
+                }
+                if (e.Node.FullPath.EndsWith(".json"))
+                {
+                    nodeImg = fileINIPath;
+                }
+                if (e.Node.FullPath.EndsWith(".png"))
+                {
+                    nodeImg = fileImagePath;
+                }
 
-            g = Graphics.FromImage(nodeImg);
-            imgPtr = g.GetHdc();
-            g.ReleaseHdc();
-            if (e.Node.Checked)
-            {
-                e.Graphics.DrawImage(nodeImg, ptNodeIcon);
-            }
+                if (e.Node.Checked)
+                {
+                    e.Graphics.DrawImage(nodeImg, ptNodeIcon);
+                }
 
-            /*--------- 3. draw node text ---------*/
-            Font nodeFont = e.Node.NodeFont;
-            if (nodeFont == null)
-                nodeFont = ((TreeView)sender).Font;
-            Brush textBrush = new SolidBrush(Color.White);
-            //to highlight the text when selected
-            if ((e.State & TreeNodeStates.Focused) != 0)
-                textBrush = new SolidBrush(Color.Aqua);
-            //Inflate to not be cut
-            Rectangle textRect = nodeRect;
-            //need to extend node rect
-            textRect.Width += 40;
-            e.Graphics.DrawString(e.Node.Text, nodeFont, textBrush,
-                Rectangle.Inflate(textRect, -12, 0));
+                /*--------- 3. draw node text ---------*/
+                Font nodeFont = e.Node.NodeFont;
+                if (nodeFont == null)
+                    nodeFont = ((TreeView)sender).Font;
+                Brush textBrush = new SolidBrush(Color.White);
+                //to highlight the text when selected
+                if ((e.State & TreeNodeStates.Focused) != 0)
+                    textBrush = new SolidBrush(Color.Aqua);
+                //Inflate to not be cut
+                Rectangle textRect = nodeRect;
+                //need to extend node rect
+                textRect.Width += 40;
+                e.Graphics.DrawString(e.Node.Text, nodeFont, textBrush, Rectangle.Inflate(textRect, -12, 0));
+            }
         }
         private void treeView1_DragDrop(object sender, DragEventArgs e)
         {
@@ -2258,78 +2283,24 @@ namespace JSharp
                 e.Node.ExpandAll();
             }
         }
-        #endregion
-
-        private void Form1_Activated(object sender, EventArgs e)
+        private void openToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (!ignorNextListboxUpdate)
+            Point targetPoint = treeView1.PointToClient(new Point(MousePosition.X, MousePosition.Y));
+            treeView1.SelectedNode = treeView1.GetNodeAt(targetPoint);
+
+            string gloDir = Path.GetDirectoryName(projectPath) + "/";
+            string path = treeView1.SelectedNode.FullPath;
+            if (path.StartsWith("src/"))
             {
-                CheckFileModdification();
-                ReloadTree();
+                path = path.Replace("src/", "scripts/")+".bps";
             }
+            MessageBox.Show(gloDir + path);
+            if (File.Exists(gloDir+path))
+                System.Diagnostics.Process.Start(gloDir + path);
             else
-            {
-                ignorNextListboxUpdate = false;
-            }
+                System.Diagnostics.Process.Start("explorer.exe", gloDir + path);
+
         }
-
-        public void DeleteSelectedFile()
-        {
-            string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
-
-            string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
-            dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
-            if (MessageBox.Show($"Are you sure you want to delete {dir} from {grp}?", "Are you sure?", MessageBoxButtons.OKCancel)
-                == DialogResult.OK)
-            {
-                string gloDir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
-                if (grp == "resourcespack")
-                {
-                    if (File.Exists(gloDir + dir))
-                    {
-                        File.Delete(gloDir + dir);
-                    }
-                }
-                gloDir = Path.GetDirectoryName(projectPath) + "/structures/";
-                if (grp == "structures")
-                {
-                    if (File.Exists(gloDir + dir))
-                    {
-                        File.Delete(gloDir + dir);
-                    }
-                }
-                gloDir = Path.GetDirectoryName(projectPath) + "/resources/";
-                if (grp == "resources")
-                {
-                    if (File.Exists(gloDir + dir))
-                    {
-                        File.Delete(gloDir + dir);
-                    }
-                    if (resources.ContainsKey(dir))
-                    {
-                        resourceOrder.Remove(dir);
-                        resources.Remove(dir);
-                    }
-                }
-                gloDir = Path.GetDirectoryName(projectPath) + "/scripts/";
-                if (grp == "src")
-                {
-                    if (File.Exists(gloDir + dir + ".bps"))
-                    {
-                        File.Delete(gloDir + dir + ".bps");
-                    }
-                    if (code.ContainsKey(dir))
-                    {
-                        codeOrder.Remove(dir);
-                        code.Remove(dir);
-                    }
-                }
-                FetchFilesInDirectory();
-                ReloadTree();
-            }
-        }
-
-
         public void ShowCodeBox()
         {
             pictureBox1.Visible = false;
@@ -2345,7 +2316,6 @@ namespace JSharp
             pictureBox1.Visible = false;
             CodeBox.Visible = false;
         }
-
         private void SelectFullPath(string fullPath)
         {
             if (fullPath.StartsWith("src") && fullPath.Length > 4)
@@ -2430,21 +2400,68 @@ namespace JSharp
                 SelectFullPath(openedFullPath[tabControl1.SelectedIndex]);
             }
         }
-
-        private void fastColoredTextBox1_Enter(object sender, EventArgs e)
+        public void DeleteSelectedFile()
         {
-            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-            CodeBox.DescriptionFile = "";
-            CodeBox.DescriptionFile = path + "formating.xml";
-            Formatter.getAutoComplete(autocompleteMenu1, previous, CodeBox.Text);
+            string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
+
+            string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
+            dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
+            if (MessageBox.Show($"Are you sure you want to delete {dir} from {grp}?", "Are you sure?", MessageBoxButtons.OKCancel)
+                == DialogResult.OK)
+            {
+                string gloDir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+                if (grp == "resourcespack")
+                {
+                    if (File.Exists(gloDir + dir))
+                    {
+                        File.Delete(gloDir + dir);
+                    }
+                }
+                gloDir = Path.GetDirectoryName(projectPath) + "/structures/";
+                if (grp == "structures")
+                {
+                    if (File.Exists(gloDir + dir))
+                    {
+                        File.Delete(gloDir + dir);
+                    }
+                }
+                gloDir = Path.GetDirectoryName(projectPath) + "/resources/";
+                if (grp == "resources")
+                {
+                    if (File.Exists(gloDir + dir))
+                    {
+                        File.Delete(gloDir + dir);
+                    }
+                    if (resources.ContainsKey(dir))
+                    {
+                        resourceOrder.Remove(dir);
+                        resources.Remove(dir);
+                    }
+                }
+                gloDir = Path.GetDirectoryName(projectPath) + "/scripts/";
+                if (grp == "src")
+                {
+                    if (File.Exists(gloDir + dir + ".bps"))
+                    {
+                        File.Delete(gloDir + dir + ".bps");
+                    }
+                    if (code.ContainsKey(dir))
+                    {
+                        codeOrder.Remove(dir);
+                        code.Remove(dir);
+                    }
+                }
+                FetchFilesInDirectory();
+                ReloadTree();
+            }
         }
+        #endregion
 
-
-        private void CodeBox_Load(object sender, EventArgs e)
+        #region CodeBox
+        private void CodeBox_MouseClick(object sender, MouseEventArgs e)
         {
 
         }
-
         private void autocompleteMenu1_Selected(object sender, AutocompleteMenuNS.SelectedEventArgs e)
         {
             if (e.Item.Text.Contains("^"))
@@ -2458,14 +2475,17 @@ namespace JSharp
                 SendKeys.Send(text);
             }
         }
-
         private void CodeBox_CustomAction(object sender, FastColoredTextBoxNS.CustomActionEventArgs e)
         {
             string text = Clipboard.GetText();
             // Special Paste
             if (e.Action == FastColoredTextBoxNS.FCTBAction.CustomAction1)
             {
-                if (new Regex(@"/setblock [\-\d]+ [\-\d]+ [\-\d]+").Match(text).Success)
+                if (customPaste != null && customPaste.Get(text) != text)
+                {
+                    CodeBox.InsertText(customPaste.Get(text));
+                }
+                else if (new Regex(@"/setblock [\-\d]+ [\-\d]+ [\-\d]+").Match(text).Success)
                 {
                     Regex reg2 = new Regex(@"[\-\d]+ [\-\d]+ [\-\d]+");
                     CodeBox.InsertText(reg2.Match(text).Value.Replace(" ", ","));
@@ -2491,7 +2511,6 @@ namespace JSharp
                 }
             }
         }
-
         private void CodeBox_ToolTipNeeded(object sender, FastColoredTextBoxNS.ToolTipNeededEventArgs e)
         {
             Regex reg = new Regex(@"[\w\._\:]+");
@@ -2523,31 +2542,6 @@ namespace JSharp
                 catch { }
             }
         }
-
-        private void inspectorToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            InspectorForm inst = new InspectorForm(currentDataPack);
-            inst.Show();
-        }
-
-        private void structureToCMDToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            StructureToCMD inst = new StructureToCMD();
-            inst.Show();
-        }
-
-        private void tilemapEditorToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (ForceSave())
-            {
-                if (!Directory.Exists(Path.GetDirectoryName(projectPath) + "/tilemaps"))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/tilemaps");
-                }
-                TilemapGenerator t = new TilemapGenerator(Path.GetDirectoryName(projectPath) + "/tilemaps");
-                t.Show();
-            }
-        }
         private void CodeBox_TextChanged(object sender, FastColoredTextBoxNS.TextChangedEventArgs e)
         {
             if (!noReformat)
@@ -2566,6 +2560,39 @@ namespace JSharp
                 catch { }
             }
         }
+        private void CodeBox_Load(object sender, EventArgs e)
+        {
+
+        }
+        private void fastColoredTextBox1_Enter(object sender, EventArgs e)
+        {
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            CodeBox.DescriptionFile = "";
+            CodeBox.DescriptionFile = path + "formating.xml";
+            Formatter.getAutoComplete(autocompleteMenu1, previous, CodeBox.Text);
+        }
+        private void CodeBox_TextChanged(object sender, EventArgs e)
+        {
+            if (!Formatter.reformating && !noReformat)
+            {
+                if (!ignoreMod)
+                {
+                    while (index < PreviousText.Count - 1)
+                    {
+                        PreviousText.RemoveAt(PreviousText.Count - 1);
+                    }
+                    PreviousText.Add(CodeBox.Text);
+                    index++;
+                }
+            }
+        }
+        private void CodeBox_Leave(object sender, EventArgs e)
+        {
+            recallFile();
+        }
+        #endregion
+
+        
 
         private class DebugMessage
         {
@@ -2609,11 +2636,6 @@ namespace JSharp
             {
                 wasModdified = false;
             }
-        }
-
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            e.Cancel = !TryClose();
         }
     }
 }

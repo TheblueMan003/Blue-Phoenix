@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
@@ -1356,7 +1357,7 @@ namespace JSharp
                 }
             }
 
-            if (fail && !tryImport(projectFolder + "/", text, fu, out output))
+            if (fail && !tryImport(projectFolder + "/lib/", text, fu, out output))
             {
                 throw new Exception($"Unknown library: \"{text}\"");
             }
@@ -1365,6 +1366,7 @@ namespace JSharp
         }
         public static bool tryImport(string folder, string lib, bool fu, out string msg)
         {
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             string[] split = lib.Split('.');
             List<string> paths = new List<string>();
             paths.Add(split[0]);
@@ -1410,6 +1412,37 @@ namespace JSharp
 
                     context = c;
 
+                    return true;
+                }
+                if (System.IO.File.Exists(folder + text + ".dpo"))
+                {
+                    Dictionary<string, List<string>> save = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(System.IO.File.ReadAllText(folder + text + ".dpo"));
+                    if (save["version"][0] == "0" && System.IO.File.Exists(folder + text + ".zip") && System.IO.File.GetLastWriteTime(folder + text + ".zip").ToString() == save["version"][1])
+                    {
+                        save["functions"].ForEach(x => preparseLine($"def external {x}()"));
+                        msg = "#Using TBMS Library: " + text + " (datapack object)\n";
+                        return true;
+                    }
+                }
+                if (System.IO.File.Exists(folder + text + ".zip"))
+                {
+                    if (Directory.Exists(path+ "unzip")) Directory.Delete(path + "unzip", true);
+                    ZipFile.ExtractToDirectory(folder + text + ".zip", path + "unzip");
+                    List<string> functions = Directory.EnumerateFiles(path + "unzip", "*.mcfunction", SearchOption.AllDirectories)
+                             .Select(x => x.Replace("\\","/").Replace(path.Replace("\\", "/") + "unzip/data", "").Replace("functions/", "").Replace("/",".").Replace(".mcfunction",""))
+                             .Where(x => !x.Contains("__"))
+                             .ToList();
+                    functions.ForEach(x => preparseLine($"def external {x}()"));
+                    
+                    Dictionary<string, List<string>> save = new Dictionary<string, List<string>>();
+                    save.Add("version", new List<string>() { "0", System.IO.File.GetLastWriteTime(folder + text + ".zip").ToString() });
+                    save.Add("functions", functions);
+                    System.IO.File.WriteAllText(folder + text + ".dpo", JsonConvert.SerializeObject(save));
+
+
+                    Directory.Delete(path + "unzip", true);
+                    
+                    msg = "#Using TBMS Library: " + text + " (datapack)\n";
                     return true;
                 }
             }
@@ -2978,10 +3011,10 @@ namespace JSharp
             else
             {
                 string op = "";
-                if (text.Contains("<=")) op = "<=";
-                else if (text.Contains("<")) op = "<";
-                else if (text.Contains(">=")) op = ">=";
-                else if (text.Contains(">")) op = ">";
+                if (smartContains(text,"<=")) op = "<=";
+                else if (smartContains(text,"<")) op = "<";
+                else if (smartContains(text,">=")) op = ">=";
+                else if (smartContains(text,">")) op = ">";
 
                 if (op == "")
                 {
@@ -3616,7 +3649,7 @@ namespace JSharp
                 i++;
             }
 
-            output += "function " + context.getRoot() + Core.FileNameSplitter()[0] + "__multiplex__/" + grp + '\n';
+            output += getCondition($"{funObj.gameName}!=null") + "function " + context.getRoot() + Core.FileNameSplitter()[0] + "__multiplex__/" + grp + '\n';
             if (outVar != null)
             {
                 for (int j = 0; j < outVar.Length; j++)
@@ -7594,6 +7627,81 @@ namespace JSharp
                 else if (text[i] == c && ind == 0 && max != 0 && !inString)
                 {
                     return true;
+                }
+            }
+
+            return false;
+        }
+        public static bool smartContains(string text, string c, int max = -1)
+        {
+            int ind = 0;
+            bool inString = false;
+            if (text == null || text.Length == 0) return false;
+            while (text.StartsWith(" "))
+                text = text.Substring(1, text.Length - 1);
+            if (text[0] == '(' && text.Contains(c))
+            {
+                return true;
+            }
+            int j = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '(')
+                {
+                    ind += 1;
+                    j = 0;
+                }
+                else if (text[i] == ')')
+                {
+                    ind -= 1;
+                    j = 0;
+                }
+                else if (text[i] == '[' && c[j] != '[' && c[j] != ']')
+                {
+                    ind += 1;
+                    j = 0;
+                }
+                else if (text[i] == ']' && c[j] != '[' && c[j] != ']')
+                {
+                    ind -= 1;
+                    j = 0;
+                }
+                else if (text[i] == '{' && c[j] != '{' && c[j] != '}')
+                {
+                    ind += 1;
+                    j = 0;
+                }
+                else if (text[i] == '}' && c[j] != '}' && c[j] != '{')
+                {
+                    ind -= 1;
+                    j = 0;
+                }
+                else if (text[i] == '"' && c[j] != '"')
+                {
+                    inString = !inString;
+                    j = 0;
+                }
+                else if (text[i] == '<' && c[j] == ',')
+                {
+                    ind += 1;
+                    j = 0;
+                }
+                else if (text[i] == '>' && c[j] == ',')
+                {
+                    ind -= 1;
+                    j = 0;
+                }
+                else if (text[i] == c[j] && ind == 0 && max != 0 && !inString)
+                {
+                    j++;
+                    if (j >= c.Length)
+                    {
+                        return true;
+                    }
+                }
+                else
+                {
+                    j = 0;
                 }
             }
 
