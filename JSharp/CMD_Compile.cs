@@ -22,13 +22,44 @@ namespace BluePhoenix
 
         public CMD_Compile(string project, string path, bool zipForce = false)
         {
+            CommandParser.loadDict();
+            Formatter.loadDict();
             consoleText = new StringBuilder();
             projectPath = project;
-            this.project = JsonConvert.DeserializeObject<ProjectSave>(File.ReadAllText(project));
+            try
+            {
+                this.project = JsonConvert.DeserializeObject<ProjectSave>(File.ReadAllText(project));
+            }
+            catch
+            {
+                this.project = new ProjectSave();
+                this.project.compilationSetting = new Compiler.CompilerSetting();
+                this.project.compilationSetting.packformat = 7;
+                this.project.compilationSetting.rppackformat = 7;
+                this.project.compilationSetting.MCVersion = "1.17";
+                this.project.compilationSetting.libraryFolder.Add("./lib/1_17/");
+                this.project.compilationSetting.libraryFolder.Add("./lib/1_16_5/");
+                this.project.compilationSetting.libraryFolder.Add("./lib/shared/");
 
+                this.project.mcTagsList = new Dictionary<string, Dictionary<string, TagsList>>();
+                this.project.mcTagsList.Add("blocks", new Dictionary<string, TagsList>());
+                this.project.mcTagsList.Add("functions", new Dictionary<string, TagsList>());
+                this.project.mcTagsList["functions"].Add("load", new TagsList());
+                this.project.mcTagsList["functions"].Add("tick", new TagsList());
+                this.project.mcTagsList["functions"]["load"].values.Add("load");
+                this.project.mcTagsList["functions"]["tick"].values.Add("main");
+                this.project.TagsList = new Dictionary<string, Dictionary<string, TagsList>>();
+
+                this.project.projectName = "bps";
+                this.project.version = new ProjectVersion();
+                this.project.compileOrder = new List<string>();
+                this.project.datapackDirectory = path;
+                projectPath += "/project.tbms";
+            }
             this.path = path;
             this.zipForce = zipForce;
             OpenFile();
+            File.WriteAllText(projectPath, JsonConvert.SerializeObject(this.project));
         }
         public string Export()
         {

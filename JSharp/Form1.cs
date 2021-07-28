@@ -852,17 +852,19 @@ namespace JSharp
                 ReloadTree();
             }
         }
-        public void NewProject()
+        public void NewProject(string path = null)
         {
             NewProjectForm form = new NewProjectForm();
-            var res = form.ShowDialog();
+            var res = DialogResult.None;
+            if (path == null)
+                res = form.ShowDialog();
             if (res == DialogResult.OK || res == DialogResult.Yes)
             {
                 Reset();
             }
-            if (res == DialogResult.OK)
+            if (res == DialogResult.OK || path != null)
             {
-                projectName = form.ProjectName.ToLower().Replace(" ","");
+                projectName = path==null?form.ProjectName.ToLower().Replace(" ",""): path+"/project.tbms";
                 compilerSetting = new Compiler.CompilerSetting();
                 compilerSetting.packformat = 7;
                 compilerSetting.rppackformat = 7;
@@ -2405,12 +2407,22 @@ namespace JSharp
         public void DeleteSelectedFile()
         {
             string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
-
+            string fullPath = dir;
             string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
             dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
             if (MessageBox.Show($"Are you sure you want to delete {dir} from {grp}?", "Are you sure?", MessageBoxButtons.OKCancel)
                 == DialogResult.OK)
             {
+                if (openedFullPath.Contains(fullPath))
+                {
+                    openedFullPath.Remove(fullPath);
+                    tabControl1.TabPages.Clear();
+                    openedFullPath.ForEach(name =>
+                    {
+                        tabControl1.TabPages.Add(new TabPage(name.Substring(name.LastIndexOf("/") + 1, name.Length - name.LastIndexOf("/") - 1)));
+                    });
+                }
+
                 string gloDir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
                 if (grp == "resourcespack")
                 {

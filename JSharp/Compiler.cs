@@ -193,6 +193,7 @@ namespace JSharp
 
             callTrace = "digraph " + project + " {\nmain\nload\nhelper\n";
             Core = core;
+            context = new Context(project, new File("", ""));
             projectVersion = version;
             muxAdding = false;
             totalCodeLines = 0;
@@ -697,7 +698,7 @@ namespace JSharp
                 if ((text.StartsWith("return") && text.Contains("(") && text.Contains(")")) || text.StartsWith("return "))
                 {
                     string[] args;
-                    if (text.Contains("(") && text.Contains(")"))
+                    if (text.Contains("(") && text.Contains(")") && getOpenCharIndex(text, '(')== text.IndexOf("("))
                     {
                         args = getArgs(text);
                     }

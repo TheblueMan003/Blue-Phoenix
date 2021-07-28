@@ -102,7 +102,7 @@ namespace BluePhoenix
 
         private void treeView1_DoubleClick(object sender, EventArgs e)
         {
-            if (treeView1.SelectedNode != null)
+            if (treeView1.SelectedNode != null && !ImportedLB.Items.Contains(treeView1.SelectedNode.FullPath))
             {
                 ImportedLB.Items.Add(treeView1.SelectedNode.FullPath);
             }
@@ -176,6 +176,11 @@ namespace BluePhoenix
                 e.Graphics.DrawString(e.Node.Text, nodeFont, textBrush,
                     Rectangle.Inflate(textRect, -12, 0));
             }
+        }
+
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+
         }
     }
 }

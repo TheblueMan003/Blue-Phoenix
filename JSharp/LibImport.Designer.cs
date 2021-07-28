@@ -94,6 +94,7 @@
             this.treeView1.Size = new System.Drawing.Size(190, 366);
             this.treeView1.TabIndex = 34;
             this.treeView1.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.treeView1_DrawNode);
+            this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
             this.treeView1.DoubleClick += new System.EventHandler(this.treeView1_DoubleClick);
             // 
             // LibImport
