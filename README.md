@@ -1,4 +1,4 @@
-# BluePhoenix
+sort# BluePhoenix
  Minecraft Command Blocks Compiler
 # Language Syntax
 ## Variables
@@ -140,22 +140,25 @@ Types are infered by the compiler. If not type is found json is choosen.
      return(0)
   }
  ```
- 
- Functions can be put inside variables of type functions:
+ Functions with different parameter types can be defined multiple times. Secondly,
+ functions can be put inside variables of type functions:
  ```
-  def name(){
+  int name(float arg1, float arg2){
      return(0)
   }
   function func = name
   func()
-  
+
+  // parameters type for the function below is (int, float) and the function returns (int, int)
   def name(int arg1, float arg2):int,int{
       return(0,0)
   }
+
+  // parameter type is (int arg1, float arg2) and return type is `(int, int)` for the function in the statement below
   function<(int,float),(int,int)> func2 = name
   a,b = func2(0,0)
  ```
-A sort notation also exist:
+A short notation to define parameter and return type also exists:
 ```
 int=>void func2 = name
 ```
