@@ -174,6 +174,7 @@
     <Compile Include="Inspector.Designer.cs">
       <DependentUpon>Inspector.cs</DependentUpon>
     </Compile>
+    <Compile Include="JsonMerger.cs" />
     <Compile Include="LibImport.cs">
       <SubType>Form</SubType>
     </Compile>

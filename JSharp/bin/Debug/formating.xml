@@ -8,6 +8,12 @@
 <rule style="s_1" options="Singleline,IgnoreCase">&quot;[^&quot;]*&quot;</rule>
 <style name="s_2" color="#808080" fontStyle="Italic" />
 <rule style="s_2" options="Singleline,IgnoreCase">(?s)(//[^\n]*|/\*[^*]*\*/)</rule>
+<style name="s_4" color="#4A9CC7" />
+<rule style="s_4" options="Singleline,IgnoreCase">(?i)(\bint\.|\bdata\.|\bstring\.|\bobject\.|\bdefault\.)</rule>
+<style name="s_5" color="#7CDCF0" />
+<rule style="s_5" options="Singleline,IgnoreCase">(?i)(\bobject\.area_cloud_initer\b|\bobject\.armor_stand_initer\b|\bobject\.default_initer\b|\bdefault\.__struct__test\.set\b|\bdefault\.p\.v\.__get_mux__\b|\bdefault\.p\.v\.__set_mux__\b|\bdefault\.p\.v\.contains\b|\bdefault\.p\.v\.indexof\b|\bdefault\.p\.v\.lastindexof\b)</rule>
+<style name="s_6" color="#44C9A2" fontStyle="Bold" />
+<rule style="s_6" options="Singleline,IgnoreCase">(?i)(\bobject\b|\bdefault\.object\b|\bobject_armor_stand\b|\bdefault\.object_armor_stand\b|\btest\b|\bdefault\.test\b|\bdefault\.default\.test\b)</rule>
 <style name="s_7" color="#FF00FF" />
 <rule style="s_7" options="Singleline,IgnoreCase">(-?\b)(\d+\.\d+|\d+)[bldsf]?\b</rule>
 <style name="s_8" color="#FFFFC8" />
@@ -15,9 +21,9 @@
 <style name="s_9" color="#FFA500" fontStyle="Bold" />
 <rule style="s_9" options="Singleline,IgnoreCase">(?i)(\bint\b|\bfloat\b|\bentity\b|\bstring\b|\bbool\b|\bfunction\b|\bselector\b)</rule>
 <style name="s_10" color="#FF00FF" fontStyle="Bold" />
-<rule style="s_10" options="Singleline,IgnoreCase">(?i)(\bdebug\b|\bprint\b|\bwarning\b|\bexception\b|\bjson\b|\bparams\b|\bimplicite\b|\bdefine\b|\[offuscationsaved\]|\[startfile\]|\[endfile\]|\[inplace\])</rule>
+<rule style="s_10" options="Singleline,IgnoreCase">(?i)(\bdebug\b|\bprint\b|\bwarning\b|\bexception\b|\bjson\b|\bparams\b|\bimplicite\b|\bdefine\b|\b@ticking\b|\b@loading\b|\[offuscationsaved\]|\[startfile\]|\[endfile\]|\[inplace\])</rule>
 <style name="s_11" color="#4A9CC7" fontStyle="Bold" />
-<rule style="s_11" options="Singleline,IgnoreCase">(?i)(\bdef\b|\bclass\b|\biniter\b|\bobject\b|\bif\b|\bifs\b|\bthen\b|\belse\b|\belseif\b|\belif\b|\belsif\b|\bwhile\b|\bfor\b|\bwith\b|\bforgenerate\b|\binterface\b|\bforeach\b|\breturn\b|\b&amp;&amp;\b|\b\|\|\b|\bat\b|\bswitch\b|\bcase\b|\bconst\b|\bfinal\b|\boverride\b|\bvirtual\b|\bstruct\b|\bextends\b|\bstatic\b|\bpositioned\b|\blazy\b|\babstract\b|\bthis\b|\balign\b|\balias\b|\bticking\b|\bloading\b|\bhelper\b|\bvoid\b|\bnull\b|\benum\b|\bblocktags\b|\bentitytags\b|\bitemtags\b|\bpublic\b|\bprivate\b|\bnew\b|\bexternal\b|\bjsonfile\b|\brequire\b|\bindexed\b|\bpredicate\b|\blet\b|\bvar\b|\bval\b|\bextension\b|\bimplements\b|\binvisible\b|\bstacksafe\b|\binfix\b|\bprefix\b|\bimport\b|\bpackage\b|\busing\b|\bas\b)</rule>
+<rule style="s_11" options="Singleline,IgnoreCase">(?i)(\bdef\b|\bclass\b|\biniter\b|\bobject\b|\bif\b|\bifs\b|\bthen\b|\belse\b|\belseif\b|\belif\b|\belsif\b|\bwhile\b|\bfor\b|\bwith\b|\bforgenerate\b|\binterface\b|\bforeach\b|\breturn\b|\b&amp;&amp;\b|\b\|\|\b|\bat\b|\bswitch\b|\bcase\b|\bconst\b|\bfinal\b|\boverride\b|\bvirtual\b|\bstruct\b|\bextends\b|\bstatic\b|\bpositioned\b|\blazy\b|\babstract\b|\bthis\b|\balign\b|\balias\b|\bticking\b|\bloading\b|\bhelper\b|\bvoid\b|\bnull\b|\benum\b|\bblocktags\b|\bentitytags\b|\bitemtags\b|\bpublic\b|\bprivate\b|\bnew\b|\bexternal\b|\bjsonfile\b|\brequire\b|\bindexed\b|\bpredicate\b|\blet\b|\bvar\b|\bval\b|\bextension\b|\bimplements\b|\binvisible\b|\bstacksafe\b|\binfix\b|\bprefix\b|\bimport\b|\bpackage\b|\busing\b|\bas\b|\bversion\b|\bfacing\b|\brotated\b|\brepeat\b|\bwithowned\b|\bwithowner\b|\bclone\b|\bfill\b|\bsetblock\b|\b__version__\b|\bcmdstore\b|\bprint\b|\bforceload\b|\bforceunload\b|\btag\b|\buntag\b|\bunitag\b|\bkill\b|\bspawnpoint\b|\bclear\b|\bgive\b|\bdata\.set\b|\bdata\.copyfromtopath\b|\bdata\.copyfrom\b|\bstring\.init\b|\bstartbind\b|\bbind\b|\bbind2\b|\bdefault\.p\.v\.set\b|\bdefault\.p\.v\.get\b)</rule>
 <style name="s_12" color="#00B9FF" />
 <rule style="s_12" options="Singleline,IgnoreCase">(?i)(\btellraw\b|\btitle\b|\bsay\b|\bclear\b|\beffect\b|\bdifficulty\b|\bgamemode\b|\bgamerule\b|\bfill\b|\bstopsound\b|\bweather\b|\btp\b|\bexecute\b|\bstructure\b|\bmagictitle\b)</rule>
 <style name="s_13" color="#00FFFF" fontStyle="Bold" />

@@ -296,7 +296,7 @@ namespace JSharp
             string dirRes = Path.GetDirectoryName(projectPath) + "/resources/";
             string dirLib = Path.GetDirectoryName(projectPath) + "/lib";
             
-            if (!Directory.Exists(dirLib))
+            if (!Directory.Exists(dirLib) && project.compilationSetting.isLibrary)
                 Directory.CreateDirectory(dirLib);
 
             foreach (string file in codeOrder)
@@ -541,8 +541,6 @@ namespace JSharp
                     }
                 }
             }
-            
-            UpdateRPTimes();
         }
         public void UpdateRPTimes()
         {
@@ -559,7 +557,8 @@ namespace JSharp
             if (Directory.Exists(rpdir))
             {
                 bool res = rpmoddate.Any(x => !File.Exists(x.Key) || File.GetLastWriteTime(x.Key) > x.Value) ||
-                        Directory.EnumerateFiles(rpdir, "*.*", SearchOption.AllDirectories).Any(x => !rpmoddate.ContainsKey(x));
+                        Directory.EnumerateFiles(rpdir, "*.*", SearchOption.AllDirectories).Any(x => !rpmoddate.ContainsKey(x))
+                        || !File.Exists(currentResourcesPack);
                 return res;
             }
             else
@@ -863,7 +862,10 @@ namespace JSharp
             }
             if (res == DialogResult.OK)
             {
-                projectName = form.ProjectName;
+                projectName = form.ProjectName.ToLower().Replace(" ","");
+                compilerSetting = new Compiler.CompilerSetting();
+                compilerSetting.packformat = 7;
+                compilerSetting.rppackformat = 7;
                 compilerSetting.MCVersion = form.MCVersion;
                 compilerSetting.libraryFolder.Add("./lib/1_17/");
                 compilerSetting.libraryFolder.Add("./lib/1_16_5/");
@@ -1337,7 +1339,6 @@ namespace JSharp
             }
             if (Directory.Exists(rpdir) && exportRP)
             {
-
                 string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
                 if (Directory.Exists(rpPath))
                 {
@@ -1498,8 +1499,9 @@ namespace JSharp
                         ZipFile.CreateFromDirectory(rpPath, path);
                     }
                     Directory.Delete(rpPath, true);
+
+                    DebugThread("Resources Pack successfully exported!", Color.Aqua);
                 }
-                DebugThread("Resources Pack successfully exported!", Color.Aqua);
             }
             catch(Exception e)
             {
