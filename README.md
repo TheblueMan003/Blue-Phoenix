@@ -130,10 +130,7 @@ Types are infered by the compiler. If not type is found json is choosen.
  
  Functions can also take arguments && have return types:
  ```
-  def name(int arg1, float arg2):int{
-     return(0)
-  }
-  def name(int arg1, float arg2):int,int{
+  int int name(int arg1, float arg2){
      return(0,0)
   }
   int name(int arg1, float arg2){
@@ -150,7 +147,7 @@ Types are infered by the compiler. If not type is found json is choosen.
   func()
 
   // parameters type for the function below is (int, float) and the function returns (int, int)
-  def name(int arg1, float arg2):int,int{
+  int int name(int arg1, float arg2){
       return(0,0)
   }
 
@@ -407,6 +404,15 @@ def armor_stand_initer(){
 }
 class example initer armor_stand_initer{
    ...
+}
+```
+Initer can also be the entity name
+```
+class am initer minecraft:armor_stand{
+
+}
+class amm initer minecraft:armor_stand{Marker:1}{
+
 }
 ```
 
