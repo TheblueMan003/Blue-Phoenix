@@ -378,7 +378,7 @@ Calling a predication in a condition can be done like a function.
 ```
 class example{
    ...
-   def virutal function(){
+   def virtual function(){
       ...
    }
    ...
@@ -391,8 +391,8 @@ class example2 extends example{
    ...
 }
 ```
-### Inniter
-Class are associated with an entity. By defaut all class extends the default object class and are thus area effect cloud. Inniter are function that will init the class by creatign the entity.
+### Initer
+Class are associated with an entity. By default all classes extend the default object class and are thus a marker. Initers are function that will init the class by creating the entity.
 ```
 def armor_stand_initer(){
 	/summon armor_stand ~ ~ ~ {Tags:["__class__","cls_trg"]}
@@ -402,7 +402,7 @@ def armor_stand_initer(){
 		__ref++
 	}
 }
-class example inniter armor_stand_initer{
+class example initer armor_stand_initer{
    ...
 }
 ```
