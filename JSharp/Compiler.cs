@@ -1738,8 +1738,8 @@ namespace JSharp
                     }
 
                     Variable var;
-                    string[] splitted = smartSplit(left[i], '.').Select(x => smartExtract(x)).ToArray();
-                    if (context.isEntity(left[i]) && splitted.Length == 2)
+                    string[] splitted = smartSplit(left[i], '.', 1).Select(x => smartExtract(x)).ToArray();
+                    if (context.isEntity(left[i]))
                     {
                         var = new Variable(context.GetEntityName(left[i]), splitted[1], Type.ENTITY_COMPONENT);
                     }
