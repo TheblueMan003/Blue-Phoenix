@@ -4394,12 +4394,12 @@ namespace JSharp
             }
             if (!structGenerating)
                 attributes = new List<string>();
-            if (context.currentFile().type != "struct" && ((!entity && splited.Length > 1) ||
+            if (((!entity && splited.Length > 1) ||
                      (entity && part == 2 && entityFormatVar)) && !instantiated && !isConst)
             {
                 output += modVar(vari + op + splited[1]);
             }
-            if (context.currentFile().type != "struct" && ((entity && part == 3)) && !instantiated)
+            if (((entity && part == 3)) && !instantiated)
             {
                 output += modVar(vari + op + splited[2]);
             }
@@ -5706,7 +5706,10 @@ namespace JSharp
         }
         public static string InstStruct(string text)
         {
-            string[] split = smartSplit(text.ToLower().Replace("{", ""), ' ');
+            text = smartExtract(text);
+            if (text[text.Length - 1] == '{')
+                text = text.Substring(0, text.Length - 1);
+            string[] split = smartSplitJson(text,' ');
             string name = "";
             string functionBase = null;
             File functionBaseFile = null;
@@ -5792,8 +5795,19 @@ namespace JSharp
             {
                 if (functionBase.StartsWith("minecraft:"))
                 {
+                    Regex datareg = new Regex(@"(\w+:\w+)(\{.+\})");
+                    string entity = functionBase;
+                    string data = "{}";
+                    if (datareg.Match(functionBase).Success)
+                    {
+                        entity = datareg.Replace(functionBase, "$1");
+                        data = datareg.Replace(functionBase, "$2");
+                    }
                     functionBaseFile = new File("", "");
-                    functionBaseFile.addParsedLine("/summon " + functionBase + " ~ ~ ~ {Tags:[\"__class__\",\"cls_trg\"]}");
+
+                    functionBaseFile.addParsedLine("define json $data = {Tags:[\"__class__\",\"cls_trg\"]}");
+                    functionBaseFile.addParsedLine("define json $data += "+data);
+                    functionBaseFile.addParsedLine("/summon " + entity + " ~ ~ ~ $data");
                     functionBaseFile.addParsedLine("with(@e[tag=cls_trg]){");
                     functionBaseFile.addParsedLine("/tag @s remove cls_trg");
                     functionBaseFile.addParsedLine("__CLASS__ = __class__");
@@ -7315,7 +7329,6 @@ namespace JSharp
                     if (CompiledFunction != null && CompiledFunction.isClassMethod && !CompiledFunction.isClassRepMethod && CompiledFunction.className == funObj.className && funObj.className!=null)
                     {
                         append = "/w_0";
-                        GlobalDebug(CompiledFunction.gameName, Color.Yellow);
                     }
                     
                     output += Core.CallFunction(funObj)+ append + '\n';
@@ -9115,6 +9128,7 @@ namespace JSharp
                 }
                 if (fun.name == "__init__")
                 {
+                    fFile.parsed.Add("__base_init__()");
                     foreach (string line in initBase.parsed)
                     {
                         fFile.addParsedLine(line);
@@ -11128,6 +11142,13 @@ namespace JSharp
 
                 if (type == "struct")
                 {
+                    string contentC = content;
+                    preparseLine("def lazy __base_init__(){");
+                    foreach(string line in contentC.Split('\n'))
+                    {
+                        preparseLine($"/{line}");
+                    }
+                    preparseLine("}");
                     structStack.Pop();
                     context.currentFile().unuse();
                 }
