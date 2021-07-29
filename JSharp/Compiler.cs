@@ -9671,11 +9671,11 @@ namespace JSharp
                     string insName = (f.args.Count > 0 ? f.args.Select(x => x.name).Aggregate((x, y) => x + ", " + y) : "");
                     string insName2 = (f.args.Count > 0 ? "," + f.args.Select(x => x.name).Aggregate((x, y) => x + ", " + y) : "");
                     preparseLine("[inplace]");
-                    parseLine($"def {outs} __dot_mux_{f.name}__(int _i {ins.Replace("$", "")})" + "{");
+                    parseLine($"def invisible {outs} __dot_mux_{f.name}__(int _i {ins.Replace("$", "")})" + "{");
                     preparseLine("switch(_i){");
-                    preparseLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
-                    preparseLine("case($_i){");
-                    preparseLine($"{name}.$_i.{f.name}({insName.Replace("$", "")})");
+                    preparseLine("forgenerate($_j,0," + (arraySize - 1).ToString() + "){");
+                    preparseLine("case($_j){");                    
+                    preparseLine($"{name}.$_j..{f.name}({insName.Replace("$", "")})");
                     preparseLine("}");
                     preparseLine("}");
                     preparseLine("}");
@@ -11064,7 +11064,8 @@ namespace JSharp
                         line = line.Replace(var + ".count", argget.Length.ToString());
                     }
 
-                    line = line.Replace(var + ".index", genIndex.ToString())
+                    line = line.Replace(var + "..", value+".")
+                        .Replace(var + ".index", genIndex.ToString())
                         .Replace(var + ".length", genAmount.ToString())
                         .Replace(var, value);
 
