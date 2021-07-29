@@ -108,14 +108,14 @@ namespace JSharp
         private static Function CompiledFunction;
 
         #region Regexs
-        private static Regex funcReg = new Regex(@"^(@?[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])*\s+)+(?<function_name>[\w\.=\?<>\+\/\*\-\^\&\|\#]+)\s*\((.+\s+.+)*\)");
+        private static Regex funcReg = new Regex(@"^(@?[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+)+(?<function_name>[\w\.=\?<>\+\/\*\-\^\&\|\#]+)\s*\((.+\s+.+)*\)");
         private static Regex nullReg = new Regex(@"\s*null\s*");
         private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9\- ,_=:/\\\.""'!\[\]]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9/\\\- ,_=:\.""'!:\[\]\(\)]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9/\\\- ,_=""'\[\]!:\(\)]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9/\\\- ,_=:\.""'\[\]!\(\)]*\))?,?\s*)*\})");
         private static Regex blocktagsDesugarReg = new Regex(@"(?s)(blocktags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|blocktags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex entitytagsDesugarReg = new Regex(@"(?s)(entitytags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|entitytags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex itemtagsDesugarReg = new Regex(@"(?s)(itemtags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|itemtags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex funArgTypeReg = new Regex(@"^([@\w\.=\?<>\+\/\*\-\^\&\|\#]*\s*(<\(?\w*\)?,?\(?\w*\)?>)?(\[\d+\])?)*\(");
-        private static Regex arraySizeReg = new Regex(@"(?:\[)\d+(?:\])");
+        private static Regex arraySizeReg = new Regex(@"(?:\[)[\d\+\*\-\/\%]+(?:\])");
         private static Regex opReg = new Regex(@"((#=)|(\+=)|(\-=)|(\*=)|(/=)|(\%=)|(\&=)|(\|=)|(\^=)|(:=)|(=))");
         private static Regex elsifReg = new Regex(@"^el?s?e?\s*ifs?\s?\(");
         private static Regex ifReg = new Regex(@"^if\s*\(");
@@ -136,7 +136,7 @@ namespace JSharp
         private static Regex blocktagReg = new Regex(@"^blocktags\s+\w+\s*=");
         private static Regex entitytagReg = new Regex(@"^entitytags\s+\w+\s*=");
         private static Regex itemtagReg = new Regex(@"^itemtags\s+\w+\s*=");
-        private static Regex varInstReg = new Regex(@"^[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])*\s+[\w\$\.]+\s*");
+        private static Regex varInstReg = new Regex(@"^[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[[\w=\+\-\*\/\(\)\%\s]+\])*\s+[\w\$\.]+\s*");
         private static Regex compVarInstReg = new Regex(@"^[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+\$[\w\$\.]+\s*=");
         private static Regex elseReg = new Regex(@"^else\s*");
         private static Regex regEval = new Regex(@"\$eval\([0-9a-zA-Z\-\+\*/% \.\^]*\)");
@@ -553,7 +553,7 @@ namespace JSharp
         public static void preparseLine(string line2, File limit = null, bool lazyEval = false)
         {
             string line = line2;
-
+            
             if (context.compVal.Count > 0 && line.Contains("$") && !(dualCompVar.Match(line).Success && structInstCompVar) && !defineReg.Match(line).Success)
             {
                 line = compVarReplace(line);
@@ -4280,7 +4280,7 @@ namespace JSharp
                 {
                     var mat = arraySizeReg.Matches(text).Cast<Match>().Last();
                     string arraySizeS = mat.Value.Replace("[", "").Replace("]", "");
-                    int arraySize = int.Parse(arraySizeS);
+                    int arraySize = (int)Calculator.Calculate(arraySizeS);
 
                     variable = new Variable(v, name, ca, entity, def);
                     variable.isConst = isConst;
@@ -4609,7 +4609,7 @@ namespace JSharp
                     }
                     else
                     {
-                        getType(funArgType[i]);
+                        getType(functionDesugar(funArgType[i]));
                         outputType.Add(funArgType[i]);
                     }
                 }
@@ -7203,7 +7203,9 @@ namespace JSharp
                     i = 0;
                     autoIndented = 0;
                     if (funObj.variableStruct != null)
+                    {
                         adjPackage.Push(funObj.variableStruct);
+                    }
                     string prevFunction = callingFunctName;
                     callingFunctName = funObj.gameName;
                     
@@ -8395,7 +8397,10 @@ namespace JSharp
                     if ((files[fi].UnparsedFunctionFile && !files[fi].notUsed))
                     {
                         CompiledFunction = files[fi].function;
+                        DateTime fstartTime = DateTime.Now;
+                        GlobalDebug($"Start: {files[fi].function.gameName}", Color.LightGreen);
                         files[fi].Compile();
+                        GlobalDebug($"Compiled: {files[fi].function.gameName} {((DateTime.Now - fstartTime).TotalMilliseconds)}ms", Color.Lime);
                         CompiledFunction = null;
                         changed = true;
                     }
@@ -9270,7 +9275,13 @@ namespace JSharp
                 if (instArg != null)
                 {
                     structInstCompVar = true;
-
+                    foreach (Function fun in methods)
+                    {
+                        if (fun.name == "__base_init__")
+                        {
+                            generateFunction(fun, varOwner, v, cont, parentClass);
+                        }
+                    }
                     foreach (Function fun in methods)
                     {
                         if (fun.name == "__init__")
@@ -9308,7 +9319,7 @@ namespace JSharp
 
                 foreach (Function fun in methods)
                 {
-                    if (fun.name != "__init__" || instArg == null)
+                    if ((fun.name != "__base_init__" && fun.name != "__init__") || instArg == null)
                     {
                         generateFunction(fun, varOwner, v, cont, parentClass);
                     }
@@ -9564,7 +9575,7 @@ namespace JSharp
                 {
                     parseLine(prefix + typeArray + " " + i.ToString());
                 }
-
+                preparseLine("[inplace]");
                 preparseLine($"def invisible __get_mux__(int index):{typeArray}" + "{");
                 preparseLine("switch(index){");
                 preparseLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
@@ -9576,6 +9587,7 @@ namespace JSharp
                 preparseLine("}");
                 associatedFunction.Add(GetFunction(context.GetFunctionName("__get_mux__"), null));
 
+                preparseLine("[inplace]");
                 preparseLine("def invisible __set_mux__(int index, " + typeArray + " value){");
                 preparseLine("switch(index){");
                 preparseLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
@@ -9587,6 +9599,7 @@ namespace JSharp
                 preparseLine("}");
                 associatedFunction.Add(GetFunction(context.GetFunctionName("__set_mux__"), null));
 
+                preparseLine("[inplace]");
                 parseLine("def lazy stacksafe set(int $a," + typeArray + " $b){");
                 context.currentFile().addParsedLine($"ifs (__isint($a))" + "{");
                 context.currentFile().addParsedLine(name + ".$a = $b");
@@ -9598,6 +9611,7 @@ namespace JSharp
                 isInLazyCompile -= 1;
                 associatedFunction.Add(GetFunction(context.GetFunctionName("set"), null));
 
+                preparseLine("[inplace]");
                 parseLine($"def lazy stacksafe get(int $a):{typeArray}" + "{");
                 context.currentFile().addParsedLine($"ifs (__isint($a))" + "{");
                 context.currentFile().addParsedLine("return(" + name + ".$a)");
@@ -9609,6 +9623,7 @@ namespace JSharp
                 isInLazyCompile -= 1;
                 associatedFunction.Add(GetFunction(context.GetFunctionName("get"), null));
 
+                preparseLine("[inplace]");
                 parseLine($"def invisible contains({typeArray} value):bool" + "{");
                 context.currentFile().addParsedLine("bool res = false");
                 context.currentFile().addParsedLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
@@ -9621,6 +9636,7 @@ namespace JSharp
                 isInLazyCompile -= 1;
                 associatedFunction.Add(GetFunction(context.GetFunctionName("contains"), null));
 
+                preparseLine("[inplace]");
                 parseLine($"def invisible indexof({typeArray} value):int" + "{");
                 context.currentFile().addParsedLine("int res = -1");
                 context.currentFile().addParsedLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
@@ -9633,6 +9649,7 @@ namespace JSharp
                 isInLazyCompile -= 1;
                 associatedFunction.Add(GetFunction(context.GetFunctionName("indexof"), null));
 
+                preparseLine("[inplace]");
                 parseLine($"def invisible lastindexof({typeArray} value):int"+"{");
                 context.currentFile().addParsedLine("int res = -1");
                 context.currentFile().addParsedLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
@@ -9653,7 +9670,7 @@ namespace JSharp
                     string ins = (f.args.Count > 0 ? "," + f.args.Select(x => x.GetInternalTypeString() + " " + x.name).Aggregate((x, y) => x + ", " + y) : "");
                     string insName = (f.args.Count > 0 ? f.args.Select(x => x.name).Aggregate((x, y) => x + ", " + y) : "");
                     string insName2 = (f.args.Count > 0 ? "," + f.args.Select(x => x.name).Aggregate((x, y) => x + ", " + y) : "");
-
+                    preparseLine("[inplace]");
                     parseLine($"def {outs} __dot_mux_{f.name}__(int _i {ins.Replace("$", "")})" + "{");
                     preparseLine("switch(_i){");
                     preparseLine("forgenerate($_i,0," + (arraySize - 1).ToString() + "){");
@@ -9665,6 +9682,7 @@ namespace JSharp
                     preparseLine("}");
                     associatedFunction.Add(GetFunction(context.GetFunctionName($"__dot_mux_{f.name}__"), null));
 
+                    preparseLine("[inplace]");
                     parseLine($"def lazy stacksafe {outs} dot_{f.name}(int $_i {ins})" + "{");
                     context.currentFile().addParsedLine($"ifs (__isint($_i))" + "{");
                     context.currentFile().addParsedLine($"return({name}.$_i.{f.name}({insName}))");
