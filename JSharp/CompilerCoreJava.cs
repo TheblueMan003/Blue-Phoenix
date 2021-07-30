@@ -363,11 +363,11 @@ namespace JSharp
                     strTag++;
                     output2 += tmp;
                 }
-                else if (context.GetVarType(subargs[0]) == Compiler.Type.ENTITY)
+                else if (Compiler.getExprType(subargs[0]) == Compiler.Type.ENTITY)
                 {
                     output += ",{\"selector\":\"" + context.GetEntitySelector(subargs[0]) + "\"";
                 }
-                else if (context.GetVarType(subargs[0]) == Compiler.Type.ARRAY)
+                else if (Compiler.getExprType(subargs[0]) == Compiler.Type.ARRAY)
                 {
                     int nb = Compiler.GetVariable(context.GetVariable(subargs[0])).arraySize;
                     ignoreFormat = true;
@@ -408,28 +408,56 @@ namespace JSharp
                         }
                     }
                 }
-                else if (context.GetVarType(subargs[0]) == Compiler.Type.STRUCT)
+                else if (Compiler.getExprType(subargs[0]) == Compiler.Type.STRUCT)
                 {
-                    Compiler.Structure s = Compiler.structs[Compiler.GetVariableByName(subargs[0]).enums];
-                    output += ",{\"text\":\"" + s.name + "(" + "\"";
-                    output += jsonSubArg(subargs, context);
-                    output += "}";
-                    foreach (var v in s.fields)
+                    var var = Compiler.GetVariableByName(subargs[0]);
+                    Compiler.Structure s = Compiler.structs[var.enums];
+                    if (!s.isClass && !s.HasMethod("__toJson__"))
                     {
-                        output += ",{\"text\":\"" + v.name + " = " + "\"";
+                        output += ",{\"text\":\"" + s.name + "(" + "\"";
                         output += jsonSubArg(subargs, context);
                         output += "}";
+                        foreach (var v in s.fields)
+                        {
+                            output += ",{\"text\":\"" + v.name + " = " + "\"";
+                            output += jsonSubArg(subargs, context);
+                            output += "}";
 
-                        string tmp = FormatJson(new string[] { subargs[0] + "." + v.name }, context, 0)[0];
-                        output += "," + tmp.Substring(1, tmp.Length - 2);
+                            string[] tmp = FormatJson(new string[] { subargs[0] + "." + v.name }, context, 0);
+                            output2 += tmp[1];
+                            output3 += tmp[2];
+                            output += "," + tmp[0].Substring(1, tmp[0].Length - 2);
 
-                        output += ",{\"text\":\"" + ", " + "\"";
-                        output += jsonSubArg(subargs, context);
-                        output += "}";
+                            output += ",{\"text\":\"" + ", " + "\"";
+                            output += jsonSubArg(subargs, context);
+                            output += "}";
+                        }
+                        output += ",{\"text\":\"" + ")" + "\"";
                     }
-                    output += ",{\"text\":\"" + ")" + "\"";
+                    else if (!s.isClass && s.HasMethod("__toJson__"))
+                    {
+                        output2 += Compiler.parseLine($"{var.gameName}.__toJson__()");
+                        string tmp = Compiler.lazyFunctionReturnJson;
+                        Compiler.lazyFunctionReturnJson = null;
+                        if (!tmp.StartsWith("{"))
+                        {
+                            string[] tmp2 = FormatJson(Compiler.smartSplitJson(tmp,','), context, 0);
+                            output2 += tmp2[1];
+                            output3 += tmp2[2];
+                            output += "," + tmp2[0].Substring(1, tmp2[0].Length - 2);
+                        }
+                        else
+                        {
+                            output += "," + tmp;
+                        }
+                    }
+                    else
+                    {
+                        string[] v = Compiler.GetVariableByName(subargs[0]).scoreboard().Split(' ');
+                        output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
+                    }
                 }
-                else if (context.GetVarType(subargs[0]) == Compiler.Type.FLOAT)
+                else if (Compiler.getExprType(subargs[0]) == Compiler.Type.FLOAT)
                 {
                     var v = Compiler.GetVariableByName(subargs[0]);
                     if (!unpackedFloat.Contains(v.gameName))
@@ -465,11 +493,19 @@ namespace JSharp
                     output += jsonSubArg(subargs, context) + "}";
                     output += ",{ \"score\":{ \"name\":\"" + vl3[0] + "\",\"objective\":\"" + vl3[1] + "\"}";
                 }
-                else
+                else if (Compiler.GetVariableByName(subargs[0], true) != null)
                 {
                     string[] v = Compiler.GetVariableByName(subargs[0]).scoreboard().Split(' ');
                     output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
                 }
+                else
+                {
+                    output2 += Compiler.parseLine($"var eval{Math.Abs(subargs[0].GetHashCode())} = {subargs[0]}") + "\n";
+                    string[] v = Compiler.GetVariableByName($"eval{Math.Abs(subargs[0].GetHashCode())}").scoreboard().Split(' ');
+                    output += ",{ \"score\":{ \"name\":\"" + v[0] + "\",\"objective\":\"" + v[1] + "\"}";
+                }
+
+
                 if (!ignoreFormat)
                     output += jsonSubArg(subargs, context);
                 if (!ignoreFormat)

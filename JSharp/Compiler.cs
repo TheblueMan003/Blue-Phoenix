@@ -173,6 +173,7 @@ namespace JSharp
         private static string ConditionAlwayFalse = "=$=False=$=";
         #endregion
 
+        public static string lazyFunctionReturnJson;
         private static int isInLazyCompile;
         public static CompilerSetting compilerSetting;
         private static int maxRecCall = 100;
@@ -539,10 +540,10 @@ namespace JSharp
                 Formatter.setStructs(structs.Keys.Where(x => !structs[x].isStatic).ToList());
                 Formatter.setpackage(packages.Concat(structs.Keys.Where(x => structs[x].isStatic)).Distinct().ToList());
                 Formatter.setTags(functionTags.Keys.ToList());
-                Formatter.setDefWord(funcDef);
-                Formatter.defWordMore1F = funcDefF.Distinct().ToList();
-                Formatter.defWordMore1L = funcDefL.Distinct().ToList();
-                Formatter.defWordMore1M = funcDefM.Distinct().ToList();
+                Formatter.setDefWord(funcDef.Distinct().Where(x => !x.Contains(".__")).ToList());
+                Formatter.defWordMore1F = funcDefF.Distinct().Where(x => !x.Contains(".__")).ToList();
+                Formatter.defWordMore1L = funcDefL.Distinct().Where(x => !x.Contains(".__")).ToList();
+                Formatter.defWordMore1M = funcDefM.Distinct().Where(x => !x.Contains(".__")).ToList();
                 Formatter.objectFunc = objectFunc;
                 Formatter.varWord = varWord;
                 Formatter.loadDict();
@@ -2021,7 +2022,7 @@ namespace JSharp
 
                             output += Core.VariableOperation(variable, valVar, "=");
                         }
-                        else if (stru1.methodsName.Contains("__set__") &&
+                        else if (stru1.HasMethod("__set__") &&
                             (valVar == null || valVar.type != Type.STRUCT || valVar.enums != stru1.name))
                         {
                             output += parseLine(variable.gameName + ".__set__(" + val + ")");
@@ -2384,7 +2385,7 @@ namespace JSharp
                 else
                 {
                     output += Core.VariableOperation(variable, 0, "=");
-                    string cond = getCondition(val);
+                    string cond = getCondition(val, 30);
                     return output + cond + Core.VariableOperation(variable, 1, "=");
                 }
             }
@@ -2597,12 +2598,12 @@ namespace JSharp
         #endregion
 
         #region condition
-        public static string getCondition(string text)
+        public static string getCondition(string text, int rec = 0)
         {
-            string[] v = getConditionSplit(text);
+            string[] v = getConditionSplit(text, rec);
             return v[0] + Core.Condition(v[1]);
         }
-        private static string[] getConditionSplit(string text)
+        private static string[] getConditionSplit(string text, int rec = 0)
         {
             string[] arg = smartSplit(text.Replace("&&", "&"), '&');
             string output = "";
@@ -2615,7 +2616,7 @@ namespace JSharp
                 }
                 else if (arg[i].Contains("||"))
                 {
-                    string[] in1 = getCondOr(arg[i]);
+                    string[] in1 = getCondOr(arg[i], ++rec);
                     cond += in1[0];
                     output += in1[1];
                 }
@@ -2627,7 +2628,7 @@ namespace JSharp
                     }
                     if (arg[i].StartsWith("!"))
                     {
-                        string[] in1 = getCond(arg[i].Substring(1, arg[i].Length - 1));
+                        string[] in1 = getCond(arg[i].Substring(1, arg[i].Length - 1), rec);
 
                         if (in1[0] == ConditionAlwayTrue)
                         {
@@ -2646,7 +2647,7 @@ namespace JSharp
                     }
                     else
                     {
-                        string[] in1 = getCond(arg[i]);
+                        string[] in1 = getCond(arg[i], rec);
                         if (in1[0] == ConditionAlwayTrue)
                         {
 
@@ -2666,7 +2667,7 @@ namespace JSharp
             }
             return new string[] { output, cond };
         }
-        private static string[] getCondOr(string text)
+        private static string[] getCondOr(string text, int rec = 0)
         {
             string out1 = "";
             string out2 = "";
@@ -2674,14 +2675,14 @@ namespace JSharp
 
             out2 += parseLine("bool __eval" + idVal.ToString() + "__ = " + text.Replace("&&", "&").Replace("||", "|"));
 
-            string[] part = getCond("__eval" + idVal.ToString() + "__");
+            string[] part = getCond("__eval" + idVal.ToString() + "__", rec);
 
             out2 += part[1];
 
             out1 = part[0];
             return new string[] { out1, out2 };
         }
-        private static string[] getCond(string text)
+        private static string[] getCond(string text, int rec = 0)
         {
             int tmpI;
             double tmpF;
@@ -3058,6 +3059,10 @@ namespace JSharp
                     }
                     else
                     {
+                        if (rec == 30)
+                        {
+                            throw new Exception("Unknow value:" + text);
+                        }
                         int idVal3 = If.GetEval(context.GetFun());
 
                         string pre2 = parseLine("bool cond_" + idVal3.ToString() + " = " + text);
@@ -6196,6 +6201,10 @@ namespace JSharp
                 jsonFiles[jsonFiles.Count - 1].AddLine(text.Substring(text.IndexOf("{"), text.Length - text.IndexOf("{")));
             }
             jsonIndent = text.Split('{').Length - text.Split('}').Length;
+
+            string subName = key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1);
+            funcDef.Add(subName);
+
             return "";
         }
         public static string InstAttribute(string text)
@@ -6395,7 +6404,7 @@ namespace JSharp
             {
                 type = Type.DEFINE;
             }
-            else if (t.ToLower().StartsWith("json ") && t.Contains("$"))
+            else if (t.ToLower().StartsWith("json "))
             {
                 type = Type.JSON;
             }
@@ -7386,6 +7395,12 @@ namespace JSharp
             {
                 int i = 0;
 
+                if (GetVariableByName($"{lazyCall.Peek().name}.ret_{i}").type == Type.JSON)
+                {
+                    lazyFunctionReturnJson = arg.Length == 1?arg[0]:arg.Aggregate((x, y) => x + "," + y);
+                    return "";
+                }
+
                 foreach (Variable v in lazyOutput.Peek())
                 {
                     ouput += parseLine(v.gameName + "=" + arg[i]);
@@ -7429,6 +7444,7 @@ namespace JSharp
                             context.currentFile().function.outputs.Add(v);
                         }
                     }
+                    
                     ouput += parseLine("ret_" + i.ToString() + "=" + arg[i]);
                 }
             }
@@ -9346,6 +9362,10 @@ namespace JSharp
                 typeMaps.Pop();
                 structGenerating = false;
                 return output;
+            }
+            public bool HasMethod(string name)
+            {
+                return methodsName.Contains(name.ToLower());
             }
 
             public bool isPolyTo(Structure stru)
