@@ -7333,6 +7333,10 @@ namespace JSharp
                                 }
                                 else if (a.defValue != null)
                                     output += parseLine(a.gameName + "=" + a.defValue);
+                                else
+                                {
+                                    throw new Exception("Not Enought argument for " + funObj.gameName + "(" + arg + ")");
+                                }
                             }
                         }
                     }

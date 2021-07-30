@@ -11,9 +11,9 @@
 <style name="s_4" color="#4A9CC7" />
 <rule style="s_4" options="Singleline,IgnoreCase">(?i)(\bint\.|\bdata\.|\bstring\.|\bobject\.|\bdefault\.)</rule>
 <style name="s_5" color="#7CDCF0" />
-<rule style="s_5" options="Singleline,IgnoreCase">(?i)(\bobject\.area_cloud_initer\b|\bobject\.armor_stand_initer\b|\bobject\.default_initer\b)</rule>
+<rule style="s_5" options="Singleline,IgnoreCase">(?i)(\bobject\.area_cloud_initer\b|\bobject\.armor_stand_initer\b|\bobject\.default_initer\b|\bdefault\.test\b)</rule>
 <style name="s_6" color="#44C9A2" fontStyle="Bold" />
-<rule style="s_6" options="Singleline,IgnoreCase">(?i)(\bobject\b|\bdefault\.object\b|\bobject_armor_stand\b|\bdefault\.object_armor_stand\b|\btest\b|\bdefault\.test\b|\bdefault\.default\.test\b)</rule>
+<rule style="s_6" options="Singleline,IgnoreCase">(?i)(\bobject\b|\bdefault\.object\b|\bobject_armor_stand\b|\bdefault\.object_armor_stand\b)</rule>
 <style name="s_7" color="#FF00FF" />
 <rule style="s_7" options="Singleline,IgnoreCase">(-?\b)(\d+\.\d+|\d+)[bldsf]?\b</rule>
 <style name="s_8" color="#FFFFC8" />
