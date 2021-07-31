@@ -567,6 +567,12 @@ namespace JSharp
             else
             {
                 line = smartExtract(line);
+                if (line.StartsWith("}") && line.Length > 1)
+                {
+                    preparseLine("}", limit, lazyEval);
+                    preparseLine(line.Substring(1), limit, lazyEval);
+                    return;
+                }
                 if (line != "")
                 {
                     if (!lazyEval)
@@ -915,8 +921,8 @@ namespace JSharp
                 char cPrev = '\n';
 
                 int columns = 0;
-
-                if (!line.Replace(" ", "").StartsWith("/"))
+                string shortline = line.Replace(" ", "");
+                if (!shortline.StartsWith("/") && !shortline.StartsWith("define"))
                 {
                     foreach (char c in line)
                     {
@@ -4027,7 +4033,7 @@ namespace JSharp
                 
                 return "";
             }
-            else if (value.StartsWith("$"))
+            else if (value.Contains("$"))
             {
                 value = compVarReplace(value);
             }
@@ -4060,31 +4066,31 @@ namespace JSharp
                     Variable valVar = GetVariableByName(value, true);
                     if (valVar != null)
                     {
-                        context.compVal[context.compVal.Count - 1].Add(name + ".enums", valVar.enums);
-                        context.compVal[context.compVal.Count - 1].Add(name + ".type", valVar.GetTypeString());
-                        context.compVal[context.compVal.Count - 1].Add(name + ".name", valVar.gameName);
-                        context.compVal[context.compVal.Count - 1].Add(name + ".scoreboard", valVar.scoreboard());
-                        context.compVal[context.compVal.Count - 1].Add(name + ".scoreboardname", valVar.scoreboard().Split(' ')[1]);
+                        context.compVal[context.compVal.Count - 1][name + ".enums"] = valVar.enums;
+                        context.compVal[context.compVal.Count - 1][name + ".type"] = valVar.GetTypeString();
+                        context.compVal[context.compVal.Count - 1][name + ".name"] = valVar.gameName;
+                        context.compVal[context.compVal.Count - 1][name + ".scoreboard"] = valVar.scoreboard();
+                        context.compVal[context.compVal.Count - 1][name + ".scoreboardname"] = valVar.scoreboard().Split(' ')[1];
                     }
                     if (value.StartsWith("("))
                     {
                         string[] argget = getArgs(value);
                         for (int i = argget.Length - 1; i >= 0; i--)
                         {
-                            context.compVal[context.compVal.Count - 1].Add(name+"." + i.ToString(), smartExtract(argget[i]));
+                            context.compVal[context.compVal.Count - 1][name+"." + i.ToString()] = smartExtract(argget[i]);
                         }
-                        context.compVal[context.compVal.Count - 1].Add(name + ".count", argget.Length.ToString());
+                        context.compVal[context.compVal.Count - 1][name + ".count"] = argget.Length.ToString();
                     }
                     if (type == Type.FUNCTION)
                     {
-                        context.compVal[context.compVal.Count - 1].Add(name + ".name", functions[context.GetFunctionName(value)][0].gameName);
+                        context.compVal[context.compVal.Count - 1][name + ".name"] = functions[context.GetFunctionName(value)][0].gameName;
                     }
-                    context.compVal[context.compVal.Count - 1].Add(name, smartExtract(value));
+                    context.compVal[context.compVal.Count - 1][name] = smartExtract(value);
                 }
                 else if (type == Type.JSON)
                 {
                     if (op == "=")
-                        context.compVal[context.compVal.Count - 1].Add(name, compVarReplace(value));
+                        context.compVal[context.compVal.Count - 1][name] = compVarReplace(value);
                     if (op == "+")
                     {
                         for (int i = context.compVal.Count - 1; i >= 0; i--)
@@ -4101,7 +4107,7 @@ namespace JSharp
                 else if (type == Type.STRING)
                 {
                     if (op == "=")
-                        context.compVal[context.compVal.Count - 1].Add(name, value);
+                        context.compVal[context.compVal.Count - 1][name] = value;
                     if (op == "+")
                     {
                         for (int i = context.compVal.Count - 1; i >= 0; i--)
@@ -4120,12 +4126,12 @@ namespace JSharp
                     Variable valVar = GetVariableByName(value);
                     if (valVar != null)
                     {
-                        context.compVal[context.compVal.Count - 1].Add(name + ".scoreboard", valVar.scoreboard());
-                        context.compVal[context.compVal.Count - 1].Add(name + ".enums", valVar.enums);
-                        context.compVal[context.compVal.Count - 1].Add(name + ".type", valVar.GetTypeString());
-                        context.compVal[context.compVal.Count - 1].Add(name + ".name", valVar.gameName);
+                        context.compVal[context.compVal.Count - 1][name + ".scoreboard"] = valVar.scoreboard();
+                        context.compVal[context.compVal.Count - 1][name + ".enums"] = valVar.enums;
+                        context.compVal[context.compVal.Count - 1][name + ".type"] = valVar.GetTypeString();
+                        context.compVal[context.compVal.Count - 1][name + ".name"] = valVar.gameName;
                     }
-                    context.compVal[context.compVal.Count - 1].Add(name, valVar.gameName);
+                    context.compVal[context.compVal.Count - 1][name] = valVar.gameName;
                 }
                 return "";
             }
@@ -7585,6 +7591,7 @@ namespace JSharp
                         else
                         {
                             skipNext = false;
+                            stringBuilder.Append(text[i]);
                         }
                     }
                     else
@@ -7611,10 +7618,7 @@ namespace JSharp
                 else if (inString && !skipNext && text[i] == '\\')
                 {
                     skipNext = true;
-                    if (text[i + 1] != '\"')
-                    {
-                        stringBuilder.Append(text[i]);
-                    }
+                    stringBuilder.Append(text[i]);
                 }
                 else
                 {
@@ -7691,6 +7695,7 @@ namespace JSharp
                         else
                         {
                             skipNext = false;
+                            stringBuilder.Append(text[i]);
                         }
                     }
                     else
@@ -7709,10 +7714,7 @@ namespace JSharp
                 else if (inString && !skipNext && text[i] == '\\')
                 {
                     skipNext = true;
-                    if (text[i+1] != '\"')
-                    {
-                        stringBuilder.Append(text[i]);
-                    }
+                    stringBuilder.Append(text[i]);
                 }
                 else 
                 {

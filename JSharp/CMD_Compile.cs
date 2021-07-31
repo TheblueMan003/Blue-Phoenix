@@ -69,13 +69,14 @@ namespace BluePhoenix
         public void ExportDataPack(string path, string rpPath)
         {
             string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-            string writePath = project.compilationSetting.ExportAsZip || zipForce ? ProjectPath + "tmp_dp" : path;
+            string writePath = project.compilationSetting.ExportAsZip || zipForce ? "C:/bpdp/" : path;
 
             if (File.Exists(writePath + "/pack.mcmeta"))
             {
                 Directory.Delete(writePath, true);
             }
             project.version.Build();
+
             ExportFiles(writePath);
             ExportTags(writePath);
             ExportStructures(writePath);
@@ -93,8 +94,8 @@ namespace BluePhoenix
                 ZipFile.CreateFromDirectory(writePath, path);
                 Directory.Delete(writePath, true);
             }
-
-            ExportResourcePack(rpPath);
+            
+            ExportResourcePack(writePath);
             Debug("Datapack successfully exported!", Color.Aqua);
         }
         public static void Debug(object text, Color c)

@@ -9,6 +9,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Media;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
@@ -957,7 +958,7 @@ namespace JSharp
             }
             File.Copy(src, dest, true);
         }
-        public void SafeWriteFile(string fileName, string content)
+        public int SafeWriteFile(string fileName, string content)
         {
             string filePath = fileName.Substring(0, fileName.LastIndexOf('/'));
             if (!Directory.Exists(filePath))
@@ -967,10 +968,17 @@ namespace JSharp
             try
             {
                 File.WriteAllText(fileName, content);
+                return 0;
+            }
+            catch (System.IO.PathTooLongException e)
+            {
+                throw new Exception($"Path Too long: {fileName}. Try using exporting as a zip.");
+                return 1;
             }
             catch (Exception e)
             {
                 Debug(e, Color.Red);
+                return -1;
             }
         }
 
@@ -1253,7 +1261,7 @@ namespace JSharp
                 recallFile();
 
                 string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-                string writePath = compilerSetting.ExportAsZip ? ProjectPath + "tmp_dp" : path;
+                string writePath = compilerSetting.ExportAsZip ? "C:/bpep/" : path;
 
                 if (File.Exists(writePath + "/pack.mcmeta"))
                 {
@@ -1262,6 +1270,7 @@ namespace JSharp
                 
                 exportRP = WasRPChanged() || exportNew;
                 projectVersion.Build();
+                
                 ExportFiles(writePath);
                 ExportTags(writePath);
                 ExportStructures(writePath);
@@ -1489,7 +1498,7 @@ namespace JSharp
             {
                 if (path != null && path != "" && exportRP)
                 {
-                    string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
+                    string rpPath = "C:/bprp/";
                     SafeWriteFile(rpPath + "/pack.mcmeta",
                                     JsonConvert.SerializeObject(
                                         new ResourcePackMeta(projectName + " - " + projectDescription,
