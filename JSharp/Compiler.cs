@@ -111,9 +111,7 @@ namespace JSharp
         private static Regex funcReg = new Regex(@"^(@?[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+)+(?<function_name>[\w\.=\?<>\+\/\*\-\^\&\|\#]+)\s*\((.+\s+.+)*\)");
         private static Regex nullReg = new Regex(@"\s*null\s*");
         private static Regex enumsDesugarReg = new Regex(@"(?s)(enum\s+\w+\s*(\([a-zA-Z0-9\- ,_=:/\\\.""'!\[\]]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9/\\\- ,_=:\.""'!:\[\]\(\)]*\))?,?\s*)*\}|enum\s+\w+\s*=\s*(\([a-zA-Z0-9/\\\- ,_=""'\[\]!:\(\)]*\))?\s*\{(\s*\w*(\([a-zA-Z0-9/\\\- ,_=:\.""'\[\]!\(\)]*\))?,?\s*)*\})");
-        private static Regex blocktagsDesugarReg = new Regex(@"(?s)(blocktags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|blocktags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
-        private static Regex entitytagsDesugarReg = new Regex(@"(?s)(entitytags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|entitytags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
-        private static Regex itemtagsDesugarReg = new Regex(@"(?s)(itemtags\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|itemtags\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
+        private static Regex blocktagsDesugarReg = new Regex(@"(?s)((blocktags|entitytags|itemtags)\s+\w+\s*\{(\s*[^\}]+,?\s*)*\}|(blocktags|entitytags|itemtags)\s+\w+\s*=\s*\{(\s*[^\}]+,?\s*)*\})");
         private static Regex funArgTypeReg = new Regex(@"^([@\w\.=\?<>\+\/\*\-\^\&\|\#]*\s*(<\(?\w*\)?,?\(?\w*\)?>)?(\[\d+\])?)*\(");
         private static Regex arraySizeReg = new Regex(@"(?:\[)[\d\+\*\-\/\%]+(?:\])");
         private static Regex opReg = new Regex(@"((#=)|(\+=)|(\-=)|(\*=)|(/=)|(\%=)|(\&=)|(\|=)|(\^=)|(:=)|(=))");
@@ -190,6 +188,10 @@ namespace JSharp
         public static List<File> compile(CompilerCore core, string project, List<File> codes, List<File> resources, Debug debug,
                                             CompilerSetting setting, ProjectVersion version, string pctFolder)
         {
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            if (Directory.Exists(path + "imported_dp")) Directory.Delete(path + "imported_dp", true);
+            if (Directory.Exists(path + "imported_rp")) Directory.Delete(path + "imported_rp", true);
+
             DateTime startTime = DateTime.Now;
 
             callTrace = "digraph " + project + " {\nmain\nload\nhelper\n";
@@ -302,7 +304,7 @@ namespace JSharp
                 new Scoreboard(compilerSetting.scoreboardValue, "dummy");
                 new Scoreboard(compilerSetting.scoreboardConst, "dummy");
                 new Scoreboard(compilerSetting.scoreboardTmp, "dummy");
-                variables.Add("__class__", new Variable("__class__", "__class__", Type.INT));
+                variables.Add("__class_count__", new Variable("__class_count__", "__class_count__", Type.INT));
                 variables.Add("__class_pointer__", new Variable("__class_pointer__", "__class_pointer__", Type.INT));
                 variables.Add("__CLASS__", new Variable("__CLASS__", "__CLASS__", Type.INT, true));
 
@@ -984,7 +986,7 @@ namespace JSharp
         }
         public static string compVarReplace(string line)
         {
-            if (!requireReg.Match(line).Success && !indexedReg.Match(line).Success)
+            if (!requireReg.Match(line).Success && !indexedReg.Match(line).Success && line.Contains("$"))
             {
                 Dictionary<string, string> dic = new Dictionary<string, string>();
                 List<string> keys = new List<string>();
@@ -1136,25 +1138,7 @@ namespace JSharp
 
                 match = blocktagsDesugarReg.Match(text);
             }
-
-            match = entitytagsDesugarReg.Match(text);
-            while (match != null && match.Value != "")
-            {
-                text = regReplace(text, match,
-                    match.Value.Replace("{", "=").Replace("\n", "").Replace("}", ""));
-
-                match = entitytagsDesugarReg.Match(text);
-            }
-
-            match = itemtagsDesugarReg.Match(text);
-            while (match != null && match.Value != "")
-            {
-                text = regReplace(text, match,
-                    match.Value.Replace("{", "=").Replace("\n", "").Replace("}", ""));
-
-                match = itemtagsDesugarReg.Match(text);
-            }
-
+           
             return text;
         }
         public static string desugarParenthis(string text)
@@ -1445,6 +1429,12 @@ namespace JSharp
 
                     return true;
                 }
+                if (System.IO.File.Exists(folder + text + ".bpz"))
+                {
+                    importRes(folder + text + ".bpz", fu);
+                    msg = "#Using TBMS Library: " + text + " (BluePhoenix ZIP)\n";
+                    return true;
+                }
                 if (System.IO.File.Exists(folder + text + ".dpo"))
                 {
                     Dictionary<string, List<string>> save = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(System.IO.File.ReadAllText(folder + text + ".dpo"));
@@ -1480,6 +1470,60 @@ namespace JSharp
 
             msg = "";
             return false;
+        }
+        public static void importRes(string file, bool fu)
+        {
+            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            try
+            {
+                if (Directory.Exists(path + "unzip")) Directory.Delete(path + "unzip", true);
+                ZipFile.ExtractToDirectory(file, path + "unzip");
+                if (Directory.Exists(path + "unzip/scripts"))
+                {
+                    compileFiles(Directory.EnumerateFiles(path + "unzip/scripts", "*.bps", SearchOption.AllDirectories)
+                             .Select(x => new File(x, System.IO.File.ReadAllText(x))).ToList(), false, false);
+                }
+                if (Directory.Exists(path + "unzip/resources"))
+                {
+                    var res = Directory.EnumerateFiles(path + "unzip/resources", "*.*", SearchOption.AllDirectories)
+                            .Select(x => new File(x, System.IO.File.ReadAllText(x)));
+                    foreach (var f in res)
+                    {
+                        if (!resourceFiles.ContainsKey(f.name))
+                            resourceFiles.Add(f.name, f.content.Replace("\r", ""));
+                    }
+                }
+                if (Directory.Exists(path + "unzip/structures"))
+                {
+                    foreach (var f in Directory.EnumerateFiles(path + "unzip/structures", "*.nbt", SearchOption.AllDirectories))
+                    {
+                        string name = f.Replace("\\", "/").Replace(path.Replace("\\", "/") + "unzip/structures/", "");
+                        Form1.SafeCopy(f, path + "imported_dp/structure/" + name);
+                    }
+                }
+                if (Directory.Exists(path + "unzip/resourcespack"))
+                {
+                    foreach (var f in Directory.EnumerateFiles(path + "unzip/resourcespack", "*.*", SearchOption.AllDirectories))
+                    {
+                        string name = f.Replace("\\", "/").Replace(path.Replace("\\", "/") + "unzip/resourcespack/", "");
+                        if (!f.EndsWith(".bps"))
+                        {
+                            Form1.SafeCopy(f, path + "imported_rp/" + name);
+                        }
+                        else
+                        {
+                            var g = new File(name, System.IO.File.ReadAllText(f));
+                            g.resourcespack = true;
+                            compileFiles(new List<File>() { g }, false, false);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                if (Directory.Exists(path + "unzip")) Directory.Delete(path + "unzip", true);
+                throw new Exception(e.ToString());
+            }
         }
         public static string instUsing(string text)
         {
@@ -2915,7 +2959,16 @@ namespace JSharp
                     {
                         return appendPreCond(Core.CompareVariable(var, enums[var.enums].IndexOf(smartEmpty(arg[1].ToLower())), "=", selector1), pre);
                     }
-                    return appendPreCond(Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2), pre);
+                    else if (GetVariableByName(arg[1], true) != null)
+                        return appendPreCond(Core.CompareVariable(var, GetVariableByName(arg[1]), "=", selector1, selector2), pre);
+                    else
+                    {
+                        int idVal3 = If.GetEval(context.GetFun());
+                        pre += parseLine(getExprTypeStr(arg[1], selector2 != "").ToString().ToLower() + " cond_" + idVal3.ToString() + " = " + (selector2 != "" ? selector2 + "." : "") + arg[1]);
+                        selector2 = "";
+                        var var2 = GetVariableByName("cond_" + idVal3);
+                        return appendPreCond(Core.CompareVariable(var, var2, "=", selector1, selector2), pre);
+                    }
                 }
                 else if (t == Type.FLOAT && arg[1].Contains(".."))
                 {
@@ -3830,7 +3883,7 @@ namespace JSharp
                     files.Add(entityTag);
                     f.AddLine(Core.As("@e[tag=__class__]")+Core.CallFunction(entityTag));
                 }
-                AddLineToFileWithFunctionPriority(func, functionTagsEntity[tag], Core.As("@s[tag=" + className + "]") + "function " + func.gameName);
+                AddLineToFileWithFunctionPriority(func, functionTagsEntity[tag], Core.AsAt("@s[tag=" + className + "]") + "function " + func.gameName);
             }
 
             functionTags[tag.ToLower()].Add(func.gameName.Replace(":", ".").Replace("/", "."));
@@ -4221,6 +4274,7 @@ namespace JSharp
                     text = text.Substring(1, text.Length - 1);
                 }
             }
+
             string orgText = text;
             text = functionDesugar(text);
 
@@ -5159,7 +5213,7 @@ namespace JSharp
             }
             return "";
         }
-        public static string InstWith(string[] text, string fText)
+        public static string InstWith(string[] text, string fText, bool adjPackageClear = false)
         {
             if (context.isEntity(text[0]))
             {
@@ -5188,6 +5242,7 @@ namespace JSharp
                 context.currentFile().AddLine(pre + cmd);
 
                 File fFile = new File(context.GetFile() + "w_" + wID, "", "with");
+                fFile.adjPackageClear = adjPackageClear;
                 context.Sub("w_" + wID, fFile);
                 files.Add(fFile);
 
@@ -5198,8 +5253,14 @@ namespace JSharp
             else if (containStruct(text[0]))
             {
                 Structure cls = structs[getStruct(text[0])];
-                text[0] = $"@e[tag={classOffuscationMapAdd(cls.name)}]";
-                return InstWith(text, fText);
+                string data = "";
+                if (text[0].Contains("["))
+                    data = ","+text[0].Substring(text[0].IndexOf("[") + 1, text[0].LastIndexOf("]") - text[0].IndexOf("[") - 1);
+                text[0] = $"@e[tag={classOffuscationMapAdd(cls.name)}{data}]";
+                if (cls.representContext == null || cls.representContext=="")
+                    cls.generate("@fake_var%", false, new Variable("@fake_var%", "@fake_var%", Type.VOID),null);
+                adjPackage.Push(cls.representContext);
+                return InstWith(text, fText, true);
             }
             else
             {
@@ -5821,7 +5882,7 @@ namespace JSharp
                     functionBaseFile.addParsedLine("/summon " + entity + " ~ ~ ~ $data");
                     functionBaseFile.addParsedLine("with(@e[tag=cls_trg]){");
                     functionBaseFile.addParsedLine("/tag @s remove cls_trg");
-                    functionBaseFile.addParsedLine("__CLASS__ = __class__");
+                    functionBaseFile.addParsedLine("__CLASS__ = __class_count__");
                     functionBaseFile.addParsedLine("__ref++");
                     functionBaseFile.addParsedLine("}");
                 }
@@ -6235,7 +6296,10 @@ namespace JSharp
             structs[cls].generate("@fake_var%", false, new Variable("@fake_var%", "@fake_var%", Type.VOID), $"({arg})");
             if (structs[cls].UnlinkedClassInit == null)
                 throw new Exception("No Unlinked class initor for this?");
-            return parseLine($"{structs[cls].UnlinkedClassInit.gameName.Replace(":",".").Replace("/",".")}({arg})");            
+            adjPackage.Push(structs[cls].UnlinkedClassContext);
+            string value = parseLine($"{structs[cls].UnlinkedClassInit.gameName.Replace(":",".").Replace("/",".")}({arg})");
+            adjPackage.Pop();
+            return value;
         }
         #endregion
 
@@ -6852,7 +6916,7 @@ namespace JSharp
         {
             while (text.StartsWith(" "))
                 text = text.Substring(1, text.Length - 1);
-            text = text.Replace("{", " ") + " ";
+            text = text.Replace("{", " ").Replace("[", " ") + " ";
             if (text.Contains("<"))
             {
                 if (!structs.ContainsKey(text.Substring(0, getCloseCharIndex(text, '>') + 1).Replace("<", "[").Replace(">", "]").ToLower()))
@@ -6893,7 +6957,7 @@ namespace JSharp
         #endregion
 
         #region function eval
-        public static string functionEval(string text, string[] outVar = null, string op = "=")
+        public static string functionEval(string text, string[] outVar = null, string op = "=", int rec = 0)
         {
             Match _m = shortFuncReg.Match(text);
             if (_m.Success && !text.Substring(0, text.IndexOf('{')).Contains("("))
@@ -6901,9 +6965,13 @@ namespace JSharp
                 text = regReplace(text, _m, _m.Value.Replace("{", "(){"));
             }
             string funcVar = smartExtract(text.Substring(0, text.IndexOf('(')));
+            if (rec > 10)
+            {
+                throw new Exception("Unknown"+funcVar);
+            }
             if (CommandParser.canBeParse(funcVar))
             {
-                return CommandParser.parse(text, context);
+                return CommandParser.parse(text, context, rec);
             }
 
             var var = GetVariableByName(funcVar, true);
@@ -7405,7 +7473,7 @@ namespace JSharp
             {
                 int i = 0;
 
-                if (GetVariableByName($"{lazyCall.Peek().name}.ret_{i}").type == Type.JSON)
+                if (GetVariableByName($"{lazyCall.Peek().name}.ret_{i}", true)?.type == Type.JSON)
                 {
                     lazyFunctionReturnJson = arg.Length == 1?arg[0]:arg.Aggregate((x, y) => x + "," + y);
                     return "";
@@ -7454,7 +7522,6 @@ namespace JSharp
                             context.currentFile().function.outputs.Add(v);
                         }
                     }
-                    
                     ouput += parseLine("ret_" + i.ToString() + "=" + arg[i]);
                 }
             }
@@ -8693,7 +8760,9 @@ namespace JSharp
             public bool isPrivate = false;
             public bool isInterface = false;
             public string privateContext;
+            public string representContext;
             public Function UnlinkedClassInit;
+            public string UnlinkedClassContext;
 
             public Structure(string name, Structure parent, List<Structure> interfaces, bool isPrivate)
             {
@@ -8870,23 +8939,23 @@ namespace JSharp
 
                 if (fun.name == "__init__" && isClass && !parentClass)
                 {
-                    fFile.parsed.Add("__class__++");
+                    fFile.parsed.Add("__class_count__++");
                     
-                    fFile.parsed.Add(varOwner.gameName + " #= __class__");
+                    fFile.parsed.Add(varOwner.gameName + " #= __class_count__");
                     foreach (string line in GetClassInitBase().parsed)
                     {
                         fFile.addParsedLine(line);
                     }
                     if (varOwner.entity)
                     {
-                        fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==__class__){");
-                        fFile.parsed.Add(varOwner.gameName + " #= __class__");
+                        fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==__class_count__){");
+                        fFile.parsed.Add(varOwner.gameName + " #= __class_count__");
                         fFile.parsed.Add("}");
                     }
                 }
                 if (fun.name == "__init__" && isClass && parentClass)
                 {
-                    fFile.parsed.Add("__class__++");
+                    fFile.parsed.Add("__class_count__++");
                     foreach (string line in GetClassInitBase().parsed)
                     {
                         fFile.addParsedLine(line);
@@ -9148,9 +9217,13 @@ namespace JSharp
                         fFile.parsed.Add("__class_pointer__ #= " + varOwner.gameName);
                         fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==__class_pointer__){");
                     }
-                    else if (!parentClass || fun.name == "__init__")
+                    else if (fun.name == "__init__")
                     {
-                        fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==" + varOwner.gameName + "){");
+                        fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__==__class_count__){");
+                    }
+                    else if (!parentClass)
+                    {
+                        fFile.parsed.Add("with(@e[tag=__class__],false,__CLASS__=="+ varOwner.gameName + "){");
                     }
                 }
                 if (fun.name == "__init__")
@@ -9270,6 +9343,7 @@ namespace JSharp
                 if (parentClass)
                 {
                     context.Sub(name.Replace(".", "_"), new File("", ""));
+                    representContext = context.GetVar();
                 }
                 context.compVal[context.compVal.Count - 1]["$this"] = varOwner.uuid;
                 context.compVal[context.compVal.Count - 1]["$this.lower"] = varOwner.uuid.ToLower();
@@ -9325,13 +9399,14 @@ namespace JSharp
                         throw new Exception($"Can not Instantiate Abstract Class/Struct {name}");
                     if (parentClass)
                     {
+                        context.Sub(name, new File($"{name}", "", "lazyfunctioncall"));
+                        UnlinkedClassContext = context.GetVar();
                         output += parseLine(representative.gameName+"."+name + ".__init__" + instArg);
-                        context.Sub(name, new File("", ""));
                     }
                     else
                     {
                         output += parseLine(v + ".__init__" + instArg);
-                        context.Sub(v, new File("", ""));
+                        context.Sub(v, new File($"{v}", "", "lazyfunctioncall"));
                     }
                     
                     context.compVal[context.compVal.Count - 1] = structCompVarPointer;
@@ -10975,6 +11050,7 @@ namespace JSharp
             public bool UnparsedFunctionFile;
             public string UnparsedFunctionFileContext;
             public bool resourcespack;
+            public bool adjPackageClear;
             public Dictionary<string, string> typeMapContext = new Dictionary<string, string>();
             public bool multiUsed = false;
             public List<Dictionary<string, string>> lazyVarStack;
@@ -11301,6 +11377,8 @@ namespace JSharp
                 {
                     ExtensionClassStack.Pop();
                 }
+                if (adjPackageClear)
+                    adjPackage.Pop();
 
                 if (type == "if" || type == "case" || type == "with")
                 {

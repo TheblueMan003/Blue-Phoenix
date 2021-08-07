@@ -97,6 +97,10 @@ namespace BluePhoenix
             
             ExportResourcePack(writePath);
             Debug("Datapack successfully exported!", Color.Aqua);
+
+            if (Directory.Exists(ProjectPath + "imported_dp")) Directory.Delete(ProjectPath + "imported_dp", true);
+            if (Directory.Exists(ProjectPath + "imported_rp")) Directory.Delete(ProjectPath + "imported_rp", true);
+            if (Directory.Exists(ProjectPath + "unzip")) Directory.Delete(ProjectPath + "unzip", true);
         }
         public static void Debug(object text, Color c)
         {
@@ -183,7 +187,14 @@ namespace BluePhoenix
                         throw new Exception(fileName + " " + e.ToString());
                     }
                 }
-
+                foreach (var file in Directory.GetFiles(path + "imported_rp", "*.*", SearchOption.AllDirectories))
+                {
+                    if (!file.EndsWith(".bps"))
+                    {
+                        string fileName = file.Replace(path.Replace("\\", "/") + "imported_rp/", rpPath);
+                        SafeCopy(file, fileName);
+                    }
+                }
                 foreach (var file in Directory.GetFiles(rpdir, "*.*", SearchOption.AllDirectories))
                 {
                     if (!file.EndsWith(".bps"))
@@ -290,9 +301,21 @@ namespace BluePhoenix
         }
         public void ExportStructures(string path)
         {
+            string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            if (Directory.Exists(path + "imported_dp/structure/"))
+            {
+                if (!Directory.Exists(path + "/data/" + project.projectName.ToLower() + "/structures/"))
+                    Directory.CreateDirectory(path + "/data/" + project.projectName.ToLower() + "/structures/");
+
+                foreach (string file in Directory.GetFiles(path + "imported_dp/structure/"))
+                {
+                    File.Copy(file, path + "/data/" + project.projectName.ToLower() + "/structures/" + Path.GetFileName(file));
+                }
+            }
             if (Directory.Exists(ProjectFolder() + "/structures"))
             {
-                Directory.CreateDirectory(path + "/data/" + project.projectName.ToLower() + "/structures/");
+                if (!Directory.Exists(path + "/data/" + project.projectName.ToLower() + "/structures/"))
+                    Directory.CreateDirectory(path + "/data/" + project.projectName.ToLower() + "/structures/");
 
                 foreach (string file in Directory.GetFiles(ProjectFolder() + "/structures"))
                 {

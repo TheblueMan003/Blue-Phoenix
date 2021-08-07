@@ -125,6 +125,7 @@
       <DependentUpon>CustomPaste.cs</DependentUpon>
     </Compile>
     <Compile Include="DataPackMeta.cs" />
+    <Compile Include="DebugFunctioParser.cs" />
     <Compile Include="EffectForm.cs">
       <SubType>Form</SubType>
     </Compile>

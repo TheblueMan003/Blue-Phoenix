@@ -949,14 +949,21 @@ namespace JSharp
         {
 
         }
-        public void SafeCopy(string src, string dest)
+        public static void SafeCopy(string src, string dest)
         {
-            string filePath = Path.GetDirectoryName(dest);
-            if (!Directory.Exists(filePath))
+            try
             {
-                Directory.CreateDirectory(filePath);
+                string filePath = Path.GetDirectoryName(dest);
+                if (!Directory.Exists(filePath))
+                {
+                    Directory.CreateDirectory(filePath);
+                }
+                File.Copy(src, dest, true);
             }
-            File.Copy(src, dest, true);
+            catch(Exception e)
+            {
+                throw new Exception($"Failed to copy: {src} -> {dest} res:{e}");
+            }
         }
         public int SafeWriteFile(string fileName, string content)
         {
@@ -1112,17 +1119,8 @@ namespace JSharp
                 string file = Compiler.getStackCall(new CompilerCoreJava(), projectName, compileFile, compileResource,
                     DebugThread, compilerSetting.withoutOffuscation(), projectVersion,
                     Path.GetDirectoryName(projectPath));
-                compileFiled = new List<Compiler.File>();
-                compileFiled.Add(new Compiler.File("Call Stacks", file));
+                ShowGraphviz(file);
 
-                try
-                {
-                    System.Diagnostics.Process.Start("https://dreampuf.github.io/GraphvizOnline/");
-                }
-                catch (Exception e)
-                {
-                    DebugThread(e.StackTrace, Color.Red);
-                }
                 if (showForm)
                 {
                     isCompiling = 2;
@@ -1156,6 +1154,9 @@ namespace JSharp
                 for (int i = 0; i < textArr.Length; i++)
                 {
                     int shift = 0;
+                    if (Compiler.smartExtract(textArr[i]).StartsWith("}"))
+                        shift += textArr[i].Split('}').Length - textArr[i].Split('{').Length;
+                    /*
                     if (textArr[i].Contains("}"))
                         shift += textArr[i].Split('}').Length - textArr[i].Split('{').Length;
 
@@ -1164,7 +1165,7 @@ namespace JSharp
 
                     if (textArr[i].Contains("]"))
                         shift += textArr[i].Split(']').Length - textArr[i].Split('[').Length;
-
+                    */
                     for (int j = 0; j < chars.Count - shift; j++)
                     {
                         text += "\t";
@@ -1241,6 +1242,27 @@ namespace JSharp
             ErrorBox.Text = "";
             debugMSGsShowned.ForEach(x => DebugDisplay(x.msg, x.color));
         }
+        private void ShowGraphviz(string data)
+        {
+            try
+            {
+                string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+                File.WriteAllText(ProjectPath + "input.dot", data);
+                var p = System.Diagnostics.Process.Start($"dot", $"-Tsvg {ProjectPath}input.dot -o {ProjectPath}tmp.svg");
+                p.WaitForExit();
+                System.Diagnostics.Process.Start($"{ProjectPath}tmp.svg");
+                File.Delete(ProjectPath + "input.dot");
+                showForm = false;
+            }
+            catch(Exception e)
+            {
+                showForm = true;
+                compileFiled = new List<Compiler.File>();
+                compileFiled.Add(new Compiler.File("Call Stacks", data));
+                System.Diagnostics.Process.Start("https://dreampuf.github.io/GraphvizOnline/");
+                DebugThread(e, Color.Red);
+            }
+        }
 
         public void DebugThread(object msg, Color c)
         {
@@ -1291,14 +1313,23 @@ namespace JSharp
 
                 DebugThread("Datapack successfully exported!", Color.Aqua);
                 ExportResourcePack(rpPath);
+
+                if (Directory.Exists(ProjectPath + "imported_dp")) Directory.Delete(ProjectPath + "imported_dp", true);
+                if (Directory.Exists(ProjectPath + "imported_rp")) Directory.Delete(ProjectPath + "imported_rp", true);
+                if (Directory.Exists(ProjectPath + "unzip")) Directory.Delete(ProjectPath + "unzip", true);
             }
             catch (Exception er)
             {
                 DebugThread(er, Color.Red);
+                string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+                if (Directory.Exists(ProjectPath + "imported_dp")) Directory.Delete(ProjectPath + "imported_dp", true);
+                if (Directory.Exists(ProjectPath + "imported_rp")) Directory.Delete(ProjectPath + "imported_rp", true);
+                if (Directory.Exists(ProjectPath + "unzip")) Directory.Delete(ProjectPath + "unzip", true);
             }
         }
         public void ExportFiles(string path)
         {
+            string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             List<Compiler.File> files = new List<Compiler.File>();
             foreach (string f in codeOrder)
             {
@@ -1350,7 +1381,7 @@ namespace JSharp
             }
             if (Directory.Exists(rpdir) && exportRP)
             {
-                string rpPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp_rp";
+                string rpPath = "C:/bprp/";
                 if (Directory.Exists(rpPath))
                 {
                     Directory.Delete(rpPath, true);
@@ -1373,7 +1404,17 @@ namespace JSharp
                         throw new Exception(fileName + " " + e.ToString());
                     }
                 }
-
+                if (Directory.Exists(ProjectPath + "imported_rp/"))
+                {
+                    foreach (var file in Directory.GetFiles(ProjectPath + "imported_rp/", "*.*", SearchOption.AllDirectories))
+                    {
+                        if (!file.EndsWith(".bps"))
+                        {
+                            string fileName = file.Replace("\\", "/").Replace(ProjectPath.Replace("\\", "/") + "imported_rp/", rpPath);
+                            SafeCopy(file, fileName);
+                        }
+                    }
+                }
                 foreach (var file in Directory.GetFiles(rpdir, "*.*", SearchOption.AllDirectories))
                 {
                     if (!file.EndsWith(".bps"))
@@ -1482,9 +1523,21 @@ namespace JSharp
         }
         public void ExportStructures(string path)
         {
+            string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
+            if (projectPath != null && Directory.Exists(path + "imported_dp/structure/"))
+            {
+                if (!Directory.Exists(path + "/data/" + projectName.ToLower() + "/structures/"))
+                    Directory.CreateDirectory(path + "/data/" + projectName.ToLower() + "/structures/");
+
+                foreach (string file in Directory.GetFiles(path + "imported_dp/structure/"))
+                {
+                    File.Copy(file, path + "/data/" + projectName.ToLower() + "/structures/" + Path.GetFileName(file));
+                }
+            }
             if (projectPath != null && Directory.Exists(ProjectFolder() + "/structures"))
             {
-                Directory.CreateDirectory(path + "/data/" + projectName.ToLower() + "/structures/");
+                if (!Directory.Exists(path + "/data/" + projectName.ToLower() + "/structures/"))
+                    Directory.CreateDirectory(path + "/data/" + projectName.ToLower() + "/structures/");
 
                 foreach (string file in Directory.GetFiles(ProjectFolder() + "/structures"))
                 {
@@ -2658,6 +2711,15 @@ namespace JSharp
             public void Save()
             {
                 wasModdified = false;
+            }
+        }
+
+        private void showDebugStackTraceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            
+            if (openDebugFile.ShowDialog() == DialogResult.OK)
+            {
+                ShowGraphviz(DebugFunctioParser.Parse(File.ReadAllText(openDebugFile.FileName)));
             }
         }
     }

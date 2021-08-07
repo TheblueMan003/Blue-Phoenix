@@ -56,58 +56,58 @@ namespace JSharp
         {
             return functionSet.Contains(text);
         }
-        public static string parse(string text, Compiler.Context context)
+        public static string parse(string text, Compiler.Context context, int rec = 0)
         {
             while (text.StartsWith(" ")) text = text.Substring(1, text.Length - 1);
             string arg = text.Substring(text.IndexOf('(') + 1, text.LastIndexOf(')') - text.IndexOf('(') - 1);
             string[] args = Compiler.smartSplit(arg, ',');
 
             if (text.ToLower().StartsWith("structure"))
-                return parseStructure(args, context, text);
+                return parseStructure(args, context, text, rec);
 
             if (text.ToLower().StartsWith("title"))
-                return parseTitle(args, context, text);
+                return parseTitle(args, context, text, rec);
 
             if (text.ToLower().StartsWith("magictitle"))
-                return parseMagicTitle(args, context, text);
+                return parseMagicTitle(args, context, text, rec);
 
             if (text.ToLower().StartsWith("tellraw"))
-                return parseTellraw(args, context, text);
+                return parseTellraw(args, context, text, rec);
 
             if (text.ToLower().StartsWith("clear"))
-                return parseClear(args, context, text);
+                return parseClear(args, context, text, rec);
 
             if (text.ToLower().StartsWith("say"))
-                return parseSay(args, context, text);
+                return parseSay(args, context, text, rec);
 
             if (text.ToLower().StartsWith("effect"))
-                return parseEffect(args, context, text);
+                return parseEffect(args, context, text, rec);
 
             if (text.ToLower().StartsWith("difficulty"))
-                return parseDifficulty(args, context, text);
+                return parseDifficulty(args, context, text, rec);
 
             if (text.ToLower().StartsWith("gamemode"))
-                return parseGamemode(args, context, text);
+                return parseGamemode(args, context, text, rec);
 
             if (text.ToLower().StartsWith("gamerule"))
-                return parseGamerule(args, context, text);
+                return parseGamerule(args, context, text, rec);
 
             if (text.ToLower().StartsWith("fill"))
-                return parseFill(args, context, text);
+                return parseFill(args, context, text, rec);
 
             if (text.ToLower().StartsWith("stopsound"))
-                return parseStopsound(args, context, text);
+                return parseStopsound(args, context, text, rec);
 
             if (text.ToLower().StartsWith("weather"))
-                return parseWeather(args, context, text);
+                return parseWeather(args, context, text, rec);
 
             if (text.ToLower().StartsWith("tp"))
-                return parseTP(args, context, text);
+                return parseTP(args, context, text, rec);
 
             throw new NotImplementedException(text.Split(' ')[0] + " is not implemented");
         }
 
-        public static string parseTellraw(string[] args, Compiler.Context context, string text)
+        public static string parseTellraw(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             string output = "tellraw " + context.GetEntitySelector(args[0]) + " ";
             string[] json = Compiler.Core.FormatJson(args, context, 1);
@@ -115,7 +115,7 @@ namespace JSharp
 
             return output + '\n';
         }
-        public static string parseTitle(string[] args, Compiler.Context context, string text)
+        public static string parseTitle(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             string titleType = Compiler.smartEmpty(args[1]);
             if (titleType != "actionbar" && titleType != "title" && titleType != "subtitle")
@@ -126,7 +126,7 @@ namespace JSharp
             output = json[1] + output + json[0] + "\n" + json[2];
             return output + '\n';
         }
-        public static string parseMagicTitle(string[] args, Compiler.Context context, string text)
+        public static string parseMagicTitle(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             int maxTime;
             int argIndex = 1;
@@ -206,7 +206,7 @@ namespace JSharp
             }
             return jsonParsedGlobal[1] + output + jsonParsedGlobal[2] + '\n';
         }
-        public static string parseSay(string[] args, Compiler.Context context, string text)
+        public static string parseSay(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             if (args.Length == 1)
             {
@@ -221,15 +221,17 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null, "=", rec + 1);
             }
         }
-        public static string parseClear(string[] args, Compiler.Context context, string text)
+        public static string parseClear(string[] args, Compiler.Context context, string text, int rec = 0)
         {
-            if (args.Length > 0 && args.Length < 3)
+            if (args.Length >= 0 && args.Length < 3)
             {
                 string output = "clear ";
-                if (context.isEntity(args[0]))
+                if (args.Length == 0)
+                    output += "@s";
+                else if (context.isEntity(args[0]))
                     output += context.GetEntitySelector(args[0]);
                 else
                     output += "@s " + args[0];
@@ -243,10 +245,10 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null,"=", rec+1);
             }
         }
-        public static string parseEffect(string[] args, Compiler.Context context, string text)
+        public static string parseEffect(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             if (args.Length < 7)
             {
@@ -270,10 +272,10 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null, "=", rec+1);
             }
         }
-        public static string parseDifficulty(string[] args, Compiler.Context context, string text)
+        public static string parseDifficulty(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             if (args.Length == 1)
             {
@@ -292,10 +294,10 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null, "=", rec+1);
             }
         }
-        public static string parseGamemode(string[] args, Compiler.Context context, string text)
+        public static string parseGamemode(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             if (args.Length == 2 && context.isEntity(args[0]))
             {
@@ -344,10 +346,10 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null, "=", rec + 1);
             }
         }
-        public static string parseGamerule(string[] args, Compiler.Context context, string text)
+        public static string parseGamerule(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             if (args.Length == 2)
             {
@@ -357,10 +359,10 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null, "=", rec + 1);
             }
         }
-        public static string parseFill(string[] args, Compiler.Context context, string text)
+        public static string parseFill(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             if (args.Length == 1)
             {
@@ -379,10 +381,10 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null, "=", rec + 1);
             }
         }
-        public static string parseStopsound(string[] args, Compiler.Context context, string text)
+        public static string parseStopsound(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             if (args.Length > 0)
             {
@@ -401,10 +403,10 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null, "=", rec + 1);
             }
         }
-        public static string parseWeather(string[] args, Compiler.Context context, string text)
+        public static string parseWeather(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             if (args.Length == 1)
             {
@@ -419,10 +421,10 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null, "=", rec + 1);
             }
         }
-        public static string parseStructure(string[] args, Compiler.Context context, string text)
+        public static string parseStructure(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             if (args.Length == 1)
             {
@@ -432,10 +434,10 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null, "=", rec + 1);
             }
         }
-        public static string parseTP(string[] args, Compiler.Context context, string text)
+        public static string parseTP(string[] args, Compiler.Context context, string text, int rec = 0)
         {
             if (args.Length == 1 || (args.Length == 2 && context.isEntity(args[0])))
             {
@@ -457,7 +459,7 @@ namespace JSharp
             }
             else
             {
-                return Compiler.functionEval(text);
+                return Compiler.functionEval(text, null, "=", rec + 1);
             }
         }
         private static string getParameter(string subargs)

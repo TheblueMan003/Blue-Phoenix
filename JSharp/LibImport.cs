@@ -43,10 +43,15 @@ namespace BluePhoenix
                 ImportedLB.Items.Add("standard.entity_id");
                 ImportedLB.Items.Add("standard.object");
             }
-            List<string> lib = paths.Select(x => (Directory.EnumerateFiles(path + x, "*.tbms",SearchOption.AllDirectories), x))
+            List<string> lib = paths.Select(x => (Directory.EnumerateFiles(path + x, "*.*",SearchOption.AllDirectories), x))
                                     .Select(tu => tu.Item1.Select(x => x.Replace(path+tu.Item2, "")))
                                     .SelectMany(x => x)
-                                    .Select(x => x.Replace("/",".").Replace(".tbms","").Replace("\\","."))
+                                    .Select(x => x.Replace("/",".")
+                                                  .Replace(".zip", "")
+                                                  .Replace(".bpz", "")
+                                                  .Replace(".dpo", "")
+                                                  .Replace(".tbms","")
+                                                  .Replace("\\","."))
                                     .Distinct()
                                     .ToList();
             

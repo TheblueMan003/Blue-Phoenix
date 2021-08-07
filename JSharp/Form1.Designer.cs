@@ -55,6 +55,7 @@
             this.settingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.getCallStackTraceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.showDebugStackTraceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.generateResourcesPackToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.inspectorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.structureToCMDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -90,6 +91,7 @@
             this.newFileToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.fileToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.folderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.animatedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -105,7 +107,7 @@
             this.ClearLogButton = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
-            this.openToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.openDebugFile = new System.Windows.Forms.OpenFileDialog();
             this.menuStrip1.SuspendLayout();
             this.CodeListContextMenu.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -319,6 +321,7 @@
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.getCallStackTraceToolStripMenuItem,
+            this.showDebugStackTraceToolStripMenuItem,
             this.generateResourcesPackToolStripMenuItem,
             this.inspectorToolStripMenuItem,
             this.structureToCMDToolStripMenuItem,
@@ -335,6 +338,13 @@
             this.getCallStackTraceToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
             this.getCallStackTraceToolStripMenuItem.Text = "Get Call Stack Trace";
             this.getCallStackTraceToolStripMenuItem.Click += new System.EventHandler(this.getCallStackTraceToolStripMenuItem_Click);
+            // 
+            // showDebugStackTraceToolStripMenuItem
+            // 
+            this.showDebugStackTraceToolStripMenuItem.Name = "showDebugStackTraceToolStripMenuItem";
+            this.showDebugStackTraceToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.showDebugStackTraceToolStripMenuItem.Text = "Show Debug Stack Trace";
+            this.showDebugStackTraceToolStripMenuItem.Click += new System.EventHandler(this.showDebugStackTraceToolStripMenuItem_Click);
             // 
             // generateResourcesPackToolStripMenuItem
             // 
@@ -684,7 +694,7 @@
             this.deleteToolStripMenuItem,
             this.newFolderToolStripMenuItem});
             this.CodeListContextMenu.Name = "contextMenuStrip1";
-            this.CodeListContextMenu.Size = new System.Drawing.Size(181, 114);
+            this.CodeListContextMenu.Size = new System.Drawing.Size(156, 92);
             // 
             // newFileToolStripMenuItem1
             // 
@@ -692,7 +702,7 @@
             this.fileToolStripMenuItem1,
             this.folderToolStripMenuItem});
             this.newFileToolStripMenuItem1.Name = "newFileToolStripMenuItem1";
-            this.newFileToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.newFileToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
             this.newFileToolStripMenuItem1.Text = "New";
             // 
             // fileToolStripMenuItem1
@@ -709,10 +719,17 @@
             this.folderToolStripMenuItem.Text = "Folder";
             this.folderToolStripMenuItem.Click += new System.EventHandler(this.folderToolStripMenuItem_Click);
             // 
+            // openToolStripMenuItem1
+            // 
+            this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
+            this.openToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
+            this.openToolStripMenuItem1.Text = "Open";
+            this.openToolStripMenuItem1.Click += new System.EventHandler(this.openToolStripMenuItem1_Click);
+            // 
             // deleteToolStripMenuItem
             // 
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
             this.deleteToolStripMenuItem.Text = "Delete";
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
             // 
@@ -721,7 +738,7 @@
             this.newFolderToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.animatedToolStripMenuItem});
             this.newFolderToolStripMenuItem.Name = "newFolderToolStripMenuItem";
-            this.newFolderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newFolderToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
             this.newFolderToolStripMenuItem.Text = "Resources Pack";
             // 
             // animatedToolStripMenuItem
@@ -934,12 +951,9 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // openToolStripMenuItem1
+            // openDebugFile
             // 
-            this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
-            this.openToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
-            this.openToolStripMenuItem1.Text = "Open";
-            this.openToolStripMenuItem1.Click += new System.EventHandler(this.openToolStripMenuItem1_Click);
+            this.openDebugFile.FileName = "debug.txt";
             // 
             // Form1
             // 
@@ -1077,6 +1091,8 @@
         private System.Windows.Forms.ToolStripMenuItem tilemapEditorToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customPasteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem showDebugStackTraceToolStripMenuItem;
+        private System.Windows.Forms.OpenFileDialog openDebugFile;
     }
 }
 

@@ -1,6 +1,7 @@
 ﻿using JSharp;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -11,17 +12,24 @@ namespace BluePhoenix
     {
         public static JsonElement GetObject(string jsonstring)
         {
-            jsonstring = Compiler.smartExtract(jsonstring);
-            
-            if (jsonstring.StartsWith("{"))
+            try
             {
-                return new JsonObject(jsonstring);
+                jsonstring = Compiler.smartExtract(jsonstring);
+
+                if (jsonstring.StartsWith("{"))
+                {
+                    return new JsonObject(jsonstring);
+                }
+                if (jsonstring.StartsWith("["))
+                {
+                    return new JsonArray(jsonstring);
+                }
+                return new JsonUnit(jsonstring);
             }
-            if (jsonstring.StartsWith("["))
+            catch(Exception e)
             {
-                return new JsonArray(jsonstring);
+                throw new Exception($"Fail to parse: {jsonstring} - {e}");
             }
-            return new JsonUnit(jsonstring);
         }
     }
     public abstract class JsonElement
@@ -34,7 +42,7 @@ namespace BluePhoenix
 
         public JsonObject(string element)
         {
-            string[][] block = Compiler.smartSplit(Compiler.getCodeBlock(element), ',')
+            string[][] block = Compiler.smartSplitJson(Compiler.getCodeBlock(element), ',')
                                         .Select(x => Compiler.smartSplitJson(x, ':').Select(y => Compiler.smartExtract(y)).ToArray())
                                         .ToArray();
             foreach(string[] kv in block)
