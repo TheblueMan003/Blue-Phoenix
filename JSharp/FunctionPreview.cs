@@ -156,6 +156,7 @@ namespace JSharp
                 {
                     listBox2.Items.Clear();
                     richTextBox1.Text = "";
+                    richTextBox1.Text += listBox1.SelectedItem.ToString()+"\n";
                     foreach (Compiler.Function f in Functions[listBox1.SelectedItem.ToString()])
                     {
                         foreach (var arg in f.args)

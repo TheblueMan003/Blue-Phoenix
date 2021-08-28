@@ -80,6 +80,7 @@ namespace JSharp
         public static Image IMG_Sound;
         public static Image IMG_Variable;
         public static Image IMG_Object_Method;
+        public static Image IMG_Particles;
 
         public static void loadDict()
         {
@@ -100,17 +101,20 @@ namespace JSharp
                                             .Concat(compKeyword)
                                             .Concat(tags.ToArray()).Distinct()
                                             .Concat(CommandParser.dataattribute.Select(x => "\\[" + x + "\\]"))
+                                            .Distinct()
                                             .ToArray(), Color.Magenta, "Bold"));
 
             colorCodings.Add(ColorCoding.Get(typKeyword.Distinct().ToArray(), Color.Orange, "Bold"));
 
             if (showName)
             {
-                colorCodings.Add(ColorCoding.Get(CommandParser.names.Distinct()
-                            .Concat(CommandParser.scoreboards.Distinct())
+                colorCodings.Add(ColorCoding.Get(CommandParser.names
+                            .Concat(CommandParser.scoreboards)
                             .Concat(CommandParser.effects)
-                            .Concat(CommandParser.gamerules.Distinct())
-                            .Concat(CommandParser.sounds.Distinct())
+                            .Concat(CommandParser.gamerules)
+                            .Concat(CommandParser.sounds)
+                            .Concat(CommandParser.particles)
+                            .Distinct()
                             .ToArray(), cKeyword, ""));
             }
 
@@ -143,6 +147,7 @@ namespace JSharp
             IMG_Sound = Image.FromFile(path + "sound.png");
             IMG_Variable = Image.FromFile(path + "variable.png");
             IMG_Object_Method = Image.FromFile(path + "object_method.png");
+            IMG_Particles = Image.FromFile(path + "particles.png");
         }
         
         private static String HexConverter(System.Drawing.Color c)
@@ -211,6 +216,7 @@ namespace JSharp
                       .Concat(func.Select(x => $"{x}(^)").Select(x => (x, IMG_Object_Method)))
                       .Concat(effect.Select(x => (x, Image.FromFile($"{path}{x}.png"))))
                       .Concat(CommandParser.funcName.Select(x => (x, IMG_Lazy_Method)))
+                      .Concat(CommandParser.particles.Select(x => (x, IMG_Particles)))
                       .Distinct().ToList();
         }
         

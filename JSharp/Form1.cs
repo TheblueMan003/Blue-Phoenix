@@ -842,7 +842,7 @@ namespace JSharp
                         }
                         else if (form.type == JSharp.NewFile.Type.SUBPROGRAMME)
                         {
-                            code.Add(path + form.filename, new FormFile(path + form.filename, "package " + (path + form.filename).Replace("/", ".") + "\n\nBOOL Enabled\ndef ticking main(){\n\twith(@a,true,Enabled){\n\t\t\n\t}\n}\n\ndef start(){\n\tEnabled = true\n}\n\ndef close(){\n\tEnabled = false\n}"));
+                            code.Add(path + form.filename, new FormFile(path + form.filename, "package " + (path + form.filename).Replace("/", ".") + "\n\nstatic class "+ (path + form.filename) + " extends process{\n\tdef main(){\n\t\t\n\t}\n\tdef onStart(){\n\t\t\n\t}\n\tdef onStop(){\n\t\t\n\t}\n}"));
                         }
                         else
                         {
@@ -1922,11 +1922,26 @@ namespace JSharp
         private void fileToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             ignorNextListboxUpdate = true;
-            NewItem f = new NewItem();
-            if (f.ShowDialog() == DialogResult.OK)
+            string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
+            if (treeView1.SelectedNode != null && treeView1.SelectedNode.Checked && dir.Contains("/"))
             {
-                NewFile(f.FileName);
-                ignorNextListboxUpdate = false;
+                dir = dir.Substring(0, dir.LastIndexOf("/"));
+            }
+            string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
+            dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
+            string path = dir == "" ? "" : dir + "/";
+            if (grp == "src")
+            {
+                NewFile();
+            }
+            else
+            {
+                NewItem f = new NewItem();
+                if (f.ShowDialog() == DialogResult.OK)
+                {
+                    NewFile(f.FileName);
+                    ignorNextListboxUpdate = false;
+                }
             }
         }
         private void folderToolStripMenuItem_Click(object sender, EventArgs e)

@@ -544,6 +544,10 @@ namespace JSharp
                 {
                     output += ",\"clickEvent\":{ \"action\":\"open_url\",\"value\":" + Compiler.smartSplit(subargs[j], '=', 1)[1] + "}";
                 }
+                else if (subargs[j].StartsWith("font"))
+                {
+                    output += ",\"font\":" + Compiler.smartSplit(subargs[j], '=', 1)[1];
+                }
                 else if (subargs[j] == "bold")
                     output += ",\"bold\":true";
 
