@@ -4037,7 +4037,7 @@ namespace JSharp
                     value = compVarReplace(value);
                 string[] argget = getArgs(value);
                 string newvalue = compVarReplace(argget[0]);
-                if (!newvalue.Contains(":")) newvalue = "minecraft:" + newvalue;
+                newvalue = namespaced(newvalue);
                 context.compVal[context.compVal.Count - 1][name] = newvalue;
                 return "";
             }
@@ -5614,7 +5614,8 @@ namespace JSharp
         public static string InstBlockTag(string text)
         {
             string[] field = smartSplit(text, '=');
-            field[1] = smartEmpty(field[1]);
+            if (field.Length > 1)
+                field[1] = smartEmpty(field[1]);
             string[] subfields = smartSplit(field[0].ToLower(), ' ').Where(x => x != "").ToArray();
             string name = (compilerSetting.tagsFolder ? context.GetVar() : "") +
                             subfields.Last();
@@ -5623,10 +5624,15 @@ namespace JSharp
 
             if (field.Length > 1)
             {
+
                 if (blockTags.ContainsKey(name))
                 {
-                    foreach (string value in smartSplit(field[1].ToLower(), ','))
+                    foreach (string val in smartSplit(field[1].ToLower(), ','))
                     {
+                        string value = val;
+                        if (value.StartsWith("#") && !value.StartsWith("#minecraft:"))
+                            value = "#"+ Core.FormatTagsPath(context.GetBlockTags(value.Substring(1)));
+
                         if (value.StartsWith("-"))
                         {
                             if (blockTags[name].values.Contains(value.Substring(1, value.Length - 1)))
@@ -5646,7 +5652,13 @@ namespace JSharp
                 }
                 else
                 {
-                    blockTags.Add(name, new TagsList(new List<string>(smartSplit(field[1].ToLower(), ','))));
+                    var values = smartSplit(field[1].ToLower(), ',').Select(x =>
+                    {
+                        if (x.StartsWith("#") && !x.StartsWith("#minecraft:"))
+                            x = "#" + Core.FormatTagsPath(context.GetBlockTags(x.Substring(1)));
+                        return x;
+                    }).ToList();
+                    blockTags.Add(name, new TagsList(values));
                 }
             }
             else if (!blockTags.ContainsKey(name))
@@ -5658,7 +5670,8 @@ namespace JSharp
         public static string InstEntityTag(string text)
         {
             string[] field = smartSplit(text, '=');
-            field[1] = smartEmpty(field[1]);
+            if (field.Length > 1)
+                field[1] = smartEmpty(field[1]);
             string[] subfields = smartSplit(field[0].ToLower(), ' ').Where(x => x != "").ToArray();
             string name = (compilerSetting.tagsFolder ? context.GetVar() : "") +
                             subfields.Last();
@@ -5669,8 +5682,12 @@ namespace JSharp
             {
                 if (entityTags.ContainsKey(name))
                 {
-                    foreach (string value in smartSplit(field[1].ToLower(), ','))
+                    foreach (string val in smartSplit(field[1].ToLower(), ','))
                     {
+                        string value = val;
+                        if (value.StartsWith("#") && !value.StartsWith("#minecraft:"))
+                            value = "#" + Core.FormatTagsPath(context.GetEntityTags(value.Substring(1)));
+
                         if (value.StartsWith("-"))
                         {
                             if (entityTags[name].values.Contains(value.Substring(1, value.Length - 1)))
@@ -5690,7 +5707,13 @@ namespace JSharp
                 }
                 else
                 {
-                    entityTags.Add(name, new TagsList(new List<string>(smartSplit(field[1].ToLower(), ','))));
+                    var values = smartSplit(field[1].ToLower(), ',').Select(x =>
+                    {
+                        if (x.StartsWith("#") && !x.StartsWith("#minecraft:"))
+                            x = "#" + Core.FormatTagsPath(context.GetBlockTags(x.Substring(1)));
+                        return x;
+                    }).ToList();
+                    entityTags.Add(name, new TagsList(values));
                 }
             }
             else if (!entityTags.ContainsKey(name))
@@ -5702,7 +5725,8 @@ namespace JSharp
         public static string InstItemTag(string text)
         {
             string[] field = smartSplit(text, '=');
-            field[1] = smartEmpty(field[1]);
+            if (field.Length > 1)
+                field[1] = smartEmpty(field[1]);
             string[] subfields = smartSplit(field[0].ToLower(), ' ').Where(x => x != "").ToArray();
             string name = (compilerSetting.tagsFolder ? context.GetVar() : "") +
                             subfields.Last();
@@ -5713,8 +5737,11 @@ namespace JSharp
             {
                 if (itemTags.ContainsKey(name))
                 {
-                    foreach (string value in smartSplit(field[1].ToLower(), ','))
+                    foreach (string val in smartSplit(field[1].ToLower(), ','))
                     {
+                        string value = val;
+                        if (value.StartsWith("#") && !value.StartsWith("#minecraft:"))
+                            value = "#" + Core.FormatTagsPath(context.GetBlockTags(value.Substring(1)));
                         if (value.StartsWith("-"))
                         {
                             if (itemTags[name].values.Contains(value.Substring(1, value.Length - 1)))
@@ -5734,7 +5761,13 @@ namespace JSharp
                 }
                 else
                 {
-                    itemTags.Add(name, new TagsList(new List<string>(smartSplit(field[1].ToLower(), ','))));
+                    var values = smartSplit(field[1].ToLower(), ',').Select(x =>
+                    {
+                        if (x.StartsWith("#") && !x.StartsWith("#minecraft:"))
+                            x = "#" + Core.FormatTagsPath(context.GetBlockTags(x.Substring(1)));
+                        return x;
+                    }).ToList();
+                    itemTags.Add(name, new TagsList(values));
                 }
             }
             else if (!itemTags.ContainsKey(name))
@@ -5765,6 +5798,7 @@ namespace JSharp
                 File fFile = new File(context.GetFile() + "s_" + wID, "", "switch");
                 context.Sub("s_" + wID, fFile);
                 files.Add(fFile);
+                autoIndent(fText, true);
                 return "";
             }
             else
@@ -8091,22 +8125,25 @@ namespace JSharp
             string value = text.Substring(getOpenCharIndex(text, '['), text.LastIndexOf(']') - getOpenCharIndex(text, '[') + 1);
             return new MatchCustom(getOpenCharIndex(text, '['), value);
         }
-        public static void autoIndent(string text)
+        public static void autoIndent(string text, bool noAuto = false)
         {
             if (text.Contains("{") && smartEndWith(text, "}"))
             {
                 preparseLine(getCodeBlock(text));
                 preparseLine("}");
-                autoIndented = 0;
+                if (!noAuto)
+                    autoIndented = 0;
             }
             else if (text.Contains("{") && !smartEndWith(text, "{") && !smartEndWith(text, "}"))
             {
                 preparseLine(getCodeBlock(text + "}"));
-                autoIndented = 2;
+                if (!noAuto)
+                    autoIndented = 2;
             }
             else if (!smartEndWith(text, "{"))
             {
-                autoIndented = 2;
+                if (!noAuto)
+                    autoIndented = 2;
             }
         }
         public static int getOpenCharIndex(string text, char d)
@@ -8354,6 +8391,12 @@ namespace JSharp
             }
             else
                 return src.Substring(0, src.Length - 1) + "," + text + "}";
+        }
+        public static string namespaced(string text)
+        {
+            if (!text.Contains(":") && !text.StartsWith("#")) text = "minecraft:" + text;
+            if (!text.Contains(":") && text.StartsWith("#")) text = "#minecraft:" + text.Substring(1);
+            return text;
         }
         #endregion
 
