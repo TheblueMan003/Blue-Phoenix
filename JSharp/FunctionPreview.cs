@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -247,6 +248,44 @@ namespace JSharp
                             ).Aggregate((x, y) => x + y);
                 }
             }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            string text = "";
+            
+                JsonSerializerSettings setting = new JsonSerializerSettings();
+                setting.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+
+                if (listBox1.SelectedIndex > -1)
+                {
+                    if (Functions != null)
+                    {
+                        text = JsonConvert.SerializeObject(Functions[listBox1.SelectedItem.ToString()], setting);
+                    }
+                    if (Structures != null)
+                    {
+                        text = JsonConvert.SerializeObject(Structures[listBox1.SelectedItem.ToString()], setting);
+                    }
+                    if (Variables != null)
+                    {
+                        text = JsonConvert.SerializeObject(Variables[listBox1.SelectedItem.ToString()], setting);
+                    }
+                    if (Enums != null)
+                    {
+                        text = JsonConvert.SerializeObject(Enums[listBox1.SelectedItem.ToString()], setting);
+                    }
+                    if (Tags != null)
+                    {
+                        text = JsonConvert.SerializeObject(Tags[listBox1.SelectedItem.ToString()], setting);
+                    }
+                    if (Predicates != null)
+                    {
+                        text = JsonConvert.SerializeObject(Predicates[listBox1.SelectedItem.ToString()], setting);
+                    }
+                }
+                Clipboard.SetText(text);
+            
         }
     }
 }

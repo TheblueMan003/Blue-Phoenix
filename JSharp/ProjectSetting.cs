@@ -46,6 +46,7 @@ namespace JSharp
             FunctionTagOptiBox.Checked = compilerSetting.opti_FunctionTagsReplace;
             ShowExceptionBox.Checked = compilerSetting.opti_ShowException;
             ShowDebugBox.Checked = compilerSetting.opti_ShowDebug;
+            FileCleanUp.Checked = compilerSetting.opti_FileCleanUp;
 
             GenMAPSFile.Checked = compilerSetting.generateMAPSFile;
             GenReadMeFile.Checked = compilerSetting.generateREADMEFile;
@@ -104,6 +105,7 @@ namespace JSharp
                 compilerSetting.opti_FunctionTagsReplace = FunctionTagOptiBox.Checked;
                 compilerSetting.opti_ShowException = ShowExceptionBox.Checked;
                 compilerSetting.opti_ShowDebug = ShowDebugBox.Checked;
+                compilerSetting.opti_FileCleanUp = FileCleanUp.Checked;
 
                 compilerSetting.generateMAPSFile = GenMAPSFile.Checked;
                 compilerSetting.generateREADMEFile = GenReadMeFile.Checked;

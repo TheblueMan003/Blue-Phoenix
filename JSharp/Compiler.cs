@@ -7,6 +7,7 @@ using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -134,6 +135,7 @@ namespace JSharp
         private static Regex blocktagReg = new Regex(@"^blocktags\s+[\.\w]+\s*=");
         private static Regex entitytagReg = new Regex(@"^entitytags\s+[\.\w]+\s*=");
         private static Regex itemtagReg = new Regex(@"^itemtags\s+[\.\w]+\s*=");
+        private static Regex smartClassReg = new Regex(@"^\w+\s+[\.\w]+\s*(\w+\s+)*{");
         private static Regex varInstReg = new Regex(@"^[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[[\w=\+\-\*\/\(\)\%\s]+\])*\s+[\w\$\.]+\s*");
         private static Regex compVarInstReg = new Regex(@"^[\w\.]+(<\(?[@\w]*\)?,?\(?\w*\)?>)?(\[\w+\])?\s+\$[\w\$\.]+\s*=");
         private static Regex elseReg = new Regex(@"^else\s*");
@@ -145,6 +147,7 @@ namespace JSharp
         private static Regex indexedReg = new Regex(@"^indexed\s+\$?\w+\s+\w+");
         private static Regex functionTypeReg = new Regex(@"^(\([\w\,\s=>]+\)|\w+)\s*=>\s*(\([\w\,\s=>]+\)|\w+)");
         private static Regex functionTypeRegRelaxed = new Regex(@"(\([\w\,\s=>]+\)|\w+)\s*=>\s*(\([\w\,\s=>]+\)|\w+)");
+        private static Regex functionTypeMaxReg = new Regex(@"^(.+)=([^>].+)");
         private static Regex thisReg = new Regex("\\bthis\\.");
         private static Regex thisReg2 = new Regex("\\$this\\.");
         private static Regex curriedReg = new Regex(@"([\w\.]*\(.*\)){2,100}");
@@ -662,38 +665,41 @@ namespace JSharp
                 {
                     return InstFuncDesc(text);
                 }
-                if (jsonIndent == 0 && text.StartsWith("//"))
+                if (jsonIndent == 0)
                 {
-                    return InstComment(text, true);
-                }
-                if (jsonIndent == 0 && text.StartsWith("/"))
-                {
-                    return text.Substring(1, text.Length - 1);
-                }
-                if (jsonIndent == 0 && text.StartsWith("import"))
-                {
-                    return import(text);
-                }
-                if (jsonIndent == 0 && text.StartsWith("using"))
-                {
-                    return instUsing(text);
-                }
-                if (jsonIndent == 0 && text.StartsWith("alias"))
-                {
-                    return InstAlias(text);
-                }
-                if (jsonIndent == 0 && text.StartsWith("package"))
-                {
-                    return InstPackage(text);
-                }
-                if (jsonIndent == 0 && text.Contains("\"\"\""))
-                {
-                    return InstFuncDesc(text);
-                }
-                if (jsonIndent == 0 && text.StartsWith("{"))
-                {
-                    autoIndented = 0;
-                    return parseLine(text.Substring(1, text.Length - 1));
+                    if (text.StartsWith("//"))
+                    {
+                        return InstComment(text, true);
+                    }
+                    if (text.StartsWith("/"))
+                    {
+                        return text.Substring(1);
+                    }
+                    if (text.StartsWith("import"))
+                    {
+                        return import(text);
+                    }
+                    if (text.StartsWith("using"))
+                    {
+                        return instUsing(text);
+                    }
+                    if (text.StartsWith("alias"))
+                    {
+                        return InstAlias(text);
+                    }
+                    if (text.StartsWith("package"))
+                    {
+                        return InstPackage(text);
+                    }
+                    if (text.Contains("\"\"\""))
+                    {
+                        return InstFuncDesc(text);
+                    }
+                    if (text.StartsWith("{"))
+                    {
+                        autoIndented = 0;
+                        return parseLine(text.Substring(1));
+                    }
                 }
                 if (requireReg.Match(text).Success)
                 {
@@ -713,7 +719,7 @@ namespace JSharp
                     }
                     else
                     {
-                        args = smartSplit(text.Substring(7, text.Length - 7), ',');
+                        args = smartSplit(text.Substring(7), ',');
                     }
 
                     return functionReturn(args);
@@ -749,69 +755,72 @@ namespace JSharp
                 {
                     return InstElse(text);
                 }
-                //class
-                if (jsonIndent == 0 && classReg.Match(text).Success)
+                if (jsonIndent == 0)
                 {
-                    return InstStruct(text);
-                }
-                //class
-                if (jsonIndent == 0 && text.StartsWith("extension "))
-                {
-                    return InstExtension(text);
-                }
-                //switch
-                if (jsonIndent == 0 && switchReg.Match(text).Success)
-                {
-                    string[] arg = getArgs(text);
+                    //class
+                    if (classReg.Match(text).Success)
+                    {
+                        return InstStruct(text);
+                    }
+                    //class
+                    if (text.StartsWith("extension "))
+                    {
+                        return InstExtension(text);
+                    }
+                    //switch
+                    if (switchReg.Match(text).Success)
+                    {
+                        string[] arg = getArgs(text);
 
-                    return InstSwitch(arg, text);
-                }
-                //case
-                if (jsonIndent == 0 && caseReg.Match(text).Success)
-                {
-                    string arg = getArg(text);
+                        return InstSwitch(arg, text);
+                    }
+                    //case
+                    if (caseReg.Match(text).Success)
+                    {
+                        string arg = getArg(text);
 
-                    return InstCase(arg);
-                }
-                //smart case
-                if (jsonIndent == 0 && text.Contains("->") && switches.Count > 0)
-                {
-                    return InstSmartCase(text);
-                }
-                //with
-                if (jsonIndent == 0 && withReg.Match(text).Success)
-                {
-                    string[] args = getArgs(text);
+                        return InstCase(arg);
+                    }
+                    //smart case
+                    if (text.Contains("->") && switches.Count > 0)
+                    {
+                        return InstSmartCase(text);
+                    }
+                    //with
+                    if (withReg.Match(text).Success)
+                    {
+                        string[] args = getArgs(text);
 
-                    return InstWith(args, text);
-                }
-                //at
-                if (jsonIndent == 0 && atReg.Match(text).Success)
-                {
-                    string[] args = getArgs(text);
+                        return InstWith(args, text);
+                    }
+                    //at
+                    if (atReg.Match(text).Success)
+                    {
+                        string[] args = getArgs(text);
 
-                    return InstAt(args, text);
-                }
-                //positioned
-                if (jsonIndent == 0 && positonedReg.Match(text).Success)
-                {
-                    string args = getArg(text);
+                        return InstAt(args, text);
+                    }
+                    //positioned
+                    if (positonedReg.Match(text).Success)
+                    {
+                        string args = getArg(text);
 
-                    return InstPositioned(args, text);
-                }
-                //aligned
-                if (jsonIndent == 0 && alignReg.Match(text).Success)
-                {
-                    string args = getArg(text);
+                        return InstPositioned(args, text);
+                    }
+                    //aligned
+                    if (alignReg.Match(text).Success)
+                    {
+                        string args = getArg(text);
 
-                    return InstAligned(args, text);
-                }
-                //while
-                if (jsonIndent == 0 && whileReg.Match(text).Success)
-                {
-                    string arg = getArg(text);
+                        return InstAligned(args, text);
+                    }
+                    //while
+                    if (whileReg.Match(text).Success)
+                    {
+                        string arg = getArg(text);
 
-                    return InstWhile(arg, text);
+                        return InstWhile(arg, text);
+                    }
                 }
                 //forgenerate
                 if (forgenerateReg.Match(text).Success)
@@ -821,67 +830,78 @@ namespace JSharp
                     return InstForGenerate(arg, text);
                 }
                 //for
-                if (jsonIndent == 0 && forReg.Match(text).Success)
+                if (jsonIndent == 0)
                 {
-                    string arg = getArg(text);
+                    if (forReg.Match(text).Success)
+                    {
+                        string arg = getArg(text);
 
-                    return InstFor(arg, text);
-                }
-                //enum set
-                if (jsonIndent == 0 && enumReg.Match(text).Success)
-                {
-                    return InstEnum(text);
-                }
-                //enum file
-                if (jsonIndent == 0 && enumFileReg.Match(text).Success)
-                {
-                    return InstEnumFile(text);
-                }
-                //unlinked class
-                if (jsonIndent == 0 && (unlinkedClassReg.Match(text).Success))
-                {
-                    return InstUnlinkedClass(text);
-                }
-                //function def
-                Match funMatch = funcReg.Match(text);
-                if (jsonIndent == 0 && funMatch.Success && illagal_op.All(x => x != funMatch.Groups["function_name"].Value))
-                {
-                    return InstFunc(text);
-                }
-                //blocktag set
-                if (jsonIndent == 0 && blocktagReg.Match(text).Success)
-                { 
-                    return InstBlockTag(text);
-                }
-                //entitytag set
-                if (jsonIndent == 0 && entitytagReg.Match(text).Success)
-                {
-                    return InstEntityTag(text);
-                }
-                //itemTag set
-                if (jsonIndent == 0 && itemtagReg.Match(text).Success)
-                {
-                    return InstItemTag(text);
+                        return InstFor(arg, text);
+                    }
+                    //enum set
+                    if (enumReg.Match(text).Success)
+                    {
+                        return InstEnum(text);
+                    }
+                    //enum file
+                    if (enumFileReg.Match(text).Success)
+                    {
+                        return InstEnumFile(text);
+                    }
+                    //unlinked class
+                    if (unlinkedClassReg.Match(text).Success)
+                    {
+                        return InstUnlinkedClass(text);
+                    }
+                    //function def
+                    Match funMatch = funcReg.Match(text);
+                    if (funMatch.Success && illagal_op.All(x => x != funMatch.Groups["function_name"].Value))
+                    {
+                        return InstFunc(text);
+                    }
+                    //blocktag set
+                    if (blocktagReg.Match(text).Success)
+                    {
+                        return InstBlockTag(text);
+                    }
+                    //entitytag set
+                    if (entitytagReg.Match(text).Success)
+                    {
+                        return InstEntityTag(text);
+                    }
+                    //itemTag set
+                    if (itemtagReg.Match(text).Success)
+                    {
+                        return InstItemTag(text);
+                    }
+                    //smart class
+                    if (smartClassReg.Match(text).Success)
+                    {
+                        return InstSmartClass(text);
+                    }
                 }
                 //comp int set
                 if (compVarInstReg.Match(text).Success || dualCompVar.Match(text).Success || defineReg.Match(text).Success)
                 {
                     return InstCompilerVar(text);
                 }
-                //int set
-                if (jsonIndent == 0 && (varInstReg.Match(text).Success || functionTypeReg.Match(text).Success))
+                if (jsonIndent == 0)
                 {
-                    return InstVar(text);
-                }
-                //int add
-                if (jsonIndent == 0 && smartContains(text, '='))
-                {
-                    return modVar(text);
-                }
-                //int add
-                if (jsonIndent == 0 && (text.Contains("++") || text.Contains("--")))
-                {
-                    return modVar(text.Replace("++", "+=1").Replace("--", "-=1"));
+                    //int set
+                    if (varInstReg.Match(text).Success || functionTypeReg.Match(text).Success)
+                    {
+                        return InstVar(text);
+                    }
+                    //int add
+                    if (smartContains(text, '='))
+                    {
+                        return modVar(text);
+                    }
+                    //int add
+                    if ((text.Contains("++") || text.Contains("--")))
+                    {
+                        return modVar(text.Replace("++", "+=1").Replace("--", "-=1"));
+                    }
                 }
                 //function call
                 if (text.Contains("(") && text.Contains(")") || context.IsFunction(text) || shortFuncReg.Match(text).Success)
@@ -1005,6 +1025,8 @@ namespace JSharp
                         }
                     }
                 }
+                keys.Add("$stackTrace");
+                dic.Add("$stackTrace", context.GetVar());
 
                 keys.Sort();
                 keys.Reverse();
@@ -1117,8 +1139,7 @@ namespace JSharp
         public static string desugar(string text)
         {
             text = desugarParenthis(text).Replace("$projectName", Project.ToLower())
-                                         .Replace("$projectVersion", projectVersion.ToString())
-                                         .Replace("$stackTrace", context.GetVar().ToString());
+                                         .Replace("$projectVersion", projectVersion.ToString());
             Match match;
             text = ifelseDetect(text);
 
@@ -1241,6 +1262,8 @@ namespace JSharp
         public static string functionDesugar(string text)
         {
             bool entity = text.ToUpper() == text;
+            Match m2 = functionTypeMaxReg.Match(text);
+            text = m2.Success ? m2.Groups[1].Value : text;
             Match m = functionTypeReg.Match(text);
             while (m.Success)
             {
@@ -1253,7 +1276,7 @@ namespace JSharp
                 text = regReplace(text, m, (entity ? "FUNCTION<" : "function<") + part[0].ToLower() + "," + part[1].ToLower() + ">");
                 m = functionTypeRegRelaxed.Match(text);
             }
-            return text;
+            return text+ (m2.Success?"="+m2.Groups[2].Value:"");
         }
         public static string evalDesugar(string text)
         {
@@ -2756,13 +2779,36 @@ namespace JSharp
                     if (compilerSetting.tagsFolder)
                     {
                         string[] part = args[0].Split(' ');
-                        string tag = Core.FormatTagsPath(context.GetBlockTags(part[3].Replace("#", "")));
-                        output = part[0] + " " + part[1] + " " + part[2] + " #" + tag;
+                        if (part.Length == 4)
+                        {
+                            string tag = Core.FormatTagsPath(context.GetBlockTags(part[3].Replace("#", "")));
+                            output = part[0] + " " + part[1] + " " + part[2] + " #" + tag;
+                        }
+                        else
+                        {
+                            string tag = Core.FormatTagsPath(context.GetBlockTags(part[0].Replace("#", "")));
+                            output = "~ ~ ~ #" + tag;
+                        }
                     }
                     else
                     {
                         string[] part = args[0].Split(' ');
-                        output = part[0] + " " + part[1] + " " + part[2] + " #" + Project + ":" + part[3].Replace("#", "");
+                        if (part.Length == 4)
+                        {
+                            output = part[0] + " " + part[1] + " " + part[2] + " #" + Project + ":" + part[3].Replace("#", "");
+                        }
+                        else
+                        {
+                            output = "~ ~ ~ #" + Project + ":" + part[0].Replace("#", "");
+                        }
+                    }
+                }
+                else
+                {
+                    string[] part = smartSplitJson(args[0], ' ');
+                    if (part.Length == 1)
+                    {
+                        output = "~ ~ ~ "+part[0];
                     }
                 }
                 return Core.ConditionBlock(output);
@@ -3212,9 +3258,21 @@ namespace JSharp
                 {
                     return appendPreCond(Core.CompareVariable(var, tmpI, op, selector1), pre);
                 }
-                if ((t == Type.ENUM) && enums[var.enums].valuesName.Contains(smartEmpty(arg[1]).ToLower()))
+                else if ((t == Type.ENUM) && enums[var.enums].valuesName.Contains(smartEmpty(arg[1]).ToLower()))
                 {
                     return appendPreCond(Core.CompareVariable(var, enums[var.enums].valuesName.IndexOf(smartEmpty(arg[1]).ToLower()), op, selector1), pre);
+                }
+                else if(t == Type.STRUCT)
+                {
+                    int idVal3 = If.GetEval(context.GetFun());
+
+                    pre += parseLine("bool cond_" + idVal3.ToString() + " = " + (selector1 != "" ? selector1 + "." : "") + arg[0]+"."
+                        +FunctionOpName(op)+"("+arg[1]+")");
+                    entity1 = selector1 != "";
+                    selector1 = "";
+                    var = GetVariableByName("cond_" + idVal3);
+
+                    return appendPreCond(Core.CompareVariable(var, 1, ">=", selector1), pre);
                 }
                 else if (t == Type.FLOAT && double.TryParse(arg[1], out tmpF))
                 {
@@ -3242,9 +3300,13 @@ namespace JSharp
         #region function
         public static void AddFunction(string name, Function func)
         {
-            if (cachedFunctionMap.ContainsKey(name))
+            if (cachedFunctionMap.ContainsKey(name) && !func.isAbstract)
             {
                 cachedFunctionMap.Remove(name);
+            }
+            else if (cachedFunctionMap.ContainsKey(name) && func.isAbstract)
+            {
+                return;
             }
 
             if (functions.ContainsKey(name))
@@ -4095,22 +4157,21 @@ namespace JSharp
             {
                 if (structCompVarPointer != null)
                 {
-                    value = compVarReplace(value);
+                    value = evalDesugar(compVarReplace(value));
 
-                    structCompVarPointer[name] = compVarReplace(value);
+                    structCompVarPointer[name] = evalDesugar(compVarReplace(value));
                 }
                 else if (structStack.Count > 0 && !isInStructMethod)
                 {
                     structStack.Peek().compField[name] = value;
                 }
-                
                 return "";
             }
             else if (value.Contains("$"))
             {
-                value = compVarReplace(value);
+                value = evalDesugar(compVarReplace(value));
             }
-
+            
             Type type;
             try
             {
@@ -4301,7 +4362,6 @@ namespace JSharp
 
             string orgText = text;
             text = functionDesugar(text);
-
             ca = getType(text);
 
             bool entity = orgText.ToUpper().Substring(0, 3) == orgText.Substring(0, 3);
@@ -4713,10 +4773,10 @@ namespace JSharp
 
             if (fullName.Contains("/"))
                 fullName = fullName.Substring(0, fullName.IndexOf("/")) + ":" +
-                            fullName.Substring(fullName.IndexOf("/") + 1, fullName.Length - fullName.IndexOf("/") - 1);
+                            fullName.Substring(fullName.IndexOf("/") + 1);
 
             string funcID = fullName.Replace(':', '.').Replace('/', '.');
-            string subName = fullName.Substring(fullName.IndexOf(":") + 1, fullName.Length - fullName.IndexOf(":") - 1);
+            string subName = fullName.Substring(fullName.IndexOf(":") + 1);
 
             if (isStatic)
             {
@@ -4777,6 +4837,22 @@ namespace JSharp
                         throw new Exception("Nothing to Override for " + funcID + "!");
                     }
                 }
+                else if (functions[funcID][0].isAbstract && functions[funcID][0].isStatic)
+                {
+                    Function prev = functions[funcID][0];
+                    fFile.notUsed = prev.file.notUsed;
+
+                    function.isLoading = prev.isLoading || isLoading;
+                    function.isTicking = prev.isTicking || isTicking;
+                    function.isHelper = prev.isHelper || isHelper;
+                    function.tags.AddRange(prev.tags);
+                    function.isPrivate = prev.isPrivate || isPrivate;
+                    function.isLambda = prev.isLambda || isLambda;
+                    function.isExternal = prev.isExternal || isExternal;
+                    fFile.parsed_end = prev.file.parsed;
+
+                    functions[funcID][0] = function;
+                }
                 else
                 {
                     bool contain = true;
@@ -4827,6 +4903,8 @@ namespace JSharp
                 function.isLambda = prev.isLambda || isLambda;
                 function.isExternal = prev.isExternal || isExternal;
                 fFile.parsed_end = prev.file.parsed;
+
+                functions[funcID][0] = function;
             }
             else
             {
@@ -4868,7 +4946,7 @@ namespace JSharp
             fFile.UnparsedFunctionFile = (!lazy && structStack.Count == 0 && !isAbstract) || (isStatic && !isAbstract && !lazy);
             fFile.UnparsedFunctionFileContext = isStatic? context.GetVar().Replace("__struct__", ""):context.GetVar();
 
-            if (structStack.Count > 0 && !isStatic)
+            if (structStack.Count > 0 && !isStatic && !isAbstract)
             {
                 function.file.type = "strucMethod";
                 isInStructMethod = true;
@@ -5013,41 +5091,9 @@ namespace JSharp
             else
                 funcDef.Add(subName.Replace("/", "."));
 
-            if (!(structStack.Count > 0 && !isStatic))
+            if (!(structStack.Count > 0 && !isStatic) && !(structStack.Count > 0 && structStack.Peek().isAbstract))
             {
-                if (isLoading)
-                {
-                    AddToFunctionTag(function, "loading");
-                    fFile.use();
-                    if (callStackDisplay)
-                        callTrace += "\"load\"->\"" + function.gameName + "\"\n";
-                }
-
-                if (isTicking)
-                {
-                    AddToFunctionTag(function, "ticking");
-                    fFile.use();
-                    if (callStackDisplay)
-                        callTrace += "\"main\"->\"" + function.gameName + "\"\n";
-                }
-
-                if (isHelper)
-                {
-                    fFile.use();
-                    if (callStackDisplay)
-                        callTrace += "\"helper\"->\"" + function.gameName + "\"\n";
-                }
-
-
-                foreach (string tag in tags)
-                {
-                    if (!tag.StartsWith("__"))
-                    {
-                        AddToFunctionTag(function, tag);
-                        if (callStackDisplay)
-                            callTrace += "\"@" + tag.ToLower() + "\"->\"" + function.gameName + "\"\n";
-                    }
-                }
+                function.AddToTags();
             }
             fFile.notUsed |= isInvisible;
             return "";
@@ -5938,7 +5984,7 @@ namespace JSharp
             }
             if (name == "")
                 throw new Exception("No Name for struct/class");
-            
+            string classEntity = null;
             if (isClass && functionBase != null)
             {
                 if (functionBase.StartsWith("minecraft:"))
@@ -5946,12 +5992,12 @@ namespace JSharp
                     Regex datareg = new Regex(@"(\w+:\w+)(\{.+\})");
                     string entity = functionBase;
                     string data = "{}";
-                    parseLine($"entitytags .__class_entity__ = {entity}");
                     if (datareg.Match(functionBase).Success)
                     {
                         entity = datareg.Replace(functionBase, "$1");
                         data = datareg.Replace(functionBase, "$2");
                     }
+                    classEntity = entity;
                     functionBaseFile = new File("", "");
 
                     functionBaseFile.addParsedLine("define json $data = {Tags:[\"__class__\",\"cls_trg\"]}");
@@ -5982,10 +6028,11 @@ namespace JSharp
 
             Structure stru = new Structure(name, parent, interfaces, isPrivate);
 
+            if (classEntity != null) stru.classEntity = classEntity;
             stru.isClass = isClass;
             stru.classInitBase = functionBaseFile;
             stru.isAbstract = isAbstract;
-            stru.isStatic = isStatic;
+            stru.isStatic |= isStatic;
             stru.isInterface = isInterface;
 
             try
@@ -6172,7 +6219,7 @@ namespace JSharp
         }
         public static string InstPackage(string text)
         {
-            string pck = smartEmpty(text.Substring(8, text.Length - 8).Replace(" ", ""));
+            string pck = smartEmpty(text.Substring(8));
             currentPackage = pck;
             if (currentPackage != ".")
             {
@@ -6285,9 +6332,9 @@ namespace JSharp
                 resourcespackFiles.Add(new File(name, "", "json"));
                 if (text.Contains("{"))
                 {
-                    resourcespackFiles[resourcespackFiles.Count - 1].AddLine(text.Substring(text.IndexOf("{"), text.Length - text.IndexOf("{")));
+                    resourcespackFiles[resourcespackFiles.Count - 1].AddLine(text.Substring(text.IndexOf("{")));
                 }
-                jsonIndent = text.Split('{').Length - text.Split('}').Length;
+                jsonIndent = text.Count(x => x == '{') - text.Count(x => x == '}');
                 return "";
             }
             else
@@ -6295,9 +6342,9 @@ namespace JSharp
                 jsonFiles.Add(new File(name, "", "json"));
                 if (text.Contains("{"))
                 {
-                    jsonFiles[jsonFiles.Count - 1].AddLine(text.Substring(text.IndexOf("{"), text.Length - text.IndexOf("{")));
+                    jsonFiles[jsonFiles.Count - 1].AddLine(text.Substring(text.IndexOf("{")));
                 }
-                jsonIndent = text.Split('{').Length - text.Split('}').Length;
+                jsonIndent = text.Count(x => x == '{') - text.Count(x => x == '}');
                 return "";
             }
         }
@@ -6308,12 +6355,12 @@ namespace JSharp
                 if (currentParsedFile != null && currentParsedFile.resourcespack)
                 {
                     resourcespackFiles[resourcespackFiles.Count - 1].AddLine(text);
-                    jsonIndent += text.Split('{').Length - text.Split('}').Length;
+                    jsonIndent += text.Count(x => x == '{') - text.Count(x => x == '}');
                 }
                 else
                 {
                     jsonFiles[jsonFiles.Count - 1].AddLine(text);
-                    jsonIndent += text.Split('{').Length - text.Split('}').Length;
+                    jsonIndent += text.Count(x => x == '{') - text.Count(x => x == '}');
                 }
             }
             return "";
@@ -6321,12 +6368,12 @@ namespace JSharp
         public static string InstPredicateFile(string text)
         {
             string name = smartSplit(text, ' ', 1)[1].Replace("{", "");
-            name = name.Substring(0, name.IndexOf("("));
+            name = name.Substring(0, name.IndexOf("(")).ToLower();
             string[] args = getArgs(text);
-
-            File f = new File("predicates/" + context.GetFun().ToLower() + name.ToLower(), "", "json");
-            Predicate p = new Predicate(context.GetFun().ToLower() + name.ToLower(), args, f);
-            string key = context.GetFun().Replace(":", ".").Replace("/", ".").ToLower() + name.ToLower();
+            string func = context.GetFun().ToLower();
+            File f = new File("predicates/" + func + name, "", "json");
+            Predicate p = new Predicate(func + name, args, f);
+            string key = context.GetVar().ToLower() + name;
 
             if (predicates.ContainsKey(key))
             {
@@ -6342,11 +6389,11 @@ namespace JSharp
             jsonFiles.Add(f);
             if (text.Contains("{"))
             {
-                jsonFiles[jsonFiles.Count - 1].AddLine(text.Substring(text.IndexOf("{"), text.Length - text.IndexOf("{")));
+                jsonFiles[jsonFiles.Count - 1].AddLine(text.Substring(text.IndexOf("{")));
             }
-            jsonIndent = text.Split('{').Length - text.Split('}').Length;
+            jsonIndent = text.Count(x => x=='{') - text.Count(x => x == '}');
 
-            string subName = key.Substring(key.IndexOf(".") + 1, key.Length - key.IndexOf(".") - 1);
+            string subName = key.Substring(key.IndexOf(".") + 1);
             funcDef.Add(subName);
 
             return "";
@@ -6382,6 +6429,15 @@ namespace JSharp
             string value = parseLine($"{func}{part2}");
             adjPackage.Pop();
             return value;
+        }
+        public static string InstSmartClass(string text)
+        {
+            text = smartExtract(text);
+            if (text[text.Length - 1] == '{')
+                text = text.Substring(0, text.Length - 1);
+            string[] split = smartSplitJson(text, ' ');
+            
+            return InstStruct("class "+ split.Skip(1).Aggregate((x,y)=>x+" "+y)+$" extends {split[0]}"+"{");
         }
         #endregion
 
@@ -6543,7 +6599,6 @@ namespace JSharp
             }
 
             Type type;
-            
             if (t.Split('=')[0].Contains("[") && t.Split('=')[0].Contains("]"))
             {
                 type = Type.ARRAY;
@@ -7669,25 +7724,25 @@ namespace JSharp
         }
         private static string GenerateInfo(Function func)
         {
-            string output = "#=================================================#" + '\n';
-            output += functionDesc.Replace("\"\"\"", "") + "\n";
-            output += "#" + func.gameName + "\n";
+            StringBuilder output = new StringBuilder("#=================================================#\n");
+            output.AppendLine(functionDesc.Replace("\"\"\"", ""));
+            output.AppendLine("#" + func.gameName);
             functionDesc = "";
-            output += "#Argument:" + '\n';
+            output.AppendLine("#Argument:");
 
             foreach (Argument arg in func.args)
             {
-                output += "# - " + arg.gameName + " (" + arg.name + "): " + arg.GetTypeString() + '\n';
+                output.AppendLine($"# - {arg.gameName} ({arg.name}): {arg.GetFancyTypeString()}");
             }
-            output += "#Output:" + '\n';
+            output.AppendLine("#Output:");
 
             foreach (Variable arg in func.outputs)
             {
-                output += "# - " + arg.gameName + ": " + arg.GetTypeString() + '\n';
+                output.AppendLine($"# - {arg.gameName}: {arg.GetTypeString()}");
             }
-            output += "#=================================================#" + '\n';
+            output.AppendLine("#=================================================#");
 
-            return output;
+            return output.ToString();
         }
         #endregion
 
@@ -8327,6 +8382,14 @@ namespace JSharp
                        .Replace("&", "__and__")
                        .Replace("|", "__or__");
         }
+        public static string FunctionOpName(string name)
+        {
+            if (name == "<=") return "__smaller_or_equals__";
+            if (name == "<") return "__smaller__";
+            if (name == ">=") return "__bigger_or_equals__";
+            if (name == ">") return "__bigger__";
+            throw new Exception("Unknown comparator "+name);
+        }
 
         public static List<ImpliciteVar> getImpliciteFromExpr(string text)
         {
@@ -8573,7 +8636,8 @@ namespace JSharp
             int pass = 1;
             while (changed)
             {
-                GlobalDebug("Funciton Pass: " + pass.ToString(), Color.YellowGreen);
+                if(compilerSetting.advanced_debug)
+                    GlobalDebug("Funciton Pass: " + pass.ToString(), Color.YellowGreen);
                 pass++;
                 int fi = 0;
                 changed = false;
@@ -8583,9 +8647,11 @@ namespace JSharp
                     {
                         CompiledFunction = files[fi].function;
                         DateTime fstartTime = DateTime.Now;
-                        GlobalDebug($"Start: {files[fi].function.gameName}", Color.LightGreen);
+                        if (compilerSetting.advanced_debug)
+                            GlobalDebug($"Start: {files[fi].function.gameName}", Color.LightGreen);
                         files[fi].Compile();
-                        GlobalDebug($"Compiled: {files[fi].function.gameName} {((DateTime.Now - fstartTime).TotalMilliseconds)}ms", Color.Lime);
+                        if (compilerSetting.advanced_debug)
+                            GlobalDebug($"Compiled: {files[fi].function.gameName} {((DateTime.Now - fstartTime).TotalMilliseconds)}ms", Color.Lime);
                         CompiledFunction = null;
                         changed = true;
                     }
@@ -8628,8 +8694,8 @@ namespace JSharp
             DateTime startTime = DateTime.Now;
             foreach (var f in functionTags.Keys.Select(x => CreateFunctionTag(x)))
             {
-                var lineCount = f.content.Split('\n').Length - 1;
-                if (lineCount == 1 && !f.content.StartsWith("#") && f.name != "load" && f.name != "main")
+                var lineCount = f.content.Count(x=>x=='\n');
+                if (lineCount == 1 && f.content[0] != '#' && f.name != "load" && f.name != "main")
                 {
                     foreach (File f2 in files)
                     {
@@ -8757,7 +8823,7 @@ namespace JSharp
                 newfunc.argNeeded = argNeeded;
                 newfunc.maxArgNeeded = maxArgNeeded;
 
-                if (isStatic && !isAbstract)
+                if (isStatic)
                 {
                     string path = gameName.Contains(":") ? gameName.Substring(gameName.IndexOf(":") + 1) : gameName;
 
@@ -8771,39 +8837,7 @@ namespace JSharp
 
                     AddFunction(gameName.Replace("/", ".").Replace(":", "."), newfunc);
 
-                    if (isLoading)
-                    {
-                        AddToFunctionTag(newfunc, "loading");
-                        newfunc.file.use();
-                        if (callStackDisplay)
-                            callTrace += "\"load\"->\"" + newfunc.gameName + "\"\n";
-                    }
-
-                    if (isTicking)
-                    {
-                        AddToFunctionTag(newfunc, "ticking");
-                        newfunc.file.use();
-                        if (callStackDisplay)
-                            callTrace += "\"main\"->\"" + newfunc.gameName + "\"\n";
-                    }
-
-                    if (isHelper)
-                    {
-                        newfunc.file.use();
-                        if (callStackDisplay)
-                            callTrace += "\"helper\"->\"" + newfunc.gameName + "\"\n";
-                    }
-
-
-                    foreach (string tag in tags)
-                    {
-                        if (!tag.StartsWith("__"))
-                        {
-                            AddToFunctionTag(newfunc, tag);
-                            if (callStackDisplay)
-                                callTrace += "\"@" + tag.ToLower() + "\"->\"" + newfunc.gameName + "\"\n";
-                        }
-                    }
+                    newfunc.AddToTags();
                 }
 
                 return newfunc;
@@ -8882,6 +8916,42 @@ namespace JSharp
                     return 0;
                 }
             }
+            public void AddToTags()
+            {
+                if (isLoading)
+                {
+                    AddToFunctionTag(this, "loading");
+                    file.use();
+                    if (callStackDisplay)
+                        callTrace += "\"load\"->\"" + gameName + "\"\n";
+                }
+
+                if (isTicking)
+                {
+                    AddToFunctionTag(this, "ticking");
+                    file.use();
+                    if (callStackDisplay)
+                        callTrace += "\"main\"->\"" + gameName + "\"\n";
+                }
+
+                if (isHelper)
+                {
+                    file.use();
+                    if (callStackDisplay)
+                        callTrace += "\"helper\"->\"" + gameName + "\"\n";
+                }
+
+
+                foreach (string tag in tags)
+                {
+                    if (!tag.StartsWith("__"))
+                    {
+                        AddToFunctionTag(this, tag);
+                        if (callStackDisplay)
+                            callTrace += "\"@" + tag.ToLower() + "\"->\"" + gameName + "\"\n";
+                    }
+                }
+            }
         }
         public class Structure : CompilerObject
         {
@@ -8913,6 +8983,7 @@ namespace JSharp
             public bool isInterface = false;
             public string privateContext;
             public string representContext;
+            public string classEntity;
             public Function UnlinkedClassInit;
             public string UnlinkedClassContext;
 
@@ -8921,6 +8992,7 @@ namespace JSharp
                 this.name = name;
                 this.parent = parent;
                 this.package = currentPackage;
+                
                 foreach (var inter in interfaces)
                 {
                     foreach (Variable v in inter.fields)
@@ -8944,6 +9016,7 @@ namespace JSharp
                 }
                 if (parent != null)
                 {
+                    classEntity = parent.classEntity;
                     foreach (Variable v in parent.fields)
                     {
                         string varName = context.toInternal(context.GetVar() + v.name);
@@ -8964,6 +9037,9 @@ namespace JSharp
                         Function newFun = f.CopyTo(context.GetFun().Replace("/__struct__"+name,"")+name +"/"+f.name, f.name, f.file);
                         methods.Add(newFun);
                     }
+                    if (parent.isStatic)
+                        isStatic = true;
+
                     methodsName.AddRange(parent.methodsName);
                 }
                 if (typeMaps.Count > 0)
@@ -9010,7 +9086,7 @@ namespace JSharp
             {
                 if (isStatic && !element.isStatic)
                     throw new Exception("Static Class/Struct Can only have static method.");
-                if (!element.isVirtual)
+                if (!element.isVirtual || element.isStatic)
                 {
                     methods.Add(element);
                     methodsName.Add(element.name);
@@ -9434,6 +9510,10 @@ namespace JSharp
             }
             public string generate(string v, bool entity, Variable varOwner, string instArg = null, bool parentClass = false)
             {
+                if (isClass && classEntity != null)
+                {
+                    parseLine($"entitytags .__class_entity__ = {classEntity}");
+                }
                 structGenerating = true;
                 if (isClass && parent == null && name != "object")
                 {
@@ -11110,6 +11190,7 @@ namespace JSharp
             public bool opti_ExportComment = false;
             public bool opti_ShowException = true;
             public bool opti_ShowDebug = true;
+            public bool opti_FileCleanUp = true;
             public bool advanced_debug = false;
 
             public bool isLibrary = true;
@@ -11189,12 +11270,21 @@ namespace JSharp
         public class File
         {
             public string name;
-            public string content;
+            public string content
+            {
+                get => contentbuilder.ToString();
+                set
+                {
+                    contentbuilder.Clear();
+                    contentbuilder.Append(value);
+                }
+            }
             public string abstractContent;
             public string ending;
             public string start = "";
             public bool valid = true;
             public StringBuilder scoreboardDef = new StringBuilder();
+            public StringBuilder contentbuilder = new StringBuilder();
             public List<string> parsed = new List<string>();
             public List<string> parsed_end = new List<string>();
             public bool isLazy;
@@ -11215,16 +11305,25 @@ namespace JSharp
             public Dictionary<string, string> typeMapContext = new Dictionary<string, string>();
             public bool multiUsed = false;
             public List<Dictionary<string, string>> lazyVarStack;
-
+            
+            [JsonIgnore]
+            [IgnoreDataMember]
             public Function function;
             public Switch.Case switchcase;
 
             public bool notUsed = false;
+
+            [JsonIgnore]
+            [IgnoreDataMember]
             public List<File> childs = new List<File>();
+
+            [JsonIgnore]
+            [IgnoreDataMember]
             public File parent;
 
             public File(string name, string content = "", string type = "")
             {
+                contentbuilder = new StringBuilder();
                 this.name = name;
                 this.content = content;
                 this.type = type;
@@ -11243,13 +11342,13 @@ namespace JSharp
             {
                 if (cont != "")
                 {
-                    if (!cont.EndsWith("\n"))
-                        content += cont + '\n';
+                    if (cont.EndsWith("\n"))
+                        contentbuilder.Append(cont);
                     else
-                        content += cont.Replace("\n\n", "\n");
+                        contentbuilder.AppendLine(cont);
 
                     if (cont.Contains('\n'))
-                        lineCount += cont.Split('\n').Length - 1;
+                        lineCount += cont.Count(x => x =='\n');
                     else
                         lineCount++;
                 }
@@ -11257,21 +11356,33 @@ namespace JSharp
             }
             public void AddScoreboardDefLine(string cont)
             {
-                scoreboardDef.Append(cont);
-                scoreboardDef.Append('\n');
-                //scoreboardDef = cont + '\n' + scoreboardDef;
-                if (cont.Contains('\n'))
-                    lineCount += cont.Split('\n').Length - 1;
-                else
-                    lineCount++;
+                if (cont != "")
+                {
+                    if (cont.EndsWith("\n"))
+                    {
+                        scoreboardDef.Append(cont);
+                    }
+                    else
+                    {
+                        scoreboardDef.AppendLine(cont);
+                    }
+
+                    if (cont.Contains('\n'))
+                        lineCount += cont.Count(x => x == '\n');
+                    else
+                        lineCount++;
+                }
             }
             public void AddStartLine(string cont)
             {
-                start = cont + '\n' + start;
-                if (cont.Contains('\n'))
-                    lineCount += cont.Split('\n').Length - 1;
-                else
-                    lineCount++;
+                if (cont != "" && cont != "\n")
+                {
+                    start = cont + '\n' + start;
+                    if (cont.Contains('\n'))
+                        lineCount += cont.Count(x => x == '\n');
+                    else
+                        lineCount++;
+                }
             }
 
             public void AddEndLine(string cont)
@@ -11411,20 +11522,32 @@ namespace JSharp
             }
             public virtual void Close(bool debug = false)
             {
-                content = content.Replace("run  execute", "run execute");
+                contentbuilder.Replace("run  execute", "run execute");
                 content = scoreboardDef.ToString() + start + content + ending;
                 ending = "";
                 start = "";
 
-                while (content.Contains("\n\n"))
+                if (compilerSetting.opti_FileCleanUp)
                 {
-                    content = content.Replace("\n\n", "\n");
+                    while (content.Contains("\n\n"))
+                    {
+                        contentbuilder.Replace("\n\n", "\n");
+                    }
+                    if (content.StartsWith("\n"))
+                    {
+                        content = content.Substring(1);
+                    }
                 }
-                lineCount = content.Split('\n').Length - 1;
+                lineCount = content.Count(x => x == '\n');
 
                 if (type == "struct")
                 {
                     string contentC = content;
+                    if (!structStack.Peek().methodsName.Contains("__init__"))
+                    {
+                        preparseLine("def __init__(){");
+                        preparseLine("}");
+                    }
                     preparseLine("def lazy __base_init__(){");
                     foreach(string line in contentC.Split('\n'))
                     {
@@ -11496,9 +11619,12 @@ namespace JSharp
                 {
                     File f = context.currentFile();
                     string tmp = switches.Pop().Compile();
-                    while (tmp.Contains("\n\n"))
+                    if (compilerSetting.opti_FileCleanUp)
                     {
-                        tmp = tmp.Replace("\n\n", "\n");
+                        while (tmp.Contains("\n\n"))
+                        {
+                            tmp = tmp.Replace("\n\n", "\n");
+                        }
                     }
                     f.AddLine(tmp);
 
@@ -11541,7 +11667,7 @@ namespace JSharp
                 if (adjPackageClear)
                     adjPackage.Pop();
 
-                if (type == "if" || type == "case" || type == "with")
+                if ((type == "if" || type == "case" || type == "with") && compilerSetting.opti_FileCleanUp)
                 {
                     bool found = false;
                     if (dedupFiles.ContainsKey(content.GetHashCode()))
@@ -11589,10 +11715,6 @@ namespace JSharp
 
             public void addParsedLine(string a)
             {
-                if (a.Contains("\\compiler\\"))
-                {
-                    a = a.Replace("\\compiler\\", "");
-                }
                 parsed.Add(a);
             }
 
@@ -11743,6 +11865,11 @@ namespace JSharp
             public string fakeContext;
             public List<List<ImpliciteVar>> impliciteVars = new List<List<ImpliciteVar>>();
             private string[] funcSplitter = Core.FileNameSplitter();
+            private string cachedFun;
+            private string cachedVar;
+            private string cachedFile;
+
+
             public Context(string project, File f)
             {
                 directories.Add(project);
@@ -11767,6 +11894,7 @@ namespace JSharp
 
             public void Sub(string file, File f)
             {
+                ClearCache();
                 File cur = null;
                 cur = currentFile();
                 directories.Add(file);
@@ -11779,6 +11907,7 @@ namespace JSharp
             }
             public void Parent()
             {
+                ClearCache();
                 if (directories.Count > 1)
                 {
                     directories.RemoveAt(directories.Count - 1);
@@ -11791,6 +11920,7 @@ namespace JSharp
             }
             public void GoRoot()
             {
+                ClearCache();
                 while (directories.Count > 1)
                 {
                     directories.RemoveAt(directories.Count - 1);
@@ -11836,6 +11966,7 @@ namespace JSharp
             }
             public File Package(string package)
             {
+                ClearCache();
                 while (directories.Count > 1)
                 {
                     directories.RemoveAt(directories.Count - 1);
@@ -11846,29 +11977,49 @@ namespace JSharp
 
                 return null;
             }
+            private void ClearCache()
+            {
+                cachedFun = null;
+                cachedVar = null;
+                cachedFile = null;
+            }
 
             public string GetFile()
             {
-                string output = "";
-
-                for (int i = 1; i < directories.Count; i++)
+                if (cachedFile != null)
                 {
-                    output += directories[i].ToLower() + "/";
+                    return cachedFile;
                 }
+                else
+                {
+                    string output = "";
 
-                return output;
+                    for (int i = 1; i < directories.Count; i++)
+                    {
+                        output += directories[i].ToLower() + "/";
+                    }
+                    cachedFile = output;
+                    return output;
+                }
             }
 
             public string GetFun()
             {
-                string output = directories[0].ToLower() + funcSplitter[0];
-
-                for (int i = 1; i < directories.Count; i++)
+                if (cachedFun != null)
                 {
-                    output += directories[i].ToLower() + funcSplitter[1];
+                    return cachedFun;
                 }
+                else
+                {
+                    string output = directories[0].ToLower() + funcSplitter[0];
 
-                return output;
+                    for (int i = 1; i < directories.Count; i++)
+                    {
+                        output += directories[i].ToLower() + funcSplitter[1];
+                    }
+                    cachedFun = output;
+                    return output;
+                }
             }
 
             public string getRoot()
@@ -11880,14 +12031,21 @@ namespace JSharp
             {
                 if (fakeContext != null && fakeContext != "")
                     return fakeContext;
-                string output = directories[0] + ".";
-
-                for (int i = 1; i < directories.Count; i++)
+                if (cachedVar != null)
                 {
-                    output += directories[i] + ".";
+                    return cachedVar;
                 }
+                else 
+                { 
+                    string output = directories[0] + ".";
 
-                return output;
+                    for (int i = 1; i < directories.Count; i++)
+                    {
+                        output += directories[i] + ".";
+                    }
+                    cachedVar = output;
+                    return output;
+                }
             }
 
             public string GetInput()
@@ -12370,7 +12528,7 @@ namespace JSharp
                 if (m.Success && !m.Value.Contains(":"))
                 {
                     string tag = GetEntityTags(m.Value.Split('#')[1]);
-                    value = regReplace(value, m, "type=#" + Core.FormatTagsPath(tag));
+                    value = regReplace(value, m, "type=#" + Core.FormatTagsPath(tag.Contains(".")?tag:(Project + "." +tag)));
                 }
                 return value;
             }
