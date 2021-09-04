@@ -1737,7 +1737,17 @@ namespace JSharp
                 string output = "";
                 for (int i = 0; i < left.Length; i++)
                 {
-                    output += parseLine("if (" + left[i] + "==null){" + left[i] + "=" + right[i % right.Length] + "}") + "\n";
+                    var v = GetVariableByName(left[i]);
+                    if (v.type == Type.ARRAY)
+                    {
+                        for (int j = 0; j < v.arraySize; j++)
+                        {
+                            output += parseLine($"if ({left[i]}.{j}==null)"+"{" + left[i] + $".{j}=" + right[i % right.Length] + "}") + "\n";
+                        }
+                    }
+                    else {
+                        output += parseLine("if (" + left[i] + "==null){" + left[i] + "=" + right[i % right.Length] + "}") + "\n";
+                    }
                 }
                 return output;
             }
@@ -4674,8 +4684,7 @@ namespace JSharp
             bool isPrefix = false;
 
             string arg = getArg(smartSplit(text, ':')[0]);
-            string[] args = smartSplit(arg, ',');
-
+            string[] args = smartSplitJson(arg, ',');
 
             List<string> outputType = new List<string>();
             List<string> tags = new List<string>();
@@ -4761,6 +4770,13 @@ namespace JSharp
                         getType(functionDesugar(funArgType[i]));
                         outputType.Add(funArgType[i]);
                     }
+                }
+            }
+            for (int i = 0; i < args.Length && !lazy; i++)
+            {
+                if (args[0].Contains("$"))
+                {
+                    lazy = true;
                 }
             }
             if (structStack.Count > 0)
