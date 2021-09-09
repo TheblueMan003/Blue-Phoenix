@@ -134,6 +134,7 @@
       <DependentUpon>EffectForm.cs</DependentUpon>
     </Compile>
     <Compile Include="EnumConverter.cs" />
+    <Compile Include="ExpressionTokenizer.cs" />
     <Compile Include="FilePreview.cs">
       <SubType>Form</SubType>
     </Compile>

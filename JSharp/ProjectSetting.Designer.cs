@@ -68,12 +68,13 @@
             this.label14 = new System.Windows.Forms.Label();
             this.AuthorsBox = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.FileCleanUp = new System.Windows.Forms.CheckBox();
             this.GenMAPSFile = new System.Windows.Forms.CheckBox();
             this.GenReadMeFile = new System.Windows.Forms.CheckBox();
             this.ShowDebugBox = new System.Windows.Forms.CheckBox();
             this.ShowExceptionBox = new System.Windows.Forms.CheckBox();
             this.FunctionTagOptiBox = new System.Windows.Forms.CheckBox();
-            this.FileCleanUp = new System.Windows.Forms.CheckBox();
+            this.ShowComments = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -483,6 +484,7 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.ShowComments);
             this.groupBox2.Controls.Add(this.FileCleanUp);
             this.groupBox2.Controls.Add(this.GenMAPSFile);
             this.groupBox2.Controls.Add(this.GenReadMeFile);
@@ -500,6 +502,16 @@
             this.groupBox2.TabIndex = 26;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Optimisation";
+            // 
+            // FileCleanUp
+            // 
+            this.FileCleanUp.AutoSize = true;
+            this.FileCleanUp.Location = new System.Drawing.Point(6, 160);
+            this.FileCleanUp.Name = "FileCleanUp";
+            this.FileCleanUp.Size = new System.Drawing.Size(89, 17);
+            this.FileCleanUp.TabIndex = 29;
+            this.FileCleanUp.Text = "File Clean Up";
+            this.FileCleanUp.UseVisualStyleBackColor = true;
             // 
             // GenMAPSFile
             // 
@@ -551,15 +563,15 @@
             this.FunctionTagOptiBox.Text = "Function Tags Replace";
             this.FunctionTagOptiBox.UseVisualStyleBackColor = true;
             // 
-            // FileCleanUp
+            // ShowComments
             // 
-            this.FileCleanUp.AutoSize = true;
-            this.FileCleanUp.Location = new System.Drawing.Point(6, 160);
-            this.FileCleanUp.Name = "FileCleanUp";
-            this.FileCleanUp.Size = new System.Drawing.Size(89, 17);
-            this.FileCleanUp.TabIndex = 29;
-            this.FileCleanUp.Text = "File Clean Up";
-            this.FileCleanUp.UseVisualStyleBackColor = true;
+            this.ShowComments.AutoSize = true;
+            this.ShowComments.Location = new System.Drawing.Point(6, 229);
+            this.ShowComments.Name = "ShowComments";
+            this.ShowComments.Size = new System.Drawing.Size(105, 17);
+            this.ShowComments.TabIndex = 30;
+            this.ShowComments.Text = "Show Comments";
+            this.ShowComments.UseVisualStyleBackColor = true;
             // 
             // ProjectSetting
             // 
@@ -652,5 +664,6 @@
         private System.Windows.Forms.CheckBox GenMAPSFile;
         private System.Windows.Forms.CheckBox GenReadMeFile;
         private System.Windows.Forms.CheckBox FileCleanUp;
+        private System.Windows.Forms.CheckBox ShowComments;
     }
 }

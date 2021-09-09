@@ -47,6 +47,7 @@ namespace JSharp
             ShowExceptionBox.Checked = compilerSetting.opti_ShowException;
             ShowDebugBox.Checked = compilerSetting.opti_ShowDebug;
             FileCleanUp.Checked = compilerSetting.opti_FileCleanUp;
+            ShowComments.Checked = compilerSetting.opti_ExportComment;
 
             GenMAPSFile.Checked = compilerSetting.generateMAPSFile;
             GenReadMeFile.Checked = compilerSetting.generateREADMEFile;
@@ -106,6 +107,7 @@ namespace JSharp
                 compilerSetting.opti_ShowException = ShowExceptionBox.Checked;
                 compilerSetting.opti_ShowDebug = ShowDebugBox.Checked;
                 compilerSetting.opti_FileCleanUp = FileCleanUp.Checked;
+                compilerSetting.opti_ExportComment = ShowComments.Checked;
 
                 compilerSetting.generateMAPSFile = GenMAPSFile.Checked;
                 compilerSetting.generateREADMEFile = GenReadMeFile.Checked;
