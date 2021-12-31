@@ -68,13 +68,14 @@
             this.label14 = new System.Windows.Forms.Label();
             this.AuthorsBox = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.ShowComments = new System.Windows.Forms.CheckBox();
             this.FileCleanUp = new System.Windows.Forms.CheckBox();
             this.GenMAPSFile = new System.Windows.Forms.CheckBox();
             this.GenReadMeFile = new System.Windows.Forms.CheckBox();
             this.ShowDebugBox = new System.Windows.Forms.CheckBox();
             this.ShowExceptionBox = new System.Windows.Forms.CheckBox();
             this.FunctionTagOptiBox = new System.Windows.Forms.CheckBox();
-            this.ShowComments = new System.Windows.Forms.CheckBox();
+            this.RandomLambdaID = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -194,6 +195,7 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
+            this.groupBox1.Controls.Add(this.RandomLambdaID);
             this.groupBox1.Controls.Add(this.CompilerCore_Box);
             this.groupBox1.Controls.Add(this.label12);
             this.groupBox1.Controls.Add(this.LibPaths);
@@ -503,6 +505,16 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Optimisation";
             // 
+            // ShowComments
+            // 
+            this.ShowComments.AutoSize = true;
+            this.ShowComments.Location = new System.Drawing.Point(6, 229);
+            this.ShowComments.Name = "ShowComments";
+            this.ShowComments.Size = new System.Drawing.Size(105, 17);
+            this.ShowComments.TabIndex = 30;
+            this.ShowComments.Text = "Show Comments";
+            this.ShowComments.UseVisualStyleBackColor = true;
+            // 
             // FileCleanUp
             // 
             this.FileCleanUp.AutoSize = true;
@@ -563,15 +575,15 @@
             this.FunctionTagOptiBox.Text = "Function Tags Replace";
             this.FunctionTagOptiBox.UseVisualStyleBackColor = true;
             // 
-            // ShowComments
+            // RandomLambdaID
             // 
-            this.ShowComments.AutoSize = true;
-            this.ShowComments.Location = new System.Drawing.Point(6, 229);
-            this.ShowComments.Name = "ShowComments";
-            this.ShowComments.Size = new System.Drawing.Size(105, 17);
-            this.ShowComments.TabIndex = 30;
-            this.ShowComments.Text = "Show Comments";
-            this.ShowComments.UseVisualStyleBackColor = true;
+            this.RandomLambdaID.AutoSize = true;
+            this.RandomLambdaID.Location = new System.Drawing.Point(9, 172);
+            this.RandomLambdaID.Name = "RandomLambdaID";
+            this.RandomLambdaID.Size = new System.Drawing.Size(121, 17);
+            this.RandomLambdaID.TabIndex = 31;
+            this.RandomLambdaID.Text = "Lambda Random ID";
+            this.RandomLambdaID.UseVisualStyleBackColor = true;
             // 
             // ProjectSetting
             // 
@@ -665,5 +677,6 @@
         private System.Windows.Forms.CheckBox GenReadMeFile;
         private System.Windows.Forms.CheckBox FileCleanUp;
         private System.Windows.Forms.CheckBox ShowComments;
+        private System.Windows.Forms.CheckBox RandomLambdaID;
     }
 }

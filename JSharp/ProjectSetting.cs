@@ -51,6 +51,7 @@ namespace JSharp
 
             GenMAPSFile.Checked = compilerSetting.generateMAPSFile;
             GenReadMeFile.Checked = compilerSetting.generateREADMEFile;
+            RandomLambdaID.Checked = compilerSetting.randomLambdaID;
 
             HighlighEnum_Box.Checked = Formatter.showEnumValue;
             HighlighFunction_Box.Checked = Formatter.showFunc;
@@ -90,6 +91,7 @@ namespace JSharp
                 compilerSetting.rppackformat = int.Parse(RPPackFormat_Box.Text);
                 compilerSetting.removeUselessFile = RMFileBox.Checked;
                 compilerSetting.tagsFolder = PathTags.Checked;
+                compilerSetting.randomLambdaID = RandomLambdaID.Checked;
 
                 compilerSetting.scoreboardValue = ValueScoreboardBox.Text.Replace(" ", "").Replace("\t", "");
                 compilerSetting.scoreboardConst = ConstScoreboardBox.Text.Replace(" ", "").Replace("\t", "");

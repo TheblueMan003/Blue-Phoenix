@@ -29,6 +29,14 @@ fall_distance = FallDistance = float
 food = foodLevel = float
 hurt_time = HurtTime = float
 
+wandering_target_x = WanderTarget.X = int
+wandering_target_y = WanderTarget.Y = int
+wandering_target_z = WanderTarget.Z = int
+
+wandering_target[0] = WanderTarget.X = int
+wandering_target[1] = WanderTarget.Y = int
+wandering_target[2] = WanderTarget.Z = int
+
 uuid_0 = UUID[0] = int
 uuid_1 = UUID[1] = int
 uuid_2 = UUID[2] = int

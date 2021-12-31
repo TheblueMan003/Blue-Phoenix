@@ -597,11 +597,13 @@ namespace JSharp
             {
                 if (!Directory.Exists(Path.GetDirectoryName(projectPath) + "/resourcespack"))
                 {
-                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/textures/block");
-                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/textures/item");
-                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/sounds");
-                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/models");
-                    Directory.CreateDirectory(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/font");
+                    SafeWriteFile(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/textures/block/generator.bps","");
+                    SafeWriteFile(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/textures/item/generator.bps","");
+                    SafeWriteFile(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/sounds/generator.bps", "");
+                    SafeWriteFile(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/models/item/generator.bps","");
+                    SafeWriteFile(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/models/block/generator.bps", "");
+                    SafeWriteFile(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/font/generator.bps", "");
+
 
                     string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
                     SafeCopy(path + "/assets/pack.png", Path.GetDirectoryName(projectPath) + "/resourcespack/pack.png");
@@ -867,12 +869,13 @@ namespace JSharp
             {
                 projectName = path==null?form.ProjectName.ToLower().Replace(" ",""): path+"/project.tbms";
                 compilerSetting = new Compiler.CompilerSetting();
-                compilerSetting.packformat = 7;
-                compilerSetting.rppackformat = 7;
+                compilerSetting.packformat = 8;
+                compilerSetting.rppackformat = 8;
                 compilerSetting.MCVersion = form.MCVersion;
                 compilerSetting.libraryFolder.Add("./lib/1_17/");
                 compilerSetting.libraryFolder.Add("./lib/1_16_5/");
                 compilerSetting.libraryFolder.Add("./lib/shared/");
+                compilerSetting.randomLambdaID = true;
 
                 Text = projectName + " - TBMScript";
 
@@ -2025,6 +2028,24 @@ namespace JSharp
                 t.Show();
             }
         }
+        private void forgenerateToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string dir = treeView1.SelectedNode != null ? treeView1.SelectedNode.FullPath : "src/";
+
+            string grp = dir.Contains("/") ? dir.Substring(0, dir.IndexOf("/")) : dir;
+            dir = dir.Contains("/") ? dir.Substring(dir.IndexOf("/") + 1, dir.Length - dir.IndexOf("/") - 1) : "";
+
+            string gloDir = Path.GetDirectoryName(projectPath) + "/resourcespack/";
+            if (grp == "resourcespack")
+            {
+                string data = File.ReadAllText(gloDir + dir);
+                SafeWriteFile(gloDir + dir.Replace(".json", ".bps"), 
+                    "forgenerate($i, ){\njsonfile "+dir.Replace(".json", "")+"{\n" + data+"\n}\n}");
+                DeleteSelectedFile();
+                FetchFilesInDirectory();
+                ReloadTree();
+            }
+        }
         #endregion
 
         #region codetree
@@ -2737,5 +2758,6 @@ namespace JSharp
                 ShowGraphviz(DebugFunctioParser.Parse(File.ReadAllText(openDebugFile.FileName)));
             }
         }
+
     }
 }

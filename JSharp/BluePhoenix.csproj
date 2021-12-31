@@ -227,6 +227,7 @@
     <Compile Include="SelectorGenerator.Designer.cs">
       <DependentUpon>SelectorGenerator.cs</DependentUpon>
     </Compile>
+    <Compile Include="SkinGetter.cs" />
     <Compile Include="SmartCommand.cs">
       <SubType>Form</SubType>
     </Compile>

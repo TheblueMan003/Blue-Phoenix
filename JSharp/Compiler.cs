@@ -41,7 +41,11 @@ namespace JSharp
         private static Dictionary<string, string> packageMap;
         private static List<Dictionary<string, string>> lazyEvalVar;
         private static Dictionary<string, List<Function>> functDelegated;
-        private static Dictionary<string, List<File>> functDelegatedFile;
+        private static Dictionary<string, HashSet<int>> functDelegatedHashed;
+        private static Dictionary<string, HashSet<Function>> functDelegatedSet;
+        private static Dictionary<string, Dictionary<Function, int>> functDelegatedMaping;
+        private static Dictionary<string, File> functDelegatedFile;
+        private static Dictionary<string, Switch> functDelegatedSwitch;
         private static Dictionary<string, string> resourceFiles;
         private static Dictionary<string, Regex> compRegexCache = new Dictionary<string, Regex>();
         public static List<string> packages;
@@ -271,7 +275,11 @@ namespace JSharp
                 constants = new Dictionary<int, Variable>();
                 constantsF = new Dictionary<int, Variable>();
                 functDelegated = new Dictionary<string, List<Function>>();
-                functDelegatedFile = new Dictionary<string, List<File>>();
+                functDelegatedFile = new Dictionary<string, File>();
+                functDelegatedSet = new Dictionary<string, HashSet<Function>>();
+                functDelegatedHashed = new Dictionary<string, HashSet<int>>();
+                functDelegatedMaping = new Dictionary<string, Dictionary<Function, int>>();
+                functDelegatedSwitch = new Dictionary<string, Switch>();
                 classOffuscationSet = new HashSet<string>();
                 imported = new HashSet<string>();
                 thisDef = new Stack<string>();
@@ -1616,7 +1624,7 @@ namespace JSharp
                 if (Directory.Exists(path + "unzip/scripts"))
                 {
                     compileFiles(Directory.EnumerateFiles(path + "unzip/scripts", "*.bps", SearchOption.AllDirectories)
-                             .Select(x => new File(x, System.IO.File.ReadAllText(x))).ToList(), false, false);
+                             .Select(x => new File(x.Replace(path + "unzip/scripts","imported").Replace("\\", "//"), System.IO.File.ReadAllText(x))).ToList(), false, false);
                 }
                 if (Directory.Exists(path + "unzip/resources"))
                 {
@@ -3849,12 +3857,19 @@ namespace JSharp
         {
             File newfFile = new File("__multiplex__/" + grp, "");
             functDelegated.Add(grp, new List<Function>());
-            functDelegatedFile.Add(grp, new List<File>() { newfFile });
+            functDelegatedHashed.Add(grp, new HashSet<int>());
+            functDelegatedSet.Add(grp, new HashSet<Function>());
+            functDelegatedMaping.Add(grp, new Dictionary<Function, int>());
+            functDelegatedFile.Add(grp, newfFile);
+
             files.Add(newfFile);
 
             if (!variables.ContainsKey("__mux__" + grp))
             {
-                AddVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
+                var v = new Variable("__mux__" + grp, "__mux__" + grp, Type.INT);
+                AddVariable("__mux__" + grp, v);
+                int wID = Switch.GetID("__mux__" + grp);
+                functDelegatedSwitch.Add(grp, new Switch(v, wID));
             }
 
             int k = 0;
@@ -3874,12 +3889,22 @@ namespace JSharp
         {
             File newfFile = new File("__multiplex__/" + grp, "");
             functDelegated.Add(grp, new List<Function>());
-            functDelegatedFile.Add(grp, new List<File>() { newfFile });
+            functDelegatedHashed.Add(grp, new HashSet<int>());
+            functDelegatedSet.Add(grp, new HashSet<Function>());
+            functDelegatedMaping.Add(grp, new Dictionary<Function, int>());
+            functDelegatedFile.Add(grp, newfFile);
             files.Add(newfFile);
+            newfFile.use();
 
             if (!variables.ContainsKey("__mux__" + grp))
             {
-                AddVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
+                var v = new Variable("__mux__" + grp, "__mux__" + grp, Type.INT);
+                AddVariable("__mux__" + grp, v);
+                if (!functDelegatedSwitch.ContainsKey(grp))
+                {
+                    int wID = Switch.GetID("__mux__" + grp);
+                    functDelegatedSwitch.Add(grp, new Switch(v, wID));
+                }
             }
 
             int k = 0;
@@ -3909,16 +3934,23 @@ namespace JSharp
 
             if (!variables.ContainsKey("__mux__" + grp))
             {
-                AddVariable("__mux__" + grp, new Variable("__mux__" + grp, "__mux__" + grp, Type.INT));
+                var v = new Variable("__mux__" + grp, "__mux__" + grp, Type.INT);
+                AddVariable("__mux__" + grp, v);
+                if (!functDelegatedSwitch.ContainsKey(grp))
+                {
+                    int wID = Switch.GetID("__mux__" + grp);
+                    functDelegatedSwitch.Add(grp, new Switch(v, wID));
+                }
             }
             Variable mux = GetVariable("__mux__" + grp);
-            int id = functDelegated[grp].IndexOf(func);
+            int id = functDelegatedMaping[grp][func];
             string cond = getCondition(mux.gameName + "== " + id.ToString());
+            
             foreach (string line in parseLine(func.gameName.Replace("/", ".").Replace(":", ".") + "(" + args + ")").Split('\n'))
             {
                 if (line != "" && !line.StartsWith("#"))
                 {
-                    fFile.AddLine(cond + line);
+                    functDelegatedSwitch[grp].Add(id.ToString(), line);
                 }
             }
             if (func.outputs.Count == 0)
@@ -3938,7 +3970,7 @@ namespace JSharp
                 string line = parseLine("__mux__." + grp + ".ret_" + i.ToString() + "=" + func.outputs[i].gameName);
                 if (line != "" && !line.StartsWith("#"))
                 {
-                    fFile.AddLine(cond + line);
+                    functDelegatedSwitch[grp].Add(id.ToString(), line);
                 }
                 i++;
             }
@@ -3946,42 +3978,17 @@ namespace JSharp
         public static void AddFunctionToGRP(Variable variable, Function func, string grp)
         {
             functDelegated[grp].Add(func);
-            List<File> fFiles = functDelegatedFile[grp];
-            muxAdding = true;
-            if ((functDelegated[grp].Count - 1) % (compilerSetting.TreeMaxSize) == 0 && functDelegated[grp].Count > 1)
-            {
-                Variable mux = GetVariable("__mux__" + grp);
-                if (fFiles.Count == 1)
-                {
-                    string muxedFileNameInit = "__multiplex__/" + grp + "/__splitted_" + (fFiles.Count - 1).ToString();
-                    int lowerBound1 = (compilerSetting.TreeMaxSize * (fFiles.Count - 1));
-                    int upperBound1 = (compilerSetting.TreeMaxSize * fFiles.Count) - 1;
-
-                    File newfFileInit = new File(muxedFileNameInit, "");
-                    newfFileInit.AddLine(fFiles[0].content);
-                    fFiles.Add(newfFileInit);
-                    files.Add(newfFileInit);
-
-                    fFiles[0].content = "";
-
-
-                    string cond1 = getCondition(mux.gameName + "== " + lowerBound1.ToString() + ".." + upperBound1.ToString());
-                    fFiles[0].AddLine(cond1 + "function " + context.getRoot() + Core.FileNameSplitter()[0] + muxedFileNameInit);
-                }
-
-                string muxedFileName = "__multiplex__/" + grp + "/__splitted_" + (fFiles.Count - 1).ToString();
-                int lowerBound = (compilerSetting.TreeMaxSize * (fFiles.Count - 1));
-                int upperBound = (compilerSetting.TreeMaxSize * fFiles.Count) - 1;
-
-                File newfFile = new File(muxedFileName, "");
-                fFiles.Add(newfFile);
-                files.Add(newfFile);
-
-                string cond = getCondition(mux.gameName + "== " + lowerBound.ToString() + ".." + upperBound.ToString());
-                fFiles[0].AddLine(cond + "function " + context.getRoot() + Core.FileNameSplitter()[0] + muxedFileName);
+            functDelegatedSet[grp].Add(func);
+            int id = compilerSetting.randomLambdaID ? func.gameName.GetHashCode() : functDelegated[grp].Count - 1;
+            while (functDelegatedHashed[grp].Contains(id)){
+                id++;
             }
+            functDelegatedHashed[grp].Add(id);
+            functDelegatedMaping[grp].Add(func, id);
 
-            File fFile = fFiles[fFiles.Count - 1];
+
+            File fFile = functDelegatedFile[grp];
+            muxAdding = true;
             AddFunctionToGRPFile(variable, func, grp, fFile);
             muxAdding = false;
         }
@@ -3993,11 +4000,11 @@ namespace JSharp
             {
                 CreateFunctionGRP(variable, grp);
             }
-            if (!functDelegated[grp].Contains(func))
+            if (!functDelegatedSet[grp].Contains(func))
             {
                 AddFunctionToGRP(variable, func, grp);
             }
-            return functDelegated[grp].IndexOf(func);
+            return functDelegatedMaping[grp][func];
         }
         public static string CallFunctionGRP(Variable funObj, string func, string grp, string[] args, string[] outVar = null)
         {
@@ -4260,6 +4267,19 @@ namespace JSharp
                 context.compVal[context.compVal.Count - 1][name] = newvalue;
                 return "";
             }
+            if (value.StartsWith("skin"))
+            {
+                if (text.ToLower().StartsWith("define"))
+                    value = compVarReplace(value);
+                string[] argget = getArgs(value);
+                argget = argget.Select(x => isString(x) ? extractString(x) : x).ToArray();
+                currentParsedFile.name.Replace("\\", "/");
+                string folder = currentParsedFile.name.Replace("\\", "/");
+                folder = folder.Substring(0, folder.LastIndexOf("/"));
+                GlobalDebug("Downloaded skin at "+projectFolder + "/resourcespack" + folder + "/" + argget[0].ToLower() + ".png", Color.Yellow);
+                SkinGetter.GetSkin(argget[0], projectFolder + "/resourcespack"+ folder + "/" + argget[0].ToLower()+".png");
+                return "";
+            }
             if (value.StartsWith("namespace"))
             {
                 if (text.ToLower().StartsWith("namespace"))
@@ -4347,7 +4367,6 @@ namespace JSharp
             catch
             {
                 type = Type.DEFINE;
-                GlobalDebug(text.ToLower().Replace("define ", ""), Color.Yellow);
             }
 
             if (structStack.Count > 0 && !isInStructMethod)
@@ -8815,6 +8834,7 @@ namespace JSharp
             DateTime startTime = DateTime.Now;
             bool changed = true;
             int pass = 1;
+
             while (changed)
             {
                 if(compilerSetting.advanced_debug)
@@ -8839,6 +8859,16 @@ namespace JSharp
                     fi++;
                 }
             }
+
+            GlobalDebug("Funciton Delegate Tree", Color.YellowGreen);
+            foreach (string grp in functDelegated.Keys)
+            {
+                context.GoRoot();
+                context.Sub(functDelegatedFile[grp].name, functDelegatedFile[grp]);
+                var c = functDelegatedSwitch[grp].Compile();
+                functDelegatedFile[grp].AddLine(c);
+            }
+
             if (compilerSetting.advanced_debug)
                 GlobalDebug($">> Functions Created in {((DateTime.Now-startTime).TotalMilliseconds)}ms", Color.Yellow);
         }
@@ -8860,12 +8890,9 @@ namespace JSharp
         public static void MuxClose()
         {
             DateTime startTime = DateTime.Now;
-            foreach (var grp in functDelegatedFile)
+            foreach (var grp in functDelegatedFile.Keys)
             {
-                foreach (var f in grp.Value)
-                {
-                    f.Close();
-                }
+                functDelegatedFile[grp].Close();
             }
             if (compilerSetting.advanced_debug)
                 GlobalDebug($">> Mux Closed in {((DateTime.Now-startTime).TotalMilliseconds)}ms", Color.Yellow);
@@ -10903,11 +10930,11 @@ namespace JSharp
             }
             public string Compile()
             {
-                bool createVar = casesUnit.TrueForAll(x => !x.cmd.Contains("function") 
+                bool createVar = copyFrom != null && 
+                                 casesUnit.TrueForAll(x => x!=null && x.cmd != null && !x.cmd.Contains("function") 
                                                         && !(x.cmd.StartsWith("scoreboard") && x.cmd.Contains(copyFrom.scoreboard()))) &&
-                                 casesRange.TrueForAll(x => !x.cmd.Contains("function")
-                                                        && !(x.cmd.StartsWith("scoreboard") && x.cmd.Contains(copyFrom.scoreboard()))) &&
-                                 copyFrom != null;
+                                 casesRange.TrueForAll(x => x != null && x.cmd != null && !x.cmd.Contains("function")
+                                                        && !(x.cmd.StartsWith("scoreboard") && x.cmd.Contains(copyFrom.scoreboard())));
                 
                 if (createVar)
                     variable = copyFrom;
@@ -10933,7 +10960,6 @@ namespace JSharp
                 {
                     tail[i - 1] = sizes[i];
                 }
-
                 casesUnit.Sort((a, b) => a.value.CompareTo(b.value));
                 int subTreeSize = (int)Math.Max(treeBottom, Math.Pow(treeBottom, Math.Log(casesUnit.Count, treeBottom)-1));
                 if (casesUnit.Count > subTreeSize)
@@ -10956,7 +10982,8 @@ namespace JSharp
 
                         Switch s = new Switch(variable, subList(casesUnit, iMin, iMax), tail);
                         context.Sub(contName, f);
-                        f.AddLine(s.Compile(false));
+                        var content = s.Compile(false);
+                        f.AddLine(content);
                         context.Parent();
                         string cmd = "function " + funcName + '\n';
                         if (variable.type == Type.FLOAT)
@@ -10997,6 +11024,9 @@ namespace JSharp
             }
             public Case Add(string cond, string cmd)
             {
+                if (cmd == null) throw new ArgumentNullException("CMD is null");
+                if (cond == null) throw new ArgumentNullException("Cond is null");
+
                 if (variable.type == Type.ENUM)
                 {
                     if (variable.enums != null && enums[variable.enums].valuesName.Contains(smartEmpty(cond).ToLower()))
@@ -11350,6 +11380,7 @@ namespace JSharp
             public int FloatPrecision = 1000;
             public bool removeUselessFile = true;
             public bool offuscate = true;
+            public bool randomLambdaID = false;
             public string scoreboardValue = "tbms.value";
             public string scoreboardConst = "tbms.const";
             public string scoreboardTmp = "tbms.tmp";
@@ -11581,7 +11612,7 @@ namespace JSharp
                 {
                     context.compVal.Add(dic);
                 }
-
+                /*
                 if (file != null)
                 {
                     string fullName = value;
@@ -11597,7 +11628,7 @@ namespace JSharp
                 {
                     foreach (string field in enums.fieldsName)
                     {
-                        dic[var + "." + field]= enums.GetFieldOf(value, field);
+                        dic[var + "." + field] = enums.GetFieldOf(value, field);
                     }
                 }
                 else if (value.StartsWith("("))
@@ -11605,20 +11636,20 @@ namespace JSharp
                     string[] argget = getArgs(value);
                     for (int i = argget.Length - 1; i >= 0; i--)
                     {
-                        dic[var + "." + i.ToString()]= smartExtract(argget[i]);
+                        dic[var + "." + i.ToString()] = smartExtract(argget[i]);
                     }
                     dic[var + ".count"]= argget.Length.ToString();
                 }
-                dic[var]= value;
+                dic[var] = value;
                 dic[var + ".."]= value + ".";
                 dic[var + ".index"]= genIndex.ToString();
                 dic[var + ".length"]= genAmount.ToString();
-
+                */
                 File f = context.currentFile();
                 foreach (string l in parsed)
                 {
                     string line = l;
-                    /*
+                    
                     if (enums != null)
                     {
                         List<string> sortedField = new List<string>();
@@ -11642,8 +11673,8 @@ namespace JSharp
                     line = line.Replace(var + "..", value+".")
                         .Replace(var + ".index", genIndex.ToString())
                         .Replace(var + ".length", genAmount.ToString())
-                        .Replace(var, value);*/
-
+                        .Replace(var, value);
+                    
                     preparseLine(line, f);
                 }
                 if (jsonIndent == 1)
