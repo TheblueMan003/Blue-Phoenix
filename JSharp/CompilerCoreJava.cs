@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BluePhoenix;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -76,9 +77,27 @@ namespace JSharp
             if (op == "=")
                 return "scoreboard players set " + GetSelector(var, selector) + " " + value.ToString() + "\n";
             if (op == "+=")
-                return "scoreboard players add " + GetSelector(var, selector) + " " + value.ToString() + "\n";
+            {
+                if (value > 0)
+                {
+                    return "scoreboard players add " + GetSelector(var, selector) + " " + value.ToString() + "\n";
+                }
+                else
+                {
+                    return "scoreboard players remove " + GetSelector(var, selector) + " " + (-value).ToString() + "\n";
+                }
+            }
             if (op == "-=")
-                return "scoreboard players remove " + GetSelector(var, selector) + " " + value.ToString() + "\n";
+            {
+                if (value < 0)
+                {
+                    return "scoreboard players add " + GetSelector(var, selector) + " " + (-value).ToString() + "\n";
+                }
+                else
+                {
+                    return "scoreboard players remove " + GetSelector(var, selector) + " " + value.ToString() + "\n";
+                }
+            }
             if (op == "*=")
                 return "scoreboard players operation " + GetSelector(var, selector) + " *= " + GetSelector(Compiler.GetConstant(value), "") + "\n";
             if (op == "/=")
@@ -92,83 +111,84 @@ namespace JSharp
             return "scoreboard players reset " + GetSelector(var, selector) + "\n";
         }
 
-        public override string[] CompareVariable(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
+        public override Condition CompareVariable(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
         {
             if (op == "==")
                 op = "=";
-            return new string[] { "if score " + GetSelector(var1, selector1) + " " + op + " " + GetSelector(var2, selector2) + " ", "" };
+            return new SingleJavaCondition($"score {GetSelector(var1, selector1)} {op} {GetSelector(var2, selector2)}");
         }
-        public override string[] CompareVariable(Compiler.Variable var1, int value, string op, string selector1 = "")
+        public override Condition CompareVariable(Compiler.Variable var1, int value, string op, string selector1 = "")
         {
             if (op == "=" || op == "==")
             {
-                return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + value.ToString() + " ", "" };
+                return new SingleJavaCondition($"score {GetSelector(var1, selector1)} matches {value}");
             }
             else if (op == "<=")
             {
-                return new string[] { "if score " + GetSelector(var1, selector1) + " matches .." + value.ToString() + " ", "" };
+                return new SingleJavaCondition($"score {GetSelector(var1, selector1)} matches ..{value}");
             }
             else if (op == "<")
             {
-                return new string[] { "if score " + GetSelector(var1, selector1) + " matches .." + (value - 1).ToString() + " ", "" };
+                return new SingleJavaCondition($"score {GetSelector(var1, selector1)} matches ..{value-1}");
             }
             else if (op == ">=")
             {
-                return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + value.ToString() + ".. ", "" };
+                return new SingleJavaCondition($"score {GetSelector(var1, selector1)} matches {value}..");
             }
             else if (op == ">")
             {
-                return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + (value + 1).ToString() + ".. ", "" };
+                return new SingleJavaCondition($"score {GetSelector(var1, selector1)} matches {value+1}..");
             }
             else if (op == "!=")
             {
-                return new string[] { "unless score " + GetSelector(var1, selector1) + " matches " + value.ToString() + " ", "" };
+                return new SingleJavaCondition($"score {GetSelector(var1, selector1)} matches {value}", "", "", false);
             }
             else
             {
                 throw new Exception("Unundelled Operation: " + op);
             }
         }
-        public override string[] CompareVariable(Compiler.Variable var1, int value1, int value2, string selector1 = "")
+        public override Condition CompareVariable(Compiler.Variable var1, int value1, int value2, string selector1 = "")
         {
-            return new string[] { "if score " + GetSelector(var1, selector1) + " matches " + value1.ToString() + ".." + value2.ToString() + " ", "" };
+            return new SingleJavaCondition($"score {GetSelector(var1, selector1)} matches {value1}..{value2}");
         }
-        public override string[] ConditionEntity(string entity)
+        public override Condition ConditionEntity(string entity)
         {
-            return new string[] { "if entity " + entity + " ", "" };
+            return new SingleJavaCondition($"entity {entity}");
         }
-        public override string[] ConditionInverse(string[] val)
+        public override Condition ConditionInverse(Condition val)
         {
-            if (val[0].StartsWith("if "))
-            {
-                return new string[] { "unless " + val[0].Substring(3, val[0].Length - 3), val[1] };
-            }
-            else if (val[0].StartsWith("unless "))
-            {
-                return new string[] { "if " + val[0].Substring(7, val[0].Length - 7), val[1] };
-            }
-            else
-                throw new Exception("Invalid Condition" + val[0] + ";" + val[1]);
+            val.Invert();
+            return val;
         }
-        public override string[] ConditionBlock(string val)
+        public override Condition ConditionBlock(string val)
         {
             if (Compiler.smartSplit(val, ' ').Length == 1)
             {
                 val = "~ ~ ~ " + val;
             }
-            return new string[] { "if block " + val + " ", "" };
+
+            return new SingleJavaCondition($"block {val}");
         }
-        public override string[] ConditionBlocks(string val)
+        public override Condition ConditionBlocks(string val)
         {
             if (!val.EndsWith("all") && !val.EndsWith("masked"))
                 val += " all";
-            return new string[] { "if blocks " + val + " ", "" };
+            return new SingleJavaCondition($"blocks {val}");
         }
-        public override string Condition(string val)
+        public override string Condition(Condition val)
         {
-            if (val != "")
+            var cond = val.GetCondition();
+            if (cond != "")
             {
-                return "execute " + val + "run ";
+                var setup = val.GetSetup();
+                if (setup.Length > 0) {
+                    return setup.Aggregate((x, y) => $"{x}\n{y}") + "\nexecute " + cond + "run ";
+                }
+                else
+                {
+                    return "execute " + cond + "run ";
+                }
             }
             else
             {

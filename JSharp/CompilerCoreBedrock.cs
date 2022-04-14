@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BluePhoenix;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -40,18 +41,21 @@ namespace JSharp
         }
 
 
-        public override string[] CompareVariable(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
+        public override Condition CompareVariable(Compiler.Variable var1, Compiler.Variable var2, string op, string selector1 = "", string selector2 = "")
         {
+            /*
             var c = condInv++;
             var name = "__cond_bedrock__" + c.ToString();
             string def = Compiler.parseLine(var1.type.ToString().ToLower() + " " + name + " = " + var1.gameName);
             def += Compiler.parseLine(name + " -= " + var2.gameName);
             string[] res = CompareVariable(Compiler.GetVariableByName(name), 0, op, selector1);
-
             return new string[] { res[0], res[1] + "\n" + def };
+            */
+            throw new NotImplementedException();
         }
-        public override string[] CompareVariable(Compiler.Variable var1, int value, string op, string selector1 = "")
+        public override Condition CompareVariable(Compiler.Variable var1, int value, string op, string selector1 = "")
         {
+            /*
             if (op == "=" || op == "==")
                 return new string[] { "execute " + GetSelectorEntity(var1, value.ToString(), selector1) + " ~ ~ ~ ", "" };
             else if (op == "<=")
@@ -64,34 +68,48 @@ namespace JSharp
                 return new string[] { "execute " + GetSelectorEntity(var1, (value + 1).ToString() + "..", selector1) + " ~ ~ ~ ", "" };
             else
                 throw new Exception("Unsupported Operator " + op);
+            */
+            throw new NotImplementedException();
         }
-        public override string[] CompareVariable(Compiler.Variable var1, int value1, int value2, string selector1 = "")
+        public override Condition CompareVariable(Compiler.Variable var1, int value1, int value2, string selector1 = "")
         {
+            /*
             return new string[] { "execute " + GetSelectorEntity(var1, value1.ToString() + ".." + value2.ToString(), selector1) + " ~ ~ ~ ", "" };
+            */
+            throw new NotImplementedException();
         }
-        public override string Condition(string val)
+        public override string Condition(Condition val)
         {
-            return val;
+            return val.GetCondition();
         }
-        public override string[] ConditionBlock(string val)
+        public override Condition ConditionBlock(string val)
         {
+            /*
             return new string[] { "execute @s ~ ~ ~ detect " + val + " ", "" };
+            */
+            throw new NotImplementedException();
         }
-        public override string[] ConditionBlocks(string val)
+        public override Condition ConditionBlocks(string val)
         {
             throw new NotImplementedException();
         }
-        public override string[] ConditionEntity(string entity)
+        public override Condition ConditionEntity(string entity)
         {
+            /*
             return new string[] { "execute " + entity + " ~ ~ ~ ", "" };
+            */
+            throw new NotImplementedException();
         }
 
-        public override string[] ConditionInverse(string[] val)
+        public override Condition ConditionInverse(Condition val)
         {
+            /*
             var c = condInv++;
             string def = Compiler.parseLine("bool __cond_bedrock__" + c.ToString() + " = true");
             string condMod = val[0] + Compiler.parseLine("__cond_bedrock__" + c.ToString() + " = false");
             return new string[] { Compiler.getCondition("__cond_bedrock__" + c.ToString()), val[1] + "\n" + def + "\n" + condMod };
+            */
+            throw new NotImplementedException();
         }
 
         public override string DefineFunction(Compiler.Function function)

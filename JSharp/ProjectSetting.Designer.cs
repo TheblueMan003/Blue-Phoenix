@@ -40,6 +40,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.FloatPrecBox = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.RandomLambdaID = new System.Windows.Forms.CheckBox();
             this.CompilerCore_Box = new System.Windows.Forms.ComboBox();
             this.label12 = new System.Windows.Forms.Label();
             this.LibPaths = new System.Windows.Forms.TextBox();
@@ -75,7 +76,7 @@
             this.ShowDebugBox = new System.Windows.Forms.CheckBox();
             this.ShowExceptionBox = new System.Windows.Forms.CheckBox();
             this.FunctionTagOptiBox = new System.Windows.Forms.CheckBox();
-            this.RandomLambdaID = new System.Windows.Forms.CheckBox();
+            this.LambdaCleanUp = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -216,6 +217,16 @@
             this.groupBox1.TabIndex = 12;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Compiler Setting";
+            // 
+            // RandomLambdaID
+            // 
+            this.RandomLambdaID.AutoSize = true;
+            this.RandomLambdaID.Location = new System.Drawing.Point(9, 172);
+            this.RandomLambdaID.Name = "RandomLambdaID";
+            this.RandomLambdaID.Size = new System.Drawing.Size(121, 17);
+            this.RandomLambdaID.TabIndex = 31;
+            this.RandomLambdaID.Text = "Lambda Random ID";
+            this.RandomLambdaID.UseVisualStyleBackColor = true;
             // 
             // CompilerCore_Box
             // 
@@ -486,6 +497,7 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.LambdaCleanUp);
             this.groupBox2.Controls.Add(this.ShowComments);
             this.groupBox2.Controls.Add(this.FileCleanUp);
             this.groupBox2.Controls.Add(this.GenMAPSFile);
@@ -575,15 +587,15 @@
             this.FunctionTagOptiBox.Text = "Function Tags Replace";
             this.FunctionTagOptiBox.UseVisualStyleBackColor = true;
             // 
-            // RandomLambdaID
+            // LambdaCleanUp
             // 
-            this.RandomLambdaID.AutoSize = true;
-            this.RandomLambdaID.Location = new System.Drawing.Point(9, 172);
-            this.RandomLambdaID.Name = "RandomLambdaID";
-            this.RandomLambdaID.Size = new System.Drawing.Size(121, 17);
-            this.RandomLambdaID.TabIndex = 31;
-            this.RandomLambdaID.Text = "Lambda Random ID";
-            this.RandomLambdaID.UseVisualStyleBackColor = true;
+            this.LambdaCleanUp.AutoSize = true;
+            this.LambdaCleanUp.Location = new System.Drawing.Point(159, 43);
+            this.LambdaCleanUp.Name = "LambdaCleanUp";
+            this.LambdaCleanUp.Size = new System.Drawing.Size(111, 17);
+            this.LambdaCleanUp.TabIndex = 31;
+            this.LambdaCleanUp.Text = "Lambda Clean Up";
+            this.LambdaCleanUp.UseVisualStyleBackColor = true;
             // 
             // ProjectSetting
             // 
@@ -678,5 +690,6 @@
         private System.Windows.Forms.CheckBox FileCleanUp;
         private System.Windows.Forms.CheckBox ShowComments;
         private System.Windows.Forms.CheckBox RandomLambdaID;
+        private System.Windows.Forms.CheckBox LambdaCleanUp;
     }
 }

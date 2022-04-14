@@ -119,6 +119,7 @@
     <Compile Include="CompilerCore.cs" />
     <Compile Include="CompilerCoreBedrock.cs" />
     <Compile Include="CompilerCoreJava.cs" />
+    <Compile Include="Condition.cs" />
     <Compile Include="CustomPaste.cs">
       <SubType>Form</SubType>
     </Compile>

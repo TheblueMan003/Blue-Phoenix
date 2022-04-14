@@ -603,6 +603,7 @@ namespace JSharp
                     SafeWriteFile(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/models/item/generator.bps","");
                     SafeWriteFile(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/models/block/generator.bps", "");
                     SafeWriteFile(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/font/generator.bps", "");
+                    SafeWriteFile(Path.GetDirectoryName(projectPath) + "/resourcespack/assets/minecraft/blockstates/generator.bps", "");
 
 
                     string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
@@ -1362,7 +1363,7 @@ namespace JSharp
 
             List<Compiler.File> cFiles = Compiler.compile(core, projectName, files, resourcesfiles,
                                         DebugThread, compilerSetting, projectVersion,
-                                        Path.GetDirectoryName(projectPath));
+                                        Path.GetDirectoryName(projectPath)); 
 
             foreach (Compiler.File f in cFiles)
             {

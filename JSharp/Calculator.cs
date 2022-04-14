@@ -7,7 +7,7 @@ namespace JSharp
         public static float Calculate(string val)
         {
             string[] part;
-            string[] operations = new string[] { "+", "-", "%", "/", "*", "^" };
+            string[] operations = new string[] { "+", "-", "%", "/", "|", "*", "^" };
 
             string val2 = Compiler.getParenthis(val, 1);
 
@@ -36,6 +36,10 @@ namespace JSharp
                         if (xop == "/")
                         {
                             return a / b;
+                        }
+                        if (xop == "|")
+                        {
+                            return (float)Math.Floor(a / b);
                         }
                         if (xop == "-")
                         {
