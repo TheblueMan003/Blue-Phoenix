@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace JSharp
@@ -8,7 +9,7 @@ namespace JSharp
     public static class CommandParser
     {
         public static string[] funcName = new string[] { "tellraw", "title", "say", "clear", "effect", "difficulty", "gamemode", "gamerule",
-            "fill", "stopsound", "weather", "tp", "execute", "structure","magictitle"};
+            "fill", "stopsound", "weather", "tp", "execute", "structure","magictitle","magicgeneric"};
         public static string[] difficulties;
         public static string[] effects;
         public static string[] gamemodes;
@@ -72,6 +73,9 @@ namespace JSharp
 
             if (text.ToLower().StartsWith("magictitle"))
                 return parseMagicTitle(args, context, text, rec);
+
+            if (text.ToLower().StartsWith("magicgeneric"))
+                return parseMagicGeneric(args, context, text, rec);
 
             if (text.ToLower().StartsWith("tellraw"))
                 return parseTellraw(args, context, text, rec);
@@ -202,6 +206,159 @@ namespace JSharp
             }
             string[] jsonParsedGlobal = Compiler.Core.FormatJson(args, context, 3 + argIndex);
             output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + ".. run " + titleLine + jsonParsedGlobal[0] + "\n";
+            if (maxTime > -1)
+            {
+                output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + (time + maxTime).ToString() + ".. run scoreboard players set " + Compiler.GetVariableByName(args[0]).scoreboard() + " -100000\n";
+            }
+            return jsonParsedGlobal[1] + output + jsonParsedGlobal[2] + '\n';
+        }
+        public static string parseMagicGeneric(string[] args, Compiler.Context context, string text, int rec = 0)
+        {
+            int maxTime=int.Parse(Compiler.smartEmpty(args[1]));
+            int argIndex = 4;
+            int padding = int.Parse(Compiler.smartEmpty(args[2]));
+            string aligned = args[3].Trim();
+            string font = args[4];
+
+            var tmp = args.ToList();
+            tmp.Add("(\"\")");
+            args = tmp.ToArray();
+            
+            string cmd = args[argIndex+1];
+            argIndex --;
+
+            string titleLine = cmd + " ";
+            string output = "";
+            int time = 0;
+
+            for (int i = argIndex + 3; i < args.Length; i++)
+            {
+                string arg = Compiler.smartEmpty(args[i]).StartsWith("(") ? Compiler.smartEmpty(args[i].Substring(args[i].IndexOf('(') + 1, args[i].LastIndexOf(')') - args[i].IndexOf('(') - 1)) : args[i];
+                string[] subargs = Compiler.smartSplit(arg, ',');
+
+                if (subargs[0].StartsWith("\""))
+                {
+                    for (int j = 1; j < subargs[0].Length - 1; j++)
+                    {
+                        if (subargs[0][j] == '\\')
+                        {
+                            if (subargs[0][j + 1] == 'u')
+                            {
+                                while (Char.IsHighSurrogate((char)Convert.ToInt32(subargs[0].Substring(j, 6).ToUpper().Replace("\\U", "0x"), 16)))
+                                {
+                                    j += 6;
+                                }
+                                j += 5;
+                            }
+                            else
+                            {
+                                j++;
+                            }
+                        }
+
+                        string[] json = new string[i - argIndex];
+                        if (padding != -1 && aligned == "right")
+                        {
+                            json[0] = "(\"" + new String(' ', padding - time - 1) + $"\",font={font})";
+                        }
+                        else if (padding != -1 && (aligned == "middle" || aligned == "center"))
+                        {
+                            json[0] = "(\"" + new String(' ', (padding - time - 1) / 2) + $"\",font={font})";
+                        }
+                        else
+                        {
+                            json[0] = $"(\"\")";
+                        }
+
+                        for (int k = argIndex + 3; k < i; k++)
+                        {
+                            json[k - 2 - argIndex] = args[k];
+                        }
+                        json[i - 2 - argIndex] = "(\"" + subargs[0].Substring(1, j) + "\"";
+                        for (int k = 1; k < subargs.Length; k++)
+                        {
+                            json[i - 2 - argIndex] += "," + subargs[k];
+                        }
+                        json[i - 2 - argIndex] += ", font=" + font;
+                        json[i - 2 - argIndex] += ")";
+
+                        if (padding != -1 && aligned == "left")
+                        {
+                            json[i - argIndex - 1] = "(\"" + new String(' ', padding - time - 1) + $"\",font={font})";
+                        }
+                        else if (padding != -1 && (aligned == "middle" || aligned == "center"))
+                        {
+                            json[i - argIndex - 1] = "(\"" + new String(' ', (padding - time - 1) / 2) + $"\",font={font})";
+                        }
+                        else
+                        {
+                            json[i - argIndex - 1] = "(\"\")";
+                        }
+
+                        string[] jsonParsed = Compiler.Core.FormatJson(json, context, 0);
+                        if (i == args.Length-1)
+                        {
+                            output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + ".. run " + titleLine + jsonParsed[0] + "\n";
+                        }
+                        else
+                        {
+                            output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + " run " + titleLine + jsonParsed[0] + "\n";
+                        }
+                        time++;
+                    }
+                }
+                else
+                {
+                    string[] json = new string[i];
+
+                    if (padding != -1 && aligned == "right")
+                    {
+                        json[0] = "(\"" + new String(' ', padding - time - 1) + "\")";
+                    }
+                    else if (padding != -1 && (aligned == "middle" || aligned == "center"))
+                    {
+                        json[0] = "(\"" + new String(' ', (padding - time - 1)/2) + "\")";
+                    }
+                    else
+                    {
+                        json[0] = "(\"\")";
+                    }
+
+                    for (int k = argIndex + 3; k <= i; k++)
+                    {
+                        json[k - 2 - argIndex] = args[k];
+                    }
+                    if (padding != -1 && aligned == "left")
+                    {
+                        json[i - 1 - argIndex] = "(\"" + new String(' ', padding - time - 1) + "\")";
+                    }
+
+                    if (padding != -1 && aligned == "left")
+                    {
+                        json[i-1] = "(\"" + new String(' ', padding - time - 1) + "\")";
+                    }
+                    else if (padding != -1 && (aligned == "middle" || aligned == "center"))
+                    {
+                        json[i-1] = "(\"" + new String(' ', (padding - time - 1) / 2) + "\")";
+                    }
+                    else
+                    {
+                        json[i-1] = "(\"\")";
+                    }
+
+                    string[] jsonParsed = Compiler.Core.FormatJson(json, context, 0);
+                    if (i == args.Length - 1)
+                    {
+                        output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + ".. run " + titleLine + jsonParsed[0] + "\n";
+                    }
+                    else
+                    {
+                        output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + time.ToString() + " run " + titleLine + jsonParsed[0] + "\n";
+                    }
+                    time++;
+                }
+            }
+            string[] jsonParsedGlobal = Compiler.Core.FormatJson(args, context, 3 + argIndex);
             if (maxTime > -1)
             {
                 output += "execute if score " + Compiler.GetVariableByName(args[0]).scoreboard() + " matches " + (time + maxTime).ToString() + ".. run scoreboard players set " + Compiler.GetVariableByName(args[0]).scoreboard() + " -100000\n";

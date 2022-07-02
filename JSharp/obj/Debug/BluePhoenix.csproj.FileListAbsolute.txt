@@ -45,3 +45,4 @@ F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.TilemapSetting.resources
 F:\002_Software_dev\JSharp\JSharp\bin\Debug\System.ValueTuple.dll
 F:\002_Software_dev\JSharp\JSharp\bin\Debug\System.ValueTuple.xml
 F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.CustomPaste.resources
+F:\002_Software_dev\JSharp\JSharp\obj\Debug\BluePhoenix.csproj.SuggestedBindingRedirects.cache

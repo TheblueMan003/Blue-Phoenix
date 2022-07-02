@@ -69,6 +69,7 @@
             this.label14 = new System.Windows.Forms.Label();
             this.AuthorsBox = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.LambdaCleanUp = new System.Windows.Forms.CheckBox();
             this.ShowComments = new System.Windows.Forms.CheckBox();
             this.FileCleanUp = new System.Windows.Forms.CheckBox();
             this.GenMAPSFile = new System.Windows.Forms.CheckBox();
@@ -76,7 +77,6 @@
             this.ShowDebugBox = new System.Windows.Forms.CheckBox();
             this.ShowExceptionBox = new System.Windows.Forms.CheckBox();
             this.FunctionTagOptiBox = new System.Windows.Forms.CheckBox();
-            this.LambdaCleanUp = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -517,6 +517,16 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Optimisation";
             // 
+            // LambdaCleanUp
+            // 
+            this.LambdaCleanUp.AutoSize = true;
+            this.LambdaCleanUp.Location = new System.Drawing.Point(159, 43);
+            this.LambdaCleanUp.Name = "LambdaCleanUp";
+            this.LambdaCleanUp.Size = new System.Drawing.Size(111, 17);
+            this.LambdaCleanUp.TabIndex = 31;
+            this.LambdaCleanUp.Text = "Lambda Clean Up";
+            this.LambdaCleanUp.UseVisualStyleBackColor = true;
+            // 
             // ShowComments
             // 
             this.ShowComments.AutoSize = true;
@@ -586,16 +596,6 @@
             this.FunctionTagOptiBox.TabIndex = 24;
             this.FunctionTagOptiBox.Text = "Function Tags Replace";
             this.FunctionTagOptiBox.UseVisualStyleBackColor = true;
-            // 
-            // LambdaCleanUp
-            // 
-            this.LambdaCleanUp.AutoSize = true;
-            this.LambdaCleanUp.Location = new System.Drawing.Point(159, 43);
-            this.LambdaCleanUp.Name = "LambdaCleanUp";
-            this.LambdaCleanUp.Size = new System.Drawing.Size(111, 17);
-            this.LambdaCleanUp.TabIndex = 31;
-            this.LambdaCleanUp.Text = "Lambda Clean Up";
-            this.LambdaCleanUp.UseVisualStyleBackColor = true;
             // 
             // ProjectSetting
             // 

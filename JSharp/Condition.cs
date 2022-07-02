@@ -125,14 +125,15 @@ namespace BluePhoenix
         public override void Invert()
         {
             if_ = !if_;
+            conditions.ForEach(x => x.Invert());
         }
     }
 
     public static class StringArrayExtension
     {
-        public static string LinesToText(this string[] str, string joint, bool atEnd = false)
+        public static string LinesToText(this IEnumerable<string> str, string joint, bool atEnd = false)
         {
-            if (str.Length > 0)
+            if (str.Count() > 0)
             {
                 return str.Aggregate((x, y) => $"{x}{joint}{y}" + (atEnd?joint:""));
             }

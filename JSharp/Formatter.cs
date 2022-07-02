@@ -441,6 +441,8 @@ namespace JSharp
                 {
                     if (p.StartsWith("\\"))
                         s += p + "|";
+                    else if (p.StartsWith("@"))
+                        s += p.Replace("|", "\\|").Replace(".", "\\.") + @"\b|";
                     else
                         s += @"\b" + p.Replace("|", "\\|").Replace(".", "\\.") + @"\b|";
                 }

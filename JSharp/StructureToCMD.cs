@@ -73,7 +73,12 @@ namespace BluePhoenix
 
                 if (tag.Contains("Properties"))
                 {
-                    tag.GetCompound("Properties").Value.ToList().ForEach(x => dic.Add(x.Name, x.GetValue().ToString()));
+                    tag.GetCompound("Properties").Value.ToList().ForEach(x =>
+                    {
+                        string v = x.GetValue().ToString();
+                        if (!int.TryParse(v, out int _)) v = "\"" + v + "\"";
+                        dic.Add(x.Name, v);
+                    }  );
                 }
             }
             List<Block> lst = new List<Block>();

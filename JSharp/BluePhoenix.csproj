@@ -207,6 +207,7 @@
     <Compile Include="NewProjectForm.Designer.cs">
       <DependentUpon>NewProjectForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="PathConverter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProjectSave.cs" />
     <Compile Include="ProjectSetting.cs">

@@ -37,6 +37,10 @@ wandering_target[0] = WanderTarget.X = int
 wandering_target[1] = WanderTarget.Y = int
 wandering_target[2] = WanderTarget.Z = int
 
+beamtarget_x = BeamTarget.X = float
+beamtarget_y = BeamTarget.Y = float
+beamtarget_z = BeamTarget.Z = float
+
 uuid_0 = UUID[0] = int
 uuid_1 = UUID[1] = int
 uuid_2 = UUID[2] = int

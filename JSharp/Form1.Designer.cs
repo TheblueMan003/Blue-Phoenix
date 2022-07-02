@@ -95,6 +95,7 @@
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.animatedToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.forgenerateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.CodeBox = new FastColoredTextBoxNS.FastColoredTextBox();
@@ -108,7 +109,7 @@
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.openDebugFile = new System.Windows.Forms.OpenFileDialog();
-            this.forgenerateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.InvalidateRPButton = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.CodeListContextMenu.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -695,7 +696,7 @@
             this.deleteToolStripMenuItem,
             this.newFolderToolStripMenuItem});
             this.CodeListContextMenu.Name = "contextMenuStrip1";
-            this.CodeListContextMenu.Size = new System.Drawing.Size(181, 114);
+            this.CodeListContextMenu.Size = new System.Drawing.Size(156, 92);
             // 
             // newFileToolStripMenuItem1
             // 
@@ -703,7 +704,7 @@
             this.fileToolStripMenuItem1,
             this.folderToolStripMenuItem});
             this.newFileToolStripMenuItem1.Name = "newFileToolStripMenuItem1";
-            this.newFileToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.newFileToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
             this.newFileToolStripMenuItem1.Text = "New";
             // 
             // fileToolStripMenuItem1
@@ -723,14 +724,14 @@
             // openToolStripMenuItem1
             // 
             this.openToolStripMenuItem1.Name = "openToolStripMenuItem1";
-            this.openToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
             this.openToolStripMenuItem1.Text = "Open";
             this.openToolStripMenuItem1.Click += new System.EventHandler(this.openToolStripMenuItem1_Click);
             // 
             // deleteToolStripMenuItem
             // 
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
             this.deleteToolStripMenuItem.Text = "Delete";
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
             // 
@@ -740,15 +741,22 @@
             this.animatedToolStripMenuItem,
             this.forgenerateToolStripMenuItem});
             this.newFolderToolStripMenuItem.Name = "newFolderToolStripMenuItem";
-            this.newFolderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newFolderToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
             this.newFolderToolStripMenuItem.Text = "Resources Pack";
             // 
             // animatedToolStripMenuItem
             // 
             this.animatedToolStripMenuItem.Name = "animatedToolStripMenuItem";
-            this.animatedToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.animatedToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.animatedToolStripMenuItem.Text = "Animated";
             this.animatedToolStripMenuItem.Click += new System.EventHandler(this.animatedToolStripMenuItem_Click);
+            // 
+            // forgenerateToolStripMenuItem
+            // 
+            this.forgenerateToolStripMenuItem.Name = "forgenerateToolStripMenuItem";
+            this.forgenerateToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
+            this.forgenerateToolStripMenuItem.Text = "Forgenerate";
+            this.forgenerateToolStripMenuItem.Click += new System.EventHandler(this.forgenerateToolStripMenuItem_Click);
             // 
             // tabPage1
             // 
@@ -956,12 +964,20 @@
             // 
             this.openDebugFile.FileName = "debug.txt";
             // 
-            // forgenerateToolStripMenuItem
+            // InvalidateRPButton
             // 
-            this.forgenerateToolStripMenuItem.Name = "forgenerateToolStripMenuItem";
-            this.forgenerateToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.forgenerateToolStripMenuItem.Text = "Forgenerate";
-            this.forgenerateToolStripMenuItem.Click += new System.EventHandler(this.forgenerateToolStripMenuItem_Click);
+            this.InvalidateRPButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.InvalidateRPButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.InvalidateRPButton.ForeColor = System.Drawing.Color.Yellow;
+            this.InvalidateRPButton.Image = global::BluePhoenix.Properties.Resources.warning;
+            this.InvalidateRPButton.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.InvalidateRPButton.Location = new System.Drawing.Point(918, 31);
+            this.InvalidateRPButton.Name = "InvalidateRPButton";
+            this.InvalidateRPButton.Size = new System.Drawing.Size(114, 23);
+            this.InvalidateRPButton.TabIndex = 43;
+            this.InvalidateRPButton.Text = "Invalidate RP";
+            this.InvalidateRPButton.UseVisualStyleBackColor = true;
+            this.InvalidateRPButton.Click += new System.EventHandler(this.InvalidateRP_Click);
             // 
             // Form1
             // 
@@ -969,6 +985,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(1192, 732);
+            this.Controls.Add(this.InvalidateRPButton);
             this.Controls.Add(this.CodeBox);
             this.Controls.Add(this.SaveButton);
             this.Controls.Add(this.tabControl1);
@@ -1102,6 +1119,7 @@
         private System.Windows.Forms.ToolStripMenuItem showDebugStackTraceToolStripMenuItem;
         private System.Windows.Forms.OpenFileDialog openDebugFile;
         private System.Windows.Forms.ToolStripMenuItem forgenerateToolStripMenuItem;
+        private System.Windows.Forms.Button InvalidateRPButton;
     }
 }
 

@@ -1527,6 +1527,20 @@ namespace JSharp
         }
         public void ExportStructures(string path)
         {
+            compilerSetting.structuresSource = Directory.GetParent(currentDataPack).Parent.FullName + "/generated/minecraft/structures";
+            if (Directory.Exists(compilerSetting.structuresSource))
+            {
+                var p = compilerSetting.structuresSource.Replace("\\\\", "/").Replace("\\", "/");
+                Directory.EnumerateFiles(compilerSetting.structuresSource, "*.*", SearchOption.AllDirectories)
+                    .Where(x => !compilerSetting.structuresSources.ContainsKey(x) || File.GetLastWriteTime(x) != compilerSetting.structuresSources[x])
+                    .ToList()
+                    .ForEach(x =>
+                    {
+                        compilerSetting.structuresSources[x] = File.GetLastWriteTime(x);
+                        File.Copy(x, ProjectFolder() + "/structures/" + x.Replace("\\\\", "/").Replace("\\","/").Replace(p,""), true);
+                    });
+            }
+
             string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             if (projectPath != null && Directory.Exists(path + "imported_dp/structure/"))
             {
@@ -2760,5 +2774,9 @@ namespace JSharp
             }
         }
 
+        private void InvalidateRP_Click(object sender, EventArgs e)
+        {
+            exportNew = true;
+        }
     }
 }
