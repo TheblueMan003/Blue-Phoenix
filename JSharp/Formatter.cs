@@ -43,7 +43,18 @@ namespace JSharp
             "blocktags ^{\n\n}",
             "itemtags ^{\n\n}",
             "entitytags ^{\n\n}",
-            "jsonfile ^{\n\n}"
+            "jsonfile ^{\n\n}",
+            "level ^{\n" +
+                "def main(){\n" +
+                "}\n" +
+                "def onStart(){\n" +
+                "}\n" +
+                "def onStop(){\n" +
+                "}\n" +
+                "def onInit(){\n" +
+                "setup()\n" +
+                "}\n" +
+            "}"
         };
 
         private static List<string> enums = new List<string>();
@@ -57,6 +68,7 @@ namespace JSharp
         public static List<string> defWordMore1M = new List<string>();
         public static List<string> defWordMore2 = new List<string>();
         public static Dictionary<string, List<string>> varWord = new Dictionary<string, List<string>>();
+        public static List<string> varGlobalWord = new List<string>();
         public static Dictionary<string, List<string>> objectFunc = new Dictionary<string, List<string>>();
 
         private static Regex numberRegex = new Regex(@"(-?\b)(\d+\.\d+|\d+)[bldsf]?\b");
@@ -193,6 +205,7 @@ namespace JSharp
             var func = objectFunc.ContainsKey(file) ? objectFunc[file] : new List<string>();
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/assets/mob_effect/";
             var effect = CommandParser.effects.Where(x => File.Exists($"{path}{x}.png"));
+            var prefix = Compiler.project + ".";
 
             return autoCompleteTools.Select(x => (x, IMG_String))
                       .Concat(funKeyword.Select(x => $"{x}(^)").Select(x => (x, IMG_Method)))
@@ -213,6 +226,7 @@ namespace JSharp
                       .Concat(defWordMore1L.Select(x => $"{x}(^)").Select(x => (x, IMG_Lazy_Method)))
                       .Concat(defWordMore2.Select(x => $"{x}(^)").Select(x => (x, IMG_Method)))
                       .Concat(vars.Select(x => (x, IMG_Variable)))
+                      .Concat(varGlobalWord.Where(x => !x.Contains("__") && !x.Contains("$")).Select(x => (x.Replace(prefix,  ""), IMG_Variable)))
                       .Concat(func.Select(x => $"{x}(^)").Select(x => (x, IMG_Object_Method)))
                       .Concat(effect.Select(x => (x, Image.FromFile($"{path}{x}.png"))))
                       .Concat(CommandParser.funcName.Select(x => (x, IMG_Lazy_Method)))
@@ -228,6 +242,7 @@ namespace JSharp
             menu.ImageList = new ImageList();
             Image[] imgs = lst.Select(x => x.Item2).Distinct().ToArray();
             menu.ImageList.Images.AddRange(imgs);
+
             lst.ForEach(x => {
                 menu.AddItem(new AutocompleteMenuNS.AutocompleteItem(x.Item1, imgs.ToList().IndexOf(x.Item2)));
                 }

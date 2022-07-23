@@ -47,6 +47,7 @@
             this.newFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.compileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.compileOrderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.showOutputToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.projectToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.minecraftToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -110,6 +111,9 @@
             this.button1 = new System.Windows.Forms.Button();
             this.openDebugFile = new System.Windows.Forms.OpenFileDialog();
             this.InvalidateRPButton = new System.Windows.Forms.Button();
+            this.button11 = new System.Windows.Forms.Button();
+            this.button17 = new System.Windows.Forms.Button();
+            this.ShowOutput = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.CodeListContextMenu.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -240,6 +244,7 @@
             this.newFileToolStripMenuItem,
             this.compileToolStripMenuItem,
             this.compileOrderToolStripMenuItem,
+            this.showOutputToolStripMenuItem,
             this.tagsToolStripMenuItem,
             this.structuresToolStripMenuItem,
             this.libraryToolStripMenuItem,
@@ -272,6 +277,14 @@
             this.compileOrderToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
             this.compileOrderToolStripMenuItem.Text = "Compile Order";
             this.compileOrderToolStripMenuItem.Click += new System.EventHandler(this.compileOrderToolStripMenuItem_Click);
+            // 
+            // showOutputToolStripMenuItem
+            // 
+            this.showOutputToolStripMenuItem.Name = "showOutputToolStripMenuItem";
+            this.showOutputToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F5)));
+            this.showOutputToolStripMenuItem.Size = new System.Drawing.Size(194, 22);
+            this.showOutputToolStripMenuItem.Text = "Show Output";
+            this.showOutputToolStripMenuItem.Click += new System.EventHandler(this.showOutputToolStripMenuItem_Click);
             // 
             // tagsToolStripMenuItem
             // 
@@ -415,7 +428,7 @@
             this.button5.BackColor = System.Drawing.Color.Black;
             this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button5.Location = new System.Drawing.Point(1038, 199);
+            this.button5.Location = new System.Drawing.Point(1038, 228);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(142, 23);
             this.button5.TabIndex = 9;
@@ -429,7 +442,7 @@
             this.button3.BackColor = System.Drawing.Color.Black;
             this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button3.Location = new System.Drawing.Point(1038, 109);
+            this.button3.Location = new System.Drawing.Point(1038, 138);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(142, 23);
             this.button3.TabIndex = 8;
@@ -443,7 +456,7 @@
             this.button4.BackColor = System.Drawing.Color.Black;
             this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button4.Location = new System.Drawing.Point(1038, 80);
+            this.button4.Location = new System.Drawing.Point(1038, 109);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(142, 23);
             this.button4.TabIndex = 7;
@@ -457,7 +470,7 @@
             this.button6.BackColor = System.Drawing.Color.Black;
             this.button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button6.Location = new System.Drawing.Point(1038, 257);
+            this.button6.Location = new System.Drawing.Point(1038, 286);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(142, 23);
             this.button6.TabIndex = 13;
@@ -471,7 +484,7 @@
             this.button7.BackColor = System.Drawing.Color.Black;
             this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button7.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button7.Location = new System.Drawing.Point(1038, 170);
+            this.button7.Location = new System.Drawing.Point(1038, 199);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(142, 23);
             this.button7.TabIndex = 14;
@@ -485,7 +498,7 @@
             this.button8.BackColor = System.Drawing.Color.Black;
             this.button8.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button8.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button8.Location = new System.Drawing.Point(1038, 228);
+            this.button8.Location = new System.Drawing.Point(1038, 257);
             this.button8.Name = "button8";
             this.button8.Size = new System.Drawing.Size(142, 23);
             this.button8.TabIndex = 15;
@@ -499,7 +512,7 @@
             this.button9.BackColor = System.Drawing.Color.Black;
             this.button9.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button9.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button9.Location = new System.Drawing.Point(1038, 522);
+            this.button9.Location = new System.Drawing.Point(1038, 551);
             this.button9.Name = "button9";
             this.button9.Size = new System.Drawing.Size(142, 23);
             this.button9.TabIndex = 16;
@@ -513,7 +526,7 @@
             this.button10.BackColor = System.Drawing.Color.Black;
             this.button10.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button10.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button10.Location = new System.Drawing.Point(1038, 493);
+            this.button10.Location = new System.Drawing.Point(1038, 522);
             this.button10.Name = "button10";
             this.button10.Size = new System.Drawing.Size(142, 23);
             this.button10.TabIndex = 17;
@@ -527,7 +540,7 @@
             this.button12.BackColor = System.Drawing.Color.Black;
             this.button12.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button12.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button12.Location = new System.Drawing.Point(1038, 359);
+            this.button12.Location = new System.Drawing.Point(1038, 388);
             this.button12.Name = "button12";
             this.button12.Size = new System.Drawing.Size(142, 23);
             this.button12.TabIndex = 22;
@@ -541,7 +554,7 @@
             this.button13.BackColor = System.Drawing.Color.Black;
             this.button13.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button13.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button13.Location = new System.Drawing.Point(1038, 286);
+            this.button13.Location = new System.Drawing.Point(1038, 315);
             this.button13.Name = "button13";
             this.button13.Size = new System.Drawing.Size(142, 23);
             this.button13.TabIndex = 23;
@@ -555,7 +568,7 @@
             this.button14.BackColor = System.Drawing.Color.Black;
             this.button14.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button14.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button14.Location = new System.Drawing.Point(1038, 388);
+            this.button14.Location = new System.Drawing.Point(1038, 417);
             this.button14.Name = "button14";
             this.button14.Size = new System.Drawing.Size(142, 23);
             this.button14.TabIndex = 24;
@@ -573,7 +586,7 @@
             this.button15.BackColor = System.Drawing.Color.Black;
             this.button15.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button15.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button15.Location = new System.Drawing.Point(1038, 417);
+            this.button15.Location = new System.Drawing.Point(1038, 446);
             this.button15.Name = "button15";
             this.button15.Size = new System.Drawing.Size(142, 23);
             this.button15.TabIndex = 25;
@@ -586,7 +599,7 @@
             this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(1038, 137);
+            this.label3.Location = new System.Drawing.Point(1038, 166);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(64, 13);
             this.label3.TabIndex = 26;
@@ -596,7 +609,7 @@
             // 
             this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(1038, 154);
+            this.label4.Location = new System.Drawing.Point(1038, 183);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(40, 13);
             this.label4.TabIndex = 27;
@@ -606,7 +619,7 @@
             // 
             this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(1038, 343);
+            this.label5.Location = new System.Drawing.Point(1038, 372);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(84, 13);
             this.label5.TabIndex = 28;
@@ -616,7 +629,7 @@
             // 
             this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(1038, 477);
+            this.label6.Location = new System.Drawing.Point(1038, 506);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(45, 13);
             this.label6.TabIndex = 29;
@@ -628,7 +641,7 @@
             this.button16.BackColor = System.Drawing.Color.Black;
             this.button16.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button16.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.button16.Location = new System.Drawing.Point(1038, 446);
+            this.button16.Location = new System.Drawing.Point(1038, 475);
             this.button16.Name = "button16";
             this.button16.Size = new System.Drawing.Size(142, 23);
             this.button16.TabIndex = 30;
@@ -653,7 +666,7 @@
             this.LibraryButton.BackColor = System.Drawing.Color.Black;
             this.LibraryButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.LibraryButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
-            this.LibraryButton.Location = new System.Drawing.Point(1038, 315);
+            this.LibraryButton.Location = new System.Drawing.Point(1038, 344);
             this.LibraryButton.Name = "LibraryButton";
             this.LibraryButton.Size = new System.Drawing.Size(142, 23);
             this.LibraryButton.TabIndex = 32;
@@ -810,6 +823,7 @@
             this.CodeBox.DescriptionFile = "";
             this.CodeBox.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.CodeBox.FoldingIndicatorColor = System.Drawing.Color.Chartreuse;
+            this.CodeBox.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.CodeBox.Hotkeys = resources.GetString("CodeBox.Hotkeys");
             this.CodeBox.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.CodeBox.IsReplaceMode = false;
@@ -952,9 +966,9 @@
             this.button1.ForeColor = System.Drawing.Color.Lime;
             this.button1.Image = global::BluePhoenix.Properties.Resources.run;
             this.button1.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button1.Location = new System.Drawing.Point(1038, 31);
+            this.button1.Location = new System.Drawing.Point(1082, 31);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(142, 23);
+            this.button1.Size = new System.Drawing.Size(98, 23);
             this.button1.TabIndex = 3;
             this.button1.Text = "Compile";
             this.button1.UseVisualStyleBackColor = true;
@@ -971,7 +985,7 @@
             this.InvalidateRPButton.ForeColor = System.Drawing.Color.Yellow;
             this.InvalidateRPButton.Image = global::BluePhoenix.Properties.Resources.warning;
             this.InvalidateRPButton.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.InvalidateRPButton.Location = new System.Drawing.Point(918, 31);
+            this.InvalidateRPButton.Location = new System.Drawing.Point(842, 31);
             this.InvalidateRPButton.Name = "InvalidateRPButton";
             this.InvalidateRPButton.Size = new System.Drawing.Size(114, 23);
             this.InvalidateRPButton.TabIndex = 43;
@@ -979,12 +993,58 @@
             this.InvalidateRPButton.UseVisualStyleBackColor = true;
             this.InvalidateRPButton.Click += new System.EventHandler(this.InvalidateRP_Click);
             // 
+            // button11
+            // 
+            this.button11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button11.BackColor = System.Drawing.Color.Black;
+            this.button11.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button11.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.button11.Location = new System.Drawing.Point(1038, 80);
+            this.button11.Name = "button11";
+            this.button11.Size = new System.Drawing.Size(142, 23);
+            this.button11.TabIndex = 44;
+            this.button11.Text = "Sync Structures";
+            this.button11.UseVisualStyleBackColor = false;
+            this.button11.Click += new System.EventHandler(this.button11_Click);
+            // 
+            // button17
+            // 
+            this.button17.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.button17.BackColor = System.Drawing.Color.Black;
+            this.button17.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button17.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(165)))), ((int)(((byte)(255)))));
+            this.button17.Location = new System.Drawing.Point(1038, 580);
+            this.button17.Name = "button17";
+            this.button17.Size = new System.Drawing.Size(142, 23);
+            this.button17.TabIndex = 45;
+            this.button17.Text = "Particles";
+            this.button17.UseVisualStyleBackColor = false;
+            this.button17.Click += new System.EventHandler(this.ParticlePreview_Click);
+            // 
+            // ShowOutput
+            // 
+            this.ShowOutput.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.ShowOutput.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ShowOutput.ForeColor = System.Drawing.Color.Lime;
+            this.ShowOutput.Image = global::BluePhoenix.Properties.Resources.run;
+            this.ShowOutput.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.ShowOutput.Location = new System.Drawing.Point(962, 31);
+            this.ShowOutput.Name = "ShowOutput";
+            this.ShowOutput.Size = new System.Drawing.Size(114, 23);
+            this.ShowOutput.TabIndex = 46;
+            this.ShowOutput.Text = "Show Output";
+            this.ShowOutput.UseVisualStyleBackColor = true;
+            this.ShowOutput.Click += new System.EventHandler(this.ShowOutput_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(1192, 732);
+            this.Controls.Add(this.ShowOutput);
+            this.Controls.Add(this.button17);
+            this.Controls.Add(this.button11);
             this.Controls.Add(this.InvalidateRPButton);
             this.Controls.Add(this.CodeBox);
             this.Controls.Add(this.SaveButton);
@@ -1120,6 +1180,10 @@
         private System.Windows.Forms.OpenFileDialog openDebugFile;
         private System.Windows.Forms.ToolStripMenuItem forgenerateToolStripMenuItem;
         private System.Windows.Forms.Button InvalidateRPButton;
+        private System.Windows.Forms.Button button11;
+        private System.Windows.Forms.Button button17;
+        private System.Windows.Forms.ToolStripMenuItem showOutputToolStripMenuItem;
+        private System.Windows.Forms.Button ShowOutput;
     }
 }
 

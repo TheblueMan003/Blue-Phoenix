@@ -7,6 +7,8 @@ using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
@@ -104,6 +106,7 @@ namespace JSharp
         private static List<string> funcDefM;
         private static List<string> funcDefL;
         private static Dictionary<string, List<string>> varWord;
+        private static List<string> varGlobalWord;
         private static Dictionary<string, List<string>> objectFunc;
         private static string callTrace = "digraph G {\nmain\nload\nhelper\n";
         private static string callingFunctName = "loading";
@@ -191,6 +194,8 @@ namespace JSharp
         private static int totalCodeFiles;
         private static long totalCodeChar;
         private static long totalCodeCharNoLib;
+        public static List<DataPackMeta.Pack.Filter.Block> FilterBlocks;
+        public static string project;
 
         private Compiler() { }
 
@@ -200,8 +205,11 @@ namespace JSharp
             string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             if (Directory.Exists(path + "imported_dp")) Directory.Delete(path + "imported_dp", true);
             if (Directory.Exists(path + "imported_rp")) Directory.Delete(path + "imported_rp", true);
+            FilterBlocks = new List<DataPackMeta.Pack.Filter.Block>();
 
             DateTime startTime = DateTime.Now;
+
+            Compiler.project = project;
 
             callTrace = "digraph " + project + " {\nmain\nload\nhelper\n";
             Core = core;
@@ -251,6 +259,7 @@ namespace JSharp
             funcDefL = new List<string>();
             funcDefF = new List<string>();
             varWord = new Dictionary<string, List<string>>();
+            varGlobalWord = new List<string>();
             objectFunc = new Dictionary<string, List<string>>();
             structureBlockCache = new Dictionary<string, List<StructureToCMD.Block>>();
 
@@ -333,7 +342,8 @@ namespace JSharp
 
                 if (Directory.Exists(path + "unzip"))
                 {
-                    foreach (var d in Directory.EnumerateDirectories(path + $"unzip/")){
+                    foreach (var d in Directory.EnumerateDirectories(path + $"unzip/"))
+                    {
                         GlobalDebug($"Compiling RP {d}", Color.Orange);
                         if (Directory.Exists(d + "/resourcespack"))
                         {
@@ -351,12 +361,16 @@ namespace JSharp
                         }
                     }
                 }
-                
+
 
                 FunctionCreate();
+                GlobalDebug("Created Functions", Color.LimeGreen);
                 ConstCreate();
+                GlobalDebug("Created Constants", Color.LimeGreen);
                 ScoreboardCreate();
+                GlobalDebug("Created Scoreboards", Color.LimeGreen);
                 StringPoolCreate();
+                GlobalDebug("String Pool Create", Color.LimeGreen);
                 MuxClose();
 
                 if (setting.opti_FunctionTagsReplace)
@@ -364,6 +378,8 @@ namespace JSharp
 
                 loadFile.Close();
                 mainFile.Close();
+
+                GlobalDebug("Closing File", Color.LimeGreen);
 
                 updateFormater();
 
@@ -382,14 +398,8 @@ namespace JSharp
                     else if (!f.notUsed && !f.isLazy && f.lineCount > 0 && f.valid)
                     {
                         returnFiles.Add(f);
-                        foreach (string line in f.content.Split('\n'))
-                        {
-                            if (line != "" && !line.StartsWith("#"))
-                            {
-                                lineCount++;
-                                charCount += f.content.Length;
-                            }
-                        }
+                        charCount += f.content.Length;
+                        lineCount += f.lineCount;
                     }
                 }
 
@@ -429,7 +439,7 @@ namespace JSharp
             }
             finally
             {
-                //if (Directory.Exists(path + "unzip")) Directory.Delete(path + "unzip", true);
+                if (Directory.Exists(path + "unzip")) Directory.Delete(path + "unzip", true);
             }
         }
         public static string getStackCall(CompilerCore core, string project, List<File> codes, List<File> resources, Debug debug, CompilerSetting setting, ProjectVersion version, string pctFolder)
@@ -590,6 +600,7 @@ namespace JSharp
                 Formatter.defWordMore1M = funcDefM.Distinct().Where(x => !x.Contains(".__")).ToList();
                 Formatter.objectFunc = objectFunc;
                 Formatter.varWord = varWord;
+                Formatter.varGlobalWord = varGlobalWord;
                 Formatter.loadDict();
             }
             catch { }
@@ -1739,7 +1750,6 @@ namespace JSharp
         {
             if (variables.ContainsKey(key))
                 throw new Exception(key + " already defined!");
-
             variables.Add(key, variable);
         }
         public static Variable GetVariable(string key)
@@ -2987,7 +2997,9 @@ namespace JSharp
             double tmpF;
             int idVal = If.GetEval(context.GetFun());
 
-            if (context.isEntity(text) && !smartContains(text, '.'))
+            var lower = text.ToLower();
+
+            if (context.isEntity(text) && !smartContains(text, '.') && context.IsValudEntitySelector(text))
             {
                 return Core.ConditionEntity(context.GetEntitySelector(text));
             }
@@ -3061,7 +3073,7 @@ namespace JSharp
                 string[] args = getArgs(text);
                 return Core.ConditionBlocks(args[0]);
             }
-            else if (text.ToLower().StartsWith("__isvar("))
+            else if (lower.StartsWith("__isvar("))
             {
                 string[] arg = getArgs(text);
                 if (arg.All(x => GetVariableByName(x, true) != null))
@@ -3073,7 +3085,7 @@ namespace JSharp
                     return new JavaConstantCondition(false);
                 }
             }
-            else if (text.ToLower().StartsWith("__equals("))
+            else if (lower.StartsWith("__equals("))
             {
                 string[] arg = getArgs(text);
                 if (arg[0] == arg[1])
@@ -3085,7 +3097,7 @@ namespace JSharp
                     return new JavaConstantCondition(false);
                 }
             }
-            else if (text.ToLower().StartsWith("__isnb("))
+            else if (lower.StartsWith("__isnb("))
             {
                 string[] arg = getArgs(text);
                 if (arg.All(x => double.TryParse(smartExtract(x), out double _)))
@@ -3097,7 +3109,7 @@ namespace JSharp
                     return new JavaConstantCondition(false);
                 }
             }
-            else if (text.ToLower().StartsWith("__isint("))
+            else if (lower.StartsWith("__isint("))
             {
                 string[] arg = getArgs(text);
 
@@ -3110,7 +3122,7 @@ namespace JSharp
                     return new JavaConstantCondition(false);
                 }
             }
-            else if (text.ToLower().StartsWith("__isstring("))
+            else if (lower.StartsWith("__isstring("))
             {
                 string[] arg = getArgs(text);
 
@@ -3123,7 +3135,7 @@ namespace JSharp
                     return new JavaConstantCondition(false);
                 }
             }
-            else if (text.ToLower().StartsWith("__isentity("))
+            else if (lower.StartsWith("__isentity("))
             {
                 string[] arg = getArgs(text);
                 if (arg.All(x => context.isEntity(x)))
@@ -3135,7 +3147,7 @@ namespace JSharp
                     return new JavaConstantCondition(false);
                 }
             }
-            else if (text.ToLower().StartsWith("__hasspace("))
+            else if (lower.StartsWith("__hasspace("))
             {
                 string[] arg = getArgs(text);
                 if (arg.Any(x => x.Contains(" ")))
@@ -3147,15 +3159,15 @@ namespace JSharp
                     return new JavaConstantCondition(false);
                 }
             }
-            else if (text.ToLower().StartsWith("__debug"))
+            else if (lower.StartsWith("__debug"))
             {
                 return compilerSetting.opti_ShowDebug?new JavaConstantCondition(true): new JavaConstantCondition(false);
             }
-            else if (text.ToLower().StartsWith("__exception"))
+            else if (lower.StartsWith("__exception"))
             {
                 return compilerSetting.opti_ShowDebug ? new JavaConstantCondition(true) : new JavaConstantCondition(false);
             }
-            else if (text.ToLower().StartsWith("__isblocktags("))
+            else if (lower.StartsWith("__isblocktags("))
             {
                 string[] arg = getArgs(text);
                 if (arg.All(x => context.GetBlockTags(x, true) != null))
@@ -3167,7 +3179,7 @@ namespace JSharp
                     return new JavaConstantCondition(false);
                 }
             }
-            else if (text.ToLower().StartsWith("__isitemtags("))
+            else if (lower.StartsWith("__isitemtags("))
             {
                 string[] arg = getArgs(text);
                 if (arg.All(x => context.GetItemTags(x, true) != null))
@@ -3179,10 +3191,21 @@ namespace JSharp
                     return new JavaConstantCondition(false);
                 }
             }
-            else if (text.ToLower().StartsWith("__isentitytags("))
+            else if (lower.StartsWith("__isentitytags("))
             {
                 string[] arg = getArgs(text);
                 if (arg.All(x => context.GetEntityTags(x, true) != null))
+                {
+                    return new JavaConstantCondition(true);
+                }
+                else
+                {
+                    return new JavaConstantCondition(false);
+                }
+            }
+            else if (text.StartsWith("@"))
+            {
+                if (functionTags.ContainsKey(lower.Substring(1)) && functionTags[lower.Substring(1)].Count > 0)
                 {
                     return new JavaConstantCondition(true);
                 }
@@ -3422,10 +3445,6 @@ namespace JSharp
                 {
                     return Core.ConditionInverse(getCond(text.Replace("!=", "==")));
                 }
-            }
-            else if ((context.isEntity(text) || text.StartsWith("@")) && !smartContains(text, '.'))
-            {
-                return Core.ConditionEntity(context.GetEntitySelector(text));
             }
             else if (text.Contains("(") && context.IsFunction(text.Substring(0, text.IndexOf('('))) && !text.Contains("<") && !text.Contains("=") && !text.Contains(">"))
             {
@@ -4749,6 +4768,8 @@ namespace JSharp
             {
                 string prefix = context.GetVar();
                 string name = v.StartsWith(".") ? v.Substring(1, v.Length - 1) : prefix + v;
+                
+                varGlobalWord.Add(name);
                 if (varWord.ContainsKey(currentFile))
                     varWord[currentFile].Add(v);
 
@@ -9099,10 +9120,11 @@ namespace JSharp
                     {
                         CompiledFunction = files[fi].function;
                         DateTime fstartTime = DateTime.Now;
-                        if (compilerSetting.advanced_debug)
-                            GlobalDebug($"Start: {files[fi].function.gameName}", Color.LightGreen);
+                        
+                        //GlobalDebug($"Start: {files[fi].function.gameName}", Color.LightGreen);
                         files[fi].Compile();
-                        if (compilerSetting.advanced_debug)
+                        
+                        if ((DateTime.Now - fstartTime).TotalMilliseconds > 100)
                             GlobalDebug($"Compiled: {files[fi].function.gameName} {((DateTime.Now - fstartTime).TotalMilliseconds)}ms", Color.Lime);
                         CompiledFunction = null;
                         changed = true;
@@ -9281,7 +9303,7 @@ namespace JSharp
 
                 newfunc.argNeeded = argNeeded;
                 newfunc.maxArgNeeded = maxArgNeeded;
-
+                
                 if (isStatic)
                 {
                     string path = gameName.Contains(":") ? gameName.Substring(gameName.IndexOf(":") + 1) : gameName;
@@ -9403,12 +9425,9 @@ namespace JSharp
 
                 foreach (string tag in tags)
                 {
-                    if (!tag.StartsWith("__"))
-                    {
-                        AddToFunctionTag(this, tag);
-                        if (callStackDisplay)
-                            callTrace += "\"@" + tag.ToLower() + "\"->\"" + gameName + "\"\n";
-                    }
+                    AddToFunctionTag(this, tag);
+                    if (callStackDisplay)
+                        callTrace += "\"@" + tag.ToLower() + "\"->\"" + gameName + "\"\n";
                 }
             }
         }
@@ -10578,6 +10597,7 @@ namespace JSharp
                 variable.privateContext = context.GetVar();
                 variable.attributes = attributes.ToList();
 
+                varGlobalWord.Add(newName);
                 AddVariable(newName, variable);
 
                 if (this.type == Type.ENUM)
@@ -10639,6 +10659,7 @@ namespace JSharp
             }
             public void LinkCopyTo(string newName)
             {
+                varGlobalWord.Add(newName);
                 AddVariable(newName, this);
 
                 if (this.type == Type.ARRAY)
@@ -11844,6 +11865,7 @@ namespace JSharp
             public bool opti_FileCleanUp = true;
             public bool opti_LambdaCleanUp = false;
             public bool advanced_debug = false;
+            public bool autoSave = true;
 
             public bool isLibrary = true;
 
@@ -12166,10 +12188,12 @@ namespace JSharp
                         generate(value.Replace("\\", "/"), null, (projectFolder + "/resourcespack/" + extractString(args[0]) + "/").Replace("\\", "/"));
                     }
                 }
-                else if (enumGen != null && functionTags.ContainsKey(enumGen.Replace("@", "")))
+                else if (enumGen != null && enumGen[0] == '@')
                 {
-                    genAmount = functionTags[enumGen.Replace("@", "")].Count;
-                    foreach (string value in functionTags[enumGen.Replace("@", "")])
+                    var tag = enumGen.Replace("@", "");
+                    CreateFunctionTag(tag);
+                    genAmount = functionTags[tag].Count;
+                    foreach (string value in functionTags[tag])
                     {
                         generate(value);
                     }
@@ -13360,6 +13384,22 @@ namespace JSharp
                 }
             }
 
+            public bool IsValudEntitySelector(string value, bool single = true)
+            {
+                value = ReplaceEntityTags(value);
+                if (value.Contains("@"))
+                {
+                    if (!Core.isValidSelector(value))
+                        return false;
+
+                    return true;
+                }
+                else if (single)
+                    return true;
+                else
+                    return true;
+
+            }
             public string GetEntitySelector(string value, bool single = true)
             {
                 value = ReplaceEntityTags(value);
@@ -13382,7 +13422,8 @@ namespace JSharp
             }
             public bool isEntity(string value)
             {
-                if (entityReg.Match(smartEmpty(value)).Success)
+                var match = entityReg.Match(smartEmpty(value));
+                if (match.Success)
                 {
                     return true;
                 }

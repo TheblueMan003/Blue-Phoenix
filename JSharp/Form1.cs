@@ -12,6 +12,7 @@ using System.Media;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace JSharp
@@ -870,9 +871,11 @@ namespace JSharp
             {
                 projectName = path==null?form.ProjectName.ToLower().Replace(" ",""): path+"/project.tbms";
                 compilerSetting = new Compiler.CompilerSetting();
-                compilerSetting.packformat = 8;
-                compilerSetting.rppackformat = 8;
+                compilerSetting.packformat = 10;
+                compilerSetting.rppackformat = 9;
                 compilerSetting.MCVersion = form.MCVersion;
+                compilerSetting.libraryFolder.Add("./lib/1_19/");
+                compilerSetting.libraryFolder.Add("./lib/1_18/");
                 compilerSetting.libraryFolder.Add("./lib/1_17/");
                 compilerSetting.libraryFolder.Add("./lib/1_16_5/");
                 compilerSetting.libraryFolder.Add("./lib/shared/");
@@ -1113,7 +1116,6 @@ namespace JSharp
                 isCompiling = 0;
                 DebugThread(er, Color.Red);
             }
-
         }
         public void GetCallStackTraceThreaded()
         {
@@ -1295,6 +1297,7 @@ namespace JSharp
                 }
                 
                 exportRP = WasRPChanged() || exportNew;
+                exportNew = false;
                 projectVersion.Build();
                 
                 ExportFiles(writePath);
@@ -1363,7 +1366,7 @@ namespace JSharp
 
             List<Compiler.File> cFiles = Compiler.compile(core, projectName, files, resourcesfiles,
                                         DebugThread, compilerSetting, projectVersion,
-                                        Path.GetDirectoryName(projectPath)); 
+                                        Path.GetDirectoryName(projectPath));
 
             foreach (Compiler.File f in cFiles)
             {
@@ -1374,6 +1377,7 @@ namespace JSharp
                     fileName = path + core.GetJsonPath(projectName, f.name + ".json");
                 else
                     fileName = path + core.GetFunctionPath(projectName, f.name);
+
                 try
                 {
                     SafeWriteFile(fileName, f.content);
@@ -1383,6 +1387,7 @@ namespace JSharp
                     throw new Exception(fileName + " " + e.ToString());
                 }
             }
+
             if (Directory.Exists(rpdir) && exportRP)
             {
                 string rpPath = "C:/bprp/";
@@ -1527,19 +1532,7 @@ namespace JSharp
         }
         public void ExportStructures(string path)
         {
-            compilerSetting.structuresSource = Directory.GetParent(currentDataPack).Parent.FullName + "/generated/minecraft/structures";
-            if (Directory.Exists(compilerSetting.structuresSource))
-            {
-                var p = compilerSetting.structuresSource.Replace("\\\\", "/").Replace("\\", "/");
-                Directory.EnumerateFiles(compilerSetting.structuresSource, "*.*", SearchOption.AllDirectories)
-                    .Where(x => !compilerSetting.structuresSources.ContainsKey(x) || File.GetLastWriteTime(x) != compilerSetting.structuresSources[x])
-                    .ToList()
-                    .ForEach(x =>
-                    {
-                        compilerSetting.structuresSources[x] = File.GetLastWriteTime(x);
-                        File.Copy(x, ProjectFolder() + "/structures/" + x.Replace("\\\\", "/").Replace("\\","/").Replace(p,""), true);
-                    });
-            }
+            SyncStructure();
 
             string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             if (projectPath != null && Directory.Exists(path + "imported_dp/structure/"))
@@ -1632,6 +1625,11 @@ namespace JSharp
         private void SoundPreview_Click(object sender, EventArgs e)
         {
             FunctionPreview fp = new FunctionPreview(CommandParser.sounds);
+            fp.Show();
+        }
+        private void ParticlePreview_Click(object sender, EventArgs e)
+        {
+            FunctionPreview fp = new FunctionPreview(CommandParser.particles);
             fp.Show();
         }
         private void PredicatePreview_Click(object sender, EventArgs e)
@@ -1763,11 +1761,10 @@ namespace JSharp
         {
             if (currentDataPack != null || ExportSave.ShowDialog() == DialogResult.OK)
             {
+                if (compilerSetting.autoSave && projectPath != "" && projectPath != null) Save(projectPath);
                 string path = (currentDataPack == null) ? ExportSave.FileName : currentDataPack;
                 currentDataPack = path;
-                exportNew = false;
                 string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
-                Debug(rpdir, Color.Yellow);
                 if (!Directory.Exists(rpdir))
                 {
                     if (isCompiling == 0)
@@ -1832,7 +1829,6 @@ namespace JSharp
             if (ExportSave.ShowDialog() == DialogResult.OK)
             {
                 string path = ExportSave.FileName;
-                exportNew = false;
 
                 string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
                 if (!Directory.Exists(rpdir))
@@ -2777,6 +2773,39 @@ namespace JSharp
         private void InvalidateRP_Click(object sender, EventArgs e)
         {
             exportNew = true;
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            SyncStructure();
+        }
+
+        private void SyncStructure()
+        {
+            compilerSetting.structuresSource = Directory.GetParent(currentDataPack).Parent.FullName + "/generated/minecraft/structures";
+            if (Directory.Exists(compilerSetting.structuresSource))
+            {
+                var p = compilerSetting.structuresSource.Replace("\\\\", "/").Replace("\\", "/");
+                Directory.EnumerateFiles(compilerSetting.structuresSource, "*.*", SearchOption.AllDirectories)
+                    .Where(x => !compilerSetting.structuresSources.ContainsKey(x) || File.GetLastWriteTime(x) != compilerSetting.structuresSources[x])
+                    .ToList()
+                    .ForEach(x =>
+                    {
+                        compilerSetting.structuresSources[x] = File.GetLastWriteTime(x);
+                        Debug($"Import Structure: {x}", Color.Yellow);
+                        File.Copy(x, ProjectFolder() + "/structures/" + x.Replace("\\\\", "/").Replace("\\", "/").Replace(p, ""), true);
+                    });
+            }
+        }
+
+        private void showOutputToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (isCompiling == 0) isCompiling = 2;
+        }
+
+        private void ShowOutput_Click(object sender, EventArgs e)
+        {
+            if (isCompiling == 0) isCompiling = 2;
         }
     }
 }

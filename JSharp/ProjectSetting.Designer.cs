@@ -77,6 +77,7 @@
             this.ShowDebugBox = new System.Windows.Forms.CheckBox();
             this.ShowExceptionBox = new System.Windows.Forms.CheckBox();
             this.FunctionTagOptiBox = new System.Windows.Forms.CheckBox();
+            this.AutoSave = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -497,6 +498,7 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.AutoSave);
             this.groupBox2.Controls.Add(this.LambdaCleanUp);
             this.groupBox2.Controls.Add(this.ShowComments);
             this.groupBox2.Controls.Add(this.FileCleanUp);
@@ -597,6 +599,16 @@
             this.FunctionTagOptiBox.Text = "Function Tags Replace";
             this.FunctionTagOptiBox.UseVisualStyleBackColor = true;
             // 
+            // AutoSave
+            // 
+            this.AutoSave.AutoSize = true;
+            this.AutoSave.Location = new System.Drawing.Point(160, 65);
+            this.AutoSave.Name = "AutoSave";
+            this.AutoSave.Size = new System.Drawing.Size(76, 17);
+            this.AutoSave.TabIndex = 32;
+            this.AutoSave.Text = "Auto Save";
+            this.AutoSave.UseVisualStyleBackColor = true;
+            // 
             // ProjectSetting
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -691,5 +703,6 @@
         private System.Windows.Forms.CheckBox ShowComments;
         private System.Windows.Forms.CheckBox RandomLambdaID;
         private System.Windows.Forms.CheckBox LambdaCleanUp;
+        private System.Windows.Forms.CheckBox AutoSave;
     }
 }

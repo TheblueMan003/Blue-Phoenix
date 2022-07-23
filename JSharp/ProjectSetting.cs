@@ -53,6 +53,7 @@ namespace JSharp
             GenMAPSFile.Checked = compilerSetting.generateMAPSFile;
             GenReadMeFile.Checked = compilerSetting.generateREADMEFile;
             RandomLambdaID.Checked = compilerSetting.randomLambdaID;
+            AutoSave.Checked = compilerSetting.autoSave;
 
             HighlighEnum_Box.Checked = Formatter.showEnumValue;
             HighlighFunction_Box.Checked = Formatter.showFunc;
@@ -115,6 +116,7 @@ namespace JSharp
 
                 compilerSetting.generateMAPSFile = GenMAPSFile.Checked;
                 compilerSetting.generateREADMEFile = GenReadMeFile.Checked;
+                compilerSetting.autoSave = AutoSave.Checked;
 
                 Formatter.showEnumValue = HighlighEnum_Box.Checked;
                 Formatter.showFunc = HighlighFunction_Box.Checked;

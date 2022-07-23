@@ -9,7 +9,7 @@ namespace JSharp
     public static class CommandParser
     {
         public static string[] funcName = new string[] { "tellraw", "title", "say", "clear", "effect", "difficulty", "gamemode", "gamerule",
-            "fill", "stopsound", "weather", "tp", "execute", "structure","magictitle","magicgeneric"};
+            "fill", "stopsound", "weather", "tp", "execute", "structure","magictitle","magicgeneric", "datapack.component.block"};
         public static string[] difficulties;
         public static string[] effects;
         public static string[] gamemodes;
@@ -61,56 +61,67 @@ namespace JSharp
         }
         public static string parse(string text, Compiler.Context context, int rec = 0)
         {
-            while (text.StartsWith(" ")) text = text.Substring(1, text.Length - 1);
-            string arg = text.Substring(text.IndexOf('(') + 1, text.LastIndexOf(')') - text.IndexOf('(') - 1);
-            string[] args = Compiler.smartSplit(arg, ',');
+            text = text.Trim();
+            string[] args = Compiler.getArgs(text);
 
-            if (text.ToLower().StartsWith("structure"))
+            var lower = text.ToLower();
+
+            if (lower.StartsWith("structure"))
                 return parseStructure(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("title"))
+            if (lower.StartsWith("title"))
                 return parseTitle(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("magictitle"))
+            if (lower.StartsWith("magictitle"))
                 return parseMagicTitle(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("magicgeneric"))
+            if (lower.StartsWith("magicgeneric"))
                 return parseMagicGeneric(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("tellraw"))
+            if (lower.StartsWith("tellraw"))
                 return parseTellraw(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("clear"))
+            if (lower.StartsWith("clear"))
                 return parseClear(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("say"))
+            if (lower.StartsWith("say"))
                 return parseSay(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("effect"))
+            if (lower.StartsWith("effect"))
                 return parseEffect(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("difficulty"))
+            if (lower.StartsWith("difficulty"))
                 return parseDifficulty(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("gamemode"))
+            if (lower.StartsWith("gamemode"))
                 return parseGamemode(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("gamerule"))
+            if (lower.StartsWith("gamerule"))
                 return parseGamerule(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("fill"))
+            if (lower.StartsWith("fill"))
                 return parseFill(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("stopsound"))
+            if (lower.StartsWith("stopsound"))
                 return parseStopsound(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("weather"))
+            if (lower.StartsWith("weather"))
                 return parseWeather(args, context, text, rec);
 
-            if (text.ToLower().StartsWith("tp"))
+            if (lower.StartsWith("tp"))
                 return parseTP(args, context, text, rec);
 
+            if (lower.StartsWith("datapack.component.block"))
+                return parseBlock(args, context, text, rec);
+
+
             throw new NotImplementedException(text.Split(' ')[0] + " is not implemented");
+        }
+
+        private static string parseBlock(string[] args, Compiler.Context context, string text, int rec)
+        {
+            Compiler.FilterBlocks.Add(new DataPackMeta.Pack.Filter.Block(Compiler.extractString(args[0]), Compiler.extractString(args[1])));
+            return "";
         }
 
         public static string parseTellraw(string[] args, Compiler.Context context, string text, int rec = 0)
