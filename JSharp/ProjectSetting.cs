@@ -54,6 +54,7 @@ namespace JSharp
             GenReadMeFile.Checked = compilerSetting.generateREADMEFile;
             RandomLambdaID.Checked = compilerSetting.randomLambdaID;
             AutoSave.Checked = compilerSetting.autoSave;
+            InterfaceExport.Checked = compilerSetting.exportInterface;
 
             HighlighEnum_Box.Checked = Formatter.showEnumValue;
             HighlighFunction_Box.Checked = Formatter.showFunc;
@@ -117,6 +118,7 @@ namespace JSharp
                 compilerSetting.generateMAPSFile = GenMAPSFile.Checked;
                 compilerSetting.generateREADMEFile = GenReadMeFile.Checked;
                 compilerSetting.autoSave = AutoSave.Checked;
+                compilerSetting.exportInterface = InterfaceExport.Checked;
 
                 Formatter.showEnumValue = HighlighEnum_Box.Checked;
                 Formatter.showFunc = HighlighFunction_Box.Checked;
@@ -144,6 +146,11 @@ namespace JSharp
         {
             ForceOffuscation form = new ForceOffuscation(variables, compilerSetting.forcedOffuscation);
             form.ShowDialog();
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

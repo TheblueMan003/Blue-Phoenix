@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
@@ -1220,99 +1221,106 @@ namespace JSharp
         }
         public static string desugarParenthis(string text)
         {
-            int ind = 0;
-            int parInd = 0;
-            StringBuilder stringBuilder = new StringBuilder(text.Length);
-            bool inString = false;
-            bool ignoreNext = false;
-            bool needSplitter = false;
-            Stack<bool> isFunkyLamba = new Stack<bool>();
-            Stack<bool> isFunkyLamba2 = new Stack<bool>();
-
-            for (int i = 0; i < text.Length; i++)
+            try
             {
-                if (text[i] == '(' && !inString && !ignoreNext)
+                int ind = 0;
+                int parInd = 0;
+                StringBuilder stringBuilder = new StringBuilder(text.Length);
+                bool inString = false;
+                bool ignoreNext = false;
+                bool needSplitter = false;
+                Stack<bool> isFunkyLamba = new Stack<bool>();
+                Stack<bool> isFunkyLamba2 = new Stack<bool>();
+
+                for (int i = 0; i < text.Length; i++)
                 {
-                    parInd++;
-                    stringBuilder.Append(text[i]);
-                    isFunkyLamba2.Push(false);
-                }
-                else if (text[i] == ')' && !inString && !ignoreNext)
-                {
-                    parInd--;
-                    stringBuilder.Append(text[i]);
-                    isFunkyLamba2.Pop();
-                }
-                else if (text[i] == '{' && !inString && !ignoreNext && parInd > 0)
-                {
-                    ind++;
-                    stringBuilder.Append(text[i]);
-                    isFunkyLamba.Push(true);
-                    isFunkyLamba2.Push(true);
-                    needSplitter = false;
-                }
-                else if (text[i] == '}' && !inString && !ignoreNext && parInd > 0)
-                {
-                    ind--;
-                    isFunkyLamba.Pop();
-                    isFunkyLamba2.Pop();
-                    stringBuilder.Append(text[i]);
-                }
-                else if (text[i] == ':' && !inString && !ignoreNext && ind > 0)
-                {
-                    isFunkyLamba.Pop();
-                    isFunkyLamba.Push(false);
-                    stringBuilder.Append(text[i]);
-                }
-                else if (text[i] == '\\' && !ignoreNext)
-                {
-                    ignoreNext = true;
-                    stringBuilder.Append(text[i]);
-                }
-                else if (text[i] == '"' && !ignoreNext)
-                {
-                    if (inString)
+                    if (text[i] == '(' && !inString && !ignoreNext)
+                    {
+                        parInd++;
+                        stringBuilder.Append(text[i]);
+                        isFunkyLamba2.Push(false);
+                    }
+                    else if (text[i] == ')' && !inString && !ignoreNext)
+                    {
+                        parInd--;
+                        stringBuilder.Append(text[i]);
+                        isFunkyLamba2.Pop();
+                    }
+                    else if (text[i] == '{' && !inString && !ignoreNext && parInd > 0)
+                    {
+                        ind++;
+                        stringBuilder.Append(text[i]);
+                        isFunkyLamba.Push(true);
+                        isFunkyLamba2.Push(true);
+                        needSplitter = false;
+                    }
+                    else if (text[i] == '}' && !inString && !ignoreNext && parInd > 0)
+                    {
+                        ind--;
+                        isFunkyLamba.Pop();
+                        isFunkyLamba2.Pop();
+                        stringBuilder.Append(text[i]);
+                    }
+                    else if (text[i] == ':' && !inString && !ignoreNext && ind > 0)
+                    {
+                        isFunkyLamba.Pop();
+                        isFunkyLamba.Push(false);
+                        stringBuilder.Append(text[i]);
+                    }
+                    else if (text[i] == '\\' && !ignoreNext)
+                    {
+                        ignoreNext = true;
+                        stringBuilder.Append(text[i]);
+                    }
+                    else if (text[i] == '"' && !ignoreNext)
+                    {
+                        if (inString)
+                        {
+                            stringBuilder.Append(text[i]);
+                            inString = false;
+                        }
+                        else
+                        {
+                            stringBuilder.Append(text[i]);
+                            inString = true;
+                        }
+                    }
+                    else if ((text[i] == '\n' || text[i] == '\r') && parInd > 0)
+                    {
+                        if (ind > 0)
+                        {
+                            bool funky = isFunkyLamba2.Peek();
+                            foreach (bool b in isFunkyLamba)
+                            {
+                                funky = b && funky;
+                            }
+                            if (funky && needSplitter)
+                            {
+                                stringBuilder.Append(";");
+                            }
+                        }
+                    }
+                    else if (ignoreNext)
+                    {
+                        ignoreNext = false;
+                        stringBuilder.Append(text[i]);
+                    }
+                    else if (text[i] == ' ' || text[i] == '\t' || text[i] == '\n' || text[i] == '\r')
                     {
                         stringBuilder.Append(text[i]);
-                        inString = false;
                     }
                     else
                     {
                         stringBuilder.Append(text[i]);
-                        inString = true;
+                        needSplitter = true;
                     }
                 }
-                else if ((text[i] == '\n' || text[i] == '\r') && parInd > 0)
-                {
-                    if (ind > 0)
-                    {
-                        bool funky = isFunkyLamba2.Peek();
-                        foreach (bool b in isFunkyLamba)
-                        {
-                            funky = b && funky;
-                        }
-                        if (funky && needSplitter)
-                        {
-                            stringBuilder.Append(";");
-                        }
-                    }
-                }
-                else if (ignoreNext)
-                {
-                    ignoreNext = false;
-                    stringBuilder.Append(text[i]);
-                }
-                else if (text[i] == ' ' || text[i] == '\t' || text[i] == '\n' || text[i] == '\r')
-                {
-                    stringBuilder.Append(text[i]);
-                }
-                else
-                {
-                    stringBuilder.Append(text[i]);
-                    needSplitter = true;
-                }
+                return stringBuilder.ToString();
             }
-            return stringBuilder.ToString();
+            catch(Exception e)
+            {
+                throw new Exception("Fail to desugar: " + text + "\n" + e.ToString());
+            }
         }
         public static string functionDesugar(string text)
         {
@@ -4447,8 +4455,36 @@ namespace JSharp
                 currentParsedFile.name.Replace("\\", "/");
                 string folder = currentParsedFile.name.Replace("\\", "/");
                 folder = folder.Substring(0, folder.LastIndexOf("/"));
-                GlobalDebug("Downloaded skin at "+projectFolder + "/resourcespack" + folder + "/" + argget[0].ToLower() + ".png", Color.Yellow);
-                SkinGetter.GetSkin(argget[0], projectFolder + "/resourcespack"+ folder + "/" + argget[0].ToLower()+".png");
+                if (!System.IO.File.Exists(projectFolder + "/resourcespack" + folder + "/" + argget[0].ToLower() + ".png"))
+                {
+                    SkinGetter.GetSkin(argget[0], projectFolder + "/resourcespack" + folder + "/" + argget[0].ToLower() + ".png");
+                    GlobalDebug("Downloaded skin at " + projectFolder + "/resourcespack" + folder + "/" + argget[0].ToLower() + ".png", Color.Yellow);
+                }
+                return "";
+            }
+            else if (value.StartsWith("run"))
+            {
+                if (text.ToLower().StartsWith("define"))
+                    value = compVarReplace(value);
+                string[] argget = getArgs(value);
+                argget = argget.Select(x => isString(x) ? extractString(x) : x).ToArray();
+                currentParsedFile.name.Replace("\\", "/");
+                string folder = currentParsedFile.name.Replace("\\", "/");
+                folder = folder.Substring(0, folder.LastIndexOf("/"));
+                if (!System.IO.File.Exists(projectFolder + "/resourcespack" + folder + "/" + argget[0].ToLower()))
+                {
+                    ProcessStartInfo ProcessInfo;
+                    Process Process;
+
+                    ProcessInfo = new ProcessStartInfo(argget[1], argget[2]);
+                    ProcessInfo.WorkingDirectory = projectFolder + "/resourcespack" + folder + "/";
+                    ProcessInfo.CreateNoWindow = true;
+                    ProcessInfo.UseShellExecute = true;
+
+                    Process = Process.Start(ProcessInfo);
+
+                    GlobalDebug("Executed Scripts " + projectFolder + "/resourcespack" + folder + "/" + argget[0].ToLower(), Color.Yellow);
+                }
                 return "";
             }
             else if (value.StartsWith("namespace"))
@@ -4634,6 +4670,7 @@ namespace JSharp
             Type ca = Type.INT;
             bool isConst = false;
             bool isPrivate = false;
+            bool isPublic = false;
             bool isStatic = false;
             if (structStack.Count > 0)
             {
@@ -4643,6 +4680,15 @@ namespace JSharp
             if (text.StartsWith("private "))
             {
                 isPrivate = true;
+                text = text.Substring("private".Length, text.Length - "private".Length);
+                while (text.StartsWith(" "))
+                {
+                    text = text.Substring(1, text.Length - 1);
+                }
+            }
+            if (text.StartsWith("public "))
+            {
+                isPublic = true;
                 text = text.Substring("private".Length, text.Length - "private".Length);
                 while (text.StartsWith(" "))
                 {
@@ -4794,6 +4840,7 @@ namespace JSharp
                     variable.isConst = isConst;
                     variable.arraySize = arraySize;
                     variable.isPrivate = isPrivate;
+                    variable.isPublic = isPublic;
                     variable.isStatic = isStatic;
                     variable.privateContext = context.GetVar();
                     
@@ -4820,6 +4867,7 @@ namespace JSharp
                     variable = new Variable(v, name, ca, entity, def);
                     variable.isConst = isConst;
                     variable.isPrivate = isPrivate;
+                    variable.isPublic = isPublic;
                     variable.isStatic = isStatic;
                     variable.privateContext = prefix;
 
@@ -4845,6 +4893,7 @@ namespace JSharp
                     variable = new Variable(v, name, ca, entity, "__class_id__");
                     variable.isConst = isConst;
                     variable.isPrivate = isPrivate;
+                    variable.isPublic = isPublic;
                     variable.isStatic = isStatic;
                     variable.privateContext = prefix;
                     
@@ -5033,6 +5082,7 @@ namespace JSharp
             bool isLoading = false;
             bool isHelper = false;
             bool isPrivate = false;
+            bool isPublic = false;
             bool isLambda = false;
             bool isExternal = false;
             bool isVirtual = false;
@@ -5108,6 +5158,7 @@ namespace JSharp
                     else if (funArgType[i] == "public")
                     {
                         isPrivate = false;
+                        isPublic = true;
                     }
                     else if (funArgType[i] == "virtual")
                     {
@@ -5177,6 +5228,7 @@ namespace JSharp
             function.isHelper = isHelper;
             function.tags = tags;
             function.isPrivate = isPrivate;
+            function.isPublic = isPublic;
             function.isLambda = isLambda;
             function.isExternal = isExternal;
             function.isVirtual = isVirtual;
@@ -5227,6 +5279,7 @@ namespace JSharp
                     function.isHelper = prev.isHelper || isHelper;
                     function.tags.AddRange(prev.tags);
                     function.isPrivate = prev.isPrivate || isPrivate;
+                    function.isPublic = prev.isPublic || isPublic;
                     function.isLambda = prev.isLambda || isLambda;
                     function.isExternal = prev.isExternal || isExternal;
                     fFile.parsed_end = prev.file.parsed;
@@ -5280,6 +5333,7 @@ namespace JSharp
                 function.isHelper = prev.isHelper || isHelper;
                 function.tags.AddRange(prev.tags);
                 function.isPrivate = prev.isPrivate || isPrivate;
+                function.isPublic = prev.isPublic || isPublic;
                 function.isLambda = prev.isLambda || isLambda;
                 function.isExternal = prev.isExternal || isExternal;
                 fFile.parsed_end = prev.file.parsed;
@@ -9221,6 +9275,7 @@ namespace JSharp
             public bool isLambda;
             public bool isExternal;
             public bool isPrivate = false;
+            public bool isPublic = false;
             public bool isVirtual = false;
             public bool isOverride = false;
             public bool isStatic = false;
@@ -9280,7 +9335,6 @@ namespace JSharp
                 newfunc.file = f;
                 newfunc.args = args;
                 newfunc.outputs = outputs;
-                newfunc.isPrivate = isPrivate;
                 newfunc.isStructMethod = isStructMethod;
                 newfunc.isStructMethod = isStructMethod;
 
@@ -9288,6 +9342,7 @@ namespace JSharp
                 newfunc.lazy = lazy;
                 newfunc.isAbstract = isAbstract;
                 newfunc.isPrivate = isPrivate;
+                newfunc.isPublic = isPublic;
                 newfunc.argNeeded = argNeeded;
                 newfunc.maxArgNeeded = maxArgNeeded;
                 newfunc.package = package;
@@ -10314,6 +10369,7 @@ namespace JSharp
             public string def;
             public Scoreboard scoreboardObj;
             public bool isPrivate = false;
+            public bool isPublic = false;
             public string privateContext;
             public bool isStructureVar;
             public int arraySize;
@@ -10455,6 +10511,7 @@ namespace JSharp
                 structGenerating = true;
                 string prefix = "";
                 if (isPrivate) { prefix += "private "; }
+                if (isPublic) { prefix += "public "; }
                 if (isStatic) { prefix += "static "; }
                 if (isConst) { prefix += "const "; }
 
@@ -10950,7 +11007,7 @@ namespace JSharp
                     {
                         defaultVal = getArg(defaultVal);
                     }
-                    if (type != "json")
+                    if (type != "json" && type != "")
                     {
                         funcName = "__getEnumField__." + parent.name + "." + name + "";
 
@@ -11326,8 +11383,9 @@ namespace JSharp
                         text += eval(this.text, variable, variable.type, "=");
                     for (int i = 0; i < Math.Ceiling((casesUnit.Count * 1.0) / subTreeSize); i++)
                     {
+                        int swid = GetID(context.GetFun());
                         string contName = "__splitted_" + i.ToString();
-                        string funcName = (context.GetFun() + contName);
+                        string funcName = (context.GetFun()+$"s_{swid}/{contName}");
                         string c = Core.FileNameSplitter()[0];
                         string subName = funcName.Substring(funcName.IndexOf(c) + 1, funcName.Length - funcName.IndexOf(c) - 1);
                         File f = new File(subName);
@@ -11338,9 +11396,11 @@ namespace JSharp
                         int iMax = Math.Min((i + 1) * subTreeSize - 1, casesUnit.Count - 1);
 
                         Switch s = new Switch(variable, subList(casesUnit, iMin, iMax), tail);
+                        context.Sub($"s_{swid}", new File("",""));
                         context.Sub(contName, f);
                         var content = s.Compile(false);
                         f.AddLine(content);
+                        context.Parent();
                         context.Parent();
                         string cmd = "function " + funcName + '\n';
                         if (variable.type == Type.FLOAT)
@@ -11866,6 +11926,7 @@ namespace JSharp
             public bool opti_LambdaCleanUp = false;
             public bool advanced_debug = false;
             public bool autoSave = true;
+            public bool exportInterface = true;
 
             public bool isLibrary = true;
 

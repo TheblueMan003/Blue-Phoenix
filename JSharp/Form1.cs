@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static JSharp.Compiler.Function;
 
 namespace JSharp
 {
@@ -32,6 +33,7 @@ namespace JSharp
         public ProjectVersion projectVersion = new ProjectVersion();
         public Compiler.CompilerSetting compilerSetting = new Compiler.CompilerSetting();
 
+        private CompilerCore core;
         public string projectDescription;
 
         private string previous = "load";
@@ -974,7 +976,8 @@ namespace JSharp
         }
         public int SafeWriteFile(string fileName, string content)
         {
-            string filePath = fileName.Substring(0, fileName.LastIndexOf('/'));
+            var filedir = fileName.Replace("\\", "/");
+            string filePath = filedir.Substring(0, filedir.LastIndexOf('/'));
             if (!Directory.Exists(filePath))
             {
                 Directory.CreateDirectory(filePath);
@@ -1018,33 +1021,7 @@ namespace JSharp
             {
                 this.showForm = showForm;
                 projectVersion.Build();
-                compileFile = new List<Compiler.File>();
-
-                recallFile();
-
-                foreach (string f in codeOrder)
-                {
-                    compileFile.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
-                }
-                
-                bool rp = WasRPChanged();
-
-                string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
-                if (Directory.Exists(rpdir) && rp)
-                {
-                    foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
-                    {
-                        var f = new Compiler.File(file.Replace(rpdir, ""), File.ReadAllText(file).Replace('\t' + "", ""));
-                        f.resourcespack = true;
-                        compileFile.Add(f);
-                    }
-                }
-
-                compileResource = new List<Compiler.File>();
-                foreach (string f in resourceOrder)
-                {
-                    compileResource.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
-                }
+                GetCompileFiles();
                 if (CompileThread != null && CompileThread.IsAlive)
                     CompileThread.Abort();
 
@@ -1053,26 +1030,58 @@ namespace JSharp
                 CompileThread.Start();
             }
         }
+
+        private void GetCompileFiles()
+        {
+            compileFile = new List<Compiler.File>();
+
+            recallFile();
+
+            foreach (string f in codeOrder)
+            {
+                compileFile.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
+            }
+
+            bool rp = WasRPChanged();
+
+            string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
+            if (currentDataPack != null && Directory.Exists(Path.GetDirectoryName(currentDataPack) + "/"))
+            {
+                foreach (var file in Directory.GetFiles(Path.GetDirectoryName(currentDataPack) + "/", "*.bpi", SearchOption.AllDirectories))
+                {
+                    if (Path.GetFileName(file) != Path.GetFileName(currentDataPack) + ".bpi")
+                    {
+                        var f = new Compiler.File("outside", File.ReadAllText(file).Replace('\t' + "", ""));
+                        compileFile.Insert(0, f);
+                    }
+                }
+            }
+            if (Directory.Exists(rpdir) && rp)
+            {
+                foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
+                {
+                    var f = new Compiler.File(file.Replace(rpdir, ""), File.ReadAllText(file).Replace('\t' + "", ""));
+                    f.resourcespack = true;
+                    compileFile.Add(f);
+                }
+            }
+
+            compileResource = new List<Compiler.File>();
+            foreach (string f in resourceOrder)
+            {
+                compileResource.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
+            }
+        }
+
         public void GetCallStackTrace()
         {
             if (isCompiling == 0)
             {
                 this.showForm = true;
                 projectVersion.Build();
-                compileFile = new List<Compiler.File>();
 
-                recallFile();
+                GetCompileFiles();
 
-                foreach (string f in codeOrder)
-                {
-                    compileFile.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
-                }
-
-                compileResource = new List<Compiler.File>();
-                foreach (string f in resourceOrder)
-                {
-                    compileResource.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
-                }
                 if (CompileThread != null && CompileThread.IsAlive)
                     CompileThread.Abort();
                 CompileThread = new Thread(GetCallStackTraceThreaded);
@@ -1085,7 +1094,7 @@ namespace JSharp
             try
             {
                 isCompiling = 1;
-                CompilerCore core;
+                
                 if (compilerSetting.CompilerCoreName == "java") { core = new CompilerCoreJava(); }
                 else if (compilerSetting.CompilerCoreName == "bedrock") { core = new CompilerCoreBedrock(); }
                 else { throw new Exception("Unknown Compiler Core"); }
@@ -1309,6 +1318,10 @@ namespace JSharp
                             JsonConvert.SerializeObject(new DataPackMeta(projectName + " - " + projectDescription,
                             compilerSetting.packformat)));
 
+                if (compilerSetting.exportInterface)
+                {
+                    ExportInterface(path + ".bpi");
+                }
                 if (compilerSetting.ExportAsZip)
                 {
                     if (!path.EndsWith(".zip")) path += ".zip";
@@ -1334,37 +1347,64 @@ namespace JSharp
                 if (Directory.Exists(ProjectPath + "unzip")) Directory.Delete(ProjectPath + "unzip", true);
             }
         }
+        public void ExportInterface(string path)
+        {
+            try
+            {
+                core = new CompilerCoreJava();
+                string GetName(Compiler.Function f)
+                {
+                    return f.gameName.Replace(":", ".").Replace("/", ".");
+                }
+                string GetArg(Compiler.Function f)
+                {
+                    string str = "";
+                    for (int i = 0; i < f.args.Count; i++)
+                    {
+                        str += i == 0 ? $"int ${i}" : $", int ${i}";
+                    }
+                    return str;
+                }
+                string GetContent(Compiler.Function f)
+                {
+                    string str = "";
+                    for (int i = 0; i < f.args.Count; i++)
+                    {
+                        str += $"/scoreboard players operation {f.args[i].scoreboard()} = ${i}.scoreboard\n";
+                    }
+                    str += $"/function {f.gameName}\n";
+                    return str;
+                }
+
+                var functions = Compiler.functions
+                    .SelectMany(x => x.Value)
+                    .Where(f => !f.isLambda && f.isPublic && !f.lazy)
+                    .Select(f => $"def lazy {GetName(f)}({GetArg(f)}){{\n{GetContent(f)}}}\n").ToList();
+                if (functions.Count != 0)
+                {
+                    var text = functions.Aggregate((x, y) => x + y);
+
+                    SafeWriteFile(path, $"package .\n{functions}");
+                }
+            }
+            catch(Exception e)
+            {
+
+            }
+        }
         public void ExportFiles(string path)
         {
             string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
-            List<Compiler.File> files = new List<Compiler.File>();
-            foreach (string f in codeOrder)
-            {
-                files.Add(new Compiler.File(f, code[f].content.Replace('\t' + "", "")));
-            }
-
             string rpdir = Path.GetDirectoryName(projectPath) + "/resourcespack";
-            if (Directory.Exists(rpdir) && exportRP)
-            {
-                foreach (var file in Directory.GetFiles(rpdir, "*.bps", SearchOption.AllDirectories))
-                {
-                    var f = new Compiler.File(file.Replace(rpdir, ""), File.ReadAllText(file).Replace('\t' + "", ""));
-                    f.resourcespack = true;
-                    files.Add(f);
-                }
-            }
 
-            List<Compiler.File> resourcesfiles = new List<Compiler.File>();
-            foreach (string f in resourceOrder)
-            {
-                resourcesfiles.Add(new Compiler.File(f, resources[f].content.Replace('\t' + "", "")));
-            }
+            GetCompileFiles();
+
             CompilerCore core;
             if (compilerSetting.CompilerCoreName == "java") { core = new CompilerCoreJava(); }
             else if (compilerSetting.CompilerCoreName == "bedrock") { core = new CompilerCoreBedrock(); }
             else { throw new Exception("Unknown Compiler Core"); }
 
-            List<Compiler.File> cFiles = Compiler.compile(core, projectName, files, resourcesfiles,
+            List<Compiler.File> cFiles = Compiler.compile(core, projectName, compileFile, compileResource,
                                         DebugThread, compilerSetting, projectVersion,
                                         Path.GetDirectoryName(projectPath));
 
@@ -1532,7 +1572,10 @@ namespace JSharp
         }
         public void ExportStructures(string path)
         {
-            SyncStructure();
+            if (projectPath != null)
+            {
+                SyncStructure();
+            }
 
             string ProjectPath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/";
             if (projectPath != null && Directory.Exists(path + "imported_dp/structure/"))
@@ -2777,24 +2820,38 @@ namespace JSharp
 
         private void button11_Click(object sender, EventArgs e)
         {
+            compilerSetting.structuresSource = Directory.GetParent(currentDataPack).Parent.FullName + "/generated/minecraft/structures";
             SyncStructure();
         }
 
         private void SyncStructure()
         {
-            compilerSetting.structuresSource = Directory.GetParent(currentDataPack).Parent.FullName + "/generated/minecraft/structures";
-            if (Directory.Exists(compilerSetting.structuresSource))
+            try
             {
-                var p = compilerSetting.structuresSource.Replace("\\\\", "/").Replace("\\", "/");
-                Directory.EnumerateFiles(compilerSetting.structuresSource, "*.*", SearchOption.AllDirectories)
-                    .Where(x => !compilerSetting.structuresSources.ContainsKey(x) || File.GetLastWriteTime(x) != compilerSetting.structuresSources[x])
-                    .ToList()
-                    .ForEach(x =>
+                if (compilerSetting.structuresSource != null)
+                {
+                    var projectDirectory = ProjectFolder() + "/structures/";
+                    if (!Directory.Exists(projectDirectory))
+                        Directory.CreateDirectory(projectDirectory);
+
+                    if (Directory.Exists(compilerSetting.structuresSource))
                     {
-                        compilerSetting.structuresSources[x] = File.GetLastWriteTime(x);
-                        Debug($"Import Structure: {x}", Color.Yellow);
-                        File.Copy(x, ProjectFolder() + "/structures/" + x.Replace("\\\\", "/").Replace("\\", "/").Replace(p, ""), true);
-                    });
+                        var p = compilerSetting.structuresSource.Replace("\\\\", "/").Replace("\\", "/");
+                        Directory.EnumerateFiles(compilerSetting.structuresSource, "*.*", SearchOption.AllDirectories)
+                            .Where(x => !compilerSetting.structuresSources.ContainsKey(x) || File.GetLastWriteTime(x) != compilerSetting.structuresSources[x])
+                            .ToList()
+                            .ForEach(x =>
+                            {
+                                compilerSetting.structuresSources[x] = File.GetLastWriteTime(x);
+                                Debug($"Import Structure: {x}", Color.Yellow);
+                                File.Copy(x, ProjectFolder() + "/structures/" + x.Replace("\\\\", "/").Replace("\\", "/").Replace(p, ""), true);
+                            });
+                    }
+                }
+            }
+            catch
+            {
+                Debug("Failled To Sync Structure", Color.Yellow);
             }
         }
 

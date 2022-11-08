@@ -69,6 +69,7 @@
             this.label14 = new System.Windows.Forms.Label();
             this.AuthorsBox = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.AutoSave = new System.Windows.Forms.CheckBox();
             this.LambdaCleanUp = new System.Windows.Forms.CheckBox();
             this.ShowComments = new System.Windows.Forms.CheckBox();
             this.FileCleanUp = new System.Windows.Forms.CheckBox();
@@ -77,7 +78,7 @@
             this.ShowDebugBox = new System.Windows.Forms.CheckBox();
             this.ShowExceptionBox = new System.Windows.Forms.CheckBox();
             this.FunctionTagOptiBox = new System.Windows.Forms.CheckBox();
-            this.AutoSave = new System.Windows.Forms.CheckBox();
+            this.InterfaceExport = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -519,6 +520,16 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Optimisation";
             // 
+            // AutoSave
+            // 
+            this.AutoSave.AutoSize = true;
+            this.AutoSave.Location = new System.Drawing.Point(160, 65);
+            this.AutoSave.Name = "AutoSave";
+            this.AutoSave.Size = new System.Drawing.Size(76, 17);
+            this.AutoSave.TabIndex = 32;
+            this.AutoSave.Text = "Auto Save";
+            this.AutoSave.UseVisualStyleBackColor = true;
+            // 
             // LambdaCleanUp
             // 
             this.LambdaCleanUp.AutoSize = true;
@@ -599,15 +610,16 @@
             this.FunctionTagOptiBox.Text = "Function Tags Replace";
             this.FunctionTagOptiBox.UseVisualStyleBackColor = true;
             // 
-            // AutoSave
+            // InterfaceExport
             // 
-            this.AutoSave.AutoSize = true;
-            this.AutoSave.Location = new System.Drawing.Point(160, 65);
-            this.AutoSave.Name = "AutoSave";
-            this.AutoSave.Size = new System.Drawing.Size(76, 17);
-            this.AutoSave.TabIndex = 32;
-            this.AutoSave.Text = "Auto Save";
-            this.AutoSave.UseVisualStyleBackColor = true;
+            this.InterfaceExport.AutoSize = true;
+            this.InterfaceExport.Location = new System.Drawing.Point(197, 221);
+            this.InterfaceExport.Name = "InterfaceExport";
+            this.InterfaceExport.Size = new System.Drawing.Size(101, 17);
+            this.InterfaceExport.TabIndex = 33;
+            this.InterfaceExport.Text = "Export Interface";
+            this.InterfaceExport.UseVisualStyleBackColor = true;
+            this.InterfaceExport.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
             // ProjectSetting
             // 
@@ -615,6 +627,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(15)))), ((int)(((byte)(15)))));
             this.ClientSize = new System.Drawing.Size(941, 273);
+            this.Controls.Add(this.InterfaceExport);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.label14);
             this.Controls.Add(this.AuthorsBox);
@@ -704,5 +717,6 @@
         private System.Windows.Forms.CheckBox RandomLambdaID;
         private System.Windows.Forms.CheckBox LambdaCleanUp;
         private System.Windows.Forms.CheckBox AutoSave;
+        private System.Windows.Forms.CheckBox InterfaceExport;
     }
 }
